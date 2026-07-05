@@ -1,72 +1,70 @@
-# Velocímetro Vialink
+# Vialink Speedtest
 
-Teste de velocidade auto-hospedado, **multi-tenant** e **multi-idioma** —
-um fork do [OpenSpeedTest™](https://github.com/openspeedtest/Speed-Test).
-100% arquivos estáticos (HTML, CSS, JavaScript e SVG): sem build, sem
-Node.js, sem backend obrigatório — qualquer servidor web serve.
+Self-hosted, **multi-tenant**, **multi-language** network speed test — a fork
+of [OpenSpeedTest™](https://github.com/openspeedtest/Speed-Test). 100% static
+files (HTML, CSS, JavaScript and SVG): no build step, no Node.js, no mandatory
+backend — any web server will do.
 
-> 🇺🇸 **English:** self-hosted, multi-tenant, multi-language speed test — an
-> OpenSpeedTest™ fork. Docs: [Install manual](docs/INSTALL.en-US.md) ·
-> [Changelog](CHANGELOG.en-US.md) · [Contributing](CONTRIBUTING.md) ·
-> [Adding a language](assets/js/i18n/README.md)
+> 🇧🇷 **Português:** [README.pt-BR.md](README.pt-BR.md) ·
+> [Manual de instalação](docs/INSTALL.pt-BR.md) · [Changelog](CHANGELOG.md)
 
 <p align="center">
-  <img src="docs/img/screenshot-desktop.png" alt="Velocímetro — desktop, tema escuro" width="68%">
-  <img src="docs/img/screenshot-mobile.png" alt="Velocímetro — mobile" width="23%">
+  <img src="docs/img/screenshot-desktop.png" alt="Speed test — desktop, dark theme" width="68%">
+  <img src="docs/img/screenshot-mobile.png" alt="Speed test — mobile" width="23%">
 </p>
 
-## Destaques
+## Highlights
 
-- **Multi-tenant** — vários domínios na mesma instalação, cada um com logo
-  (claro/escuro), cores, favicon, título e relatórios próprios; configuração
-  estática em [`assets/js/tenants.js`](assets/js/tenants.js).
-- **8 idiomas** — português, inglês, espanhol, francês, chinês, japonês,
-  russo e alemão, com seletor de bandeira, detecção do idioma do navegador e
-  preferência em cookie. [Contribua com o seu idioma](assets/js/i18n/README.md)
-  — é um único arquivo JS.
-- **Relatório e PDF** — página de relatório imprimível (1 página A4) e PDF
-  gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
-  nativo do celular.
-- **Card de IP/provedor**, escala do velocímetro **dinâmica**, tema escuro
-  por padrão, layout mobile dedicado.
-- **Correções sobre o upstream** — gráfico ao vivo que nunca renderizava,
-  medição de upload ~160× mais rápida de preparar, threads ajustadas ao
-  HTTP/1.1 — tudo documentado no [CHANGELOG](CHANGELOG.md).
-- **Persistência opcional** de resultados (PHP + MariaDB) para histórico e
-  relatórios internos.
-- **Privacidade** — nenhum dado enviado a terceiros pelo servidor; o teste
-  roda contra a *sua* infraestrutura.
+- **Multi-tenant** — several domains on the same installation, each with its
+  own logo (light/dark), colors, favicon, title and reports; static
+  configuration in [`assets/js/tenants.js`](assets/js/tenants.js).
+- **8 languages** — English, Portuguese, Spanish, French, Chinese, Japanese,
+  Russian and German, with a flag selector, browser-language detection and a
+  cookie-stored preference. [Contribute your language](assets/js/i18n/README.md)
+  — it's a single JS file.
+- **Report and PDF** — printable report page (single A4 sheet) and a PDF
+  generated in the browser (vendored jsPDF, no CDN), shareable through the
+  phone's native share sheet.
+- **IP/provider card**, **dynamic** gauge scale, dark theme by default,
+  dedicated mobile layout.
+- **Fixes over upstream** — a live graph that never rendered, upload payload
+  ~160× faster to prepare, threads tuned to HTTP/1.1 — all documented in the
+  [CHANGELOG](CHANGELOG.en-US.md).
+- **Optional persistence** of results (PHP + MariaDB) for history and
+  internal reporting.
+- **Privacy** — the server sends nothing to third parties; the test runs
+  against *your* infrastructure.
 
 <p align="center">
-  <img src="docs/img/screenshot-idiomas.png" alt="Seletor de idiomas (8 idiomas)" width="68%">
+  <img src="docs/img/screenshot-idiomas.png" alt="Language selector (8 languages)" width="68%">
 </p>
 
-## Instalação em servidor próprio
+## Self-hosting
 
-Manual completo (nginx e Apache, HTTPS com Let's Encrypt, branding
-multi-tenant, criação de idioma, persistência opcional e troubleshooting):
+Complete manual (nginx and Apache, HTTPS with Let's Encrypt, multi-tenant
+branding, language creation, optional persistence and troubleshooting):
 
-- **Português:** [docs/INSTALL.pt-BR.md](docs/INSTALL.pt-BR.md)
 - **English:** [docs/INSTALL.en-US.md](docs/INSTALL.en-US.md)
+- **Português:** [docs/INSTALL.pt-BR.md](docs/INSTALL.pt-BR.md)
 
-Resumo: clone, gere o arquivo de download
-(`dd if=/dev/urandom of=downloading bs=1M count=100`), aplique a configuração
-de servidor web do manual e pronto.
+In short: clone, generate the download blob
+(`dd if=/dev/urandom of=downloading bs=1M count=100`), apply the web-server
+configuration from the manual and you're done.
 
-## Contribuindo
+## Contributing
 
-Contribuições são bem-vindas — especialmente **novos idiomas** (um arquivo de
-dicionário + uma bandeira SVG) e correções. Veja o
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome — especially **new languages** (one dictionary file
++ one SVG flag) and fixes. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Licença e marcas
+## License and trademarks
 
-- Código sob licença **MIT** — © 2013–2023 OpenSpeedTest™ (projeto original)
-  e © 2026 [Vialink](https://vialink.com.br) (modificações do fork). Ver
-  [LICENSE](LICENSE) e [COPYRIGHT.md](COPYRIGHT.md).
-- **Logotipos, nomes e cores Vialink e MaisLink não são MIT** — ao hospedar
-  publicamente, configure um tenant com a sua própria marca
-  ([manual, §6](docs/INSTALL.pt-BR.md#6-personalização--marca-cores-e-domínios-tenants)).
-- OpenSpeedTest™ é marca do projeto original. Este fork não é afiliado ao
-  OpenSpeedTest; melhorias de interesse geral podem ser propostas de volta
-  ao [projeto original](https://github.com/openspeedtest/Speed-Test).
+- Code under the **MIT** license — © 2013–2023 OpenSpeedTest™ (original
+  project) and © 2026 [Vialink](https://vialink.com.br) (fork modifications).
+  See [LICENSE](LICENSE) and [COPYRIGHT.md](COPYRIGHT.md).
+- **The Vialink and MaisLink logos, names and colors are not MIT** — when
+  hosting publicly, configure a tenant with your own brand
+  ([manual, §6](docs/INSTALL.en-US.md#6-branding--logo-colors-and-domains-tenants)).
+- OpenSpeedTest™ is a trademark of the original project. This fork is not
+  affiliated with OpenSpeedTest; improvements of general interest can be
+  proposed back to the
+  [original project](https://github.com/openspeedtest/Speed-Test).
