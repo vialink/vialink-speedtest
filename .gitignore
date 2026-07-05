@@ -1,6 +1,8 @@
 .DS_Store
 .playwright-mcp/
-*.png
+# screenshots de validação só na raiz e em .screenshots/ (PNGs de assets são versionados normalmente)
+/*.png
+.screenshots/
 # arquivo binário gerado pelo CI/CD (100 MB); não versionar
 downloading
 
