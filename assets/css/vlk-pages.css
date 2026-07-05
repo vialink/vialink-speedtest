@@ -1,0 +1,140 @@
+/* Estilo compartilhado das páginas Vialink (relatorio, manual, sobre) */
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/roboto-v30-latin-regular.woff2") format("woff2"),
+       url("../fonts/roboto-v30-latin-regular.woff") format("woff");
+}
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/roboto-v30-latin-500.woff2") format("woff2"),
+       url("../fonts/roboto-v30-latin-500.woff") format("woff");
+}
+
+:root {
+  /* Acompanham o tenant (tenants.js define --vlk-*; fallback = Vialink) */
+  --azul: var(--vlk-accent, #0095BE);
+  --azul-escuro: var(--vlk-gauge-end, #005A73);
+  --laranja: #E15E30;
+  --bg: #1b1b1b;
+  --card: #000000;
+  --texto: #f2f2f2;
+  --texto-suave: #9a9a9a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: Roboto, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--texto);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.pagina {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.topo img.logo { height: 44px; }
+.topo a.voltar {
+  color: var(--azul);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.topo a.voltar:hover { text-decoration: underline; }
+.topo-acoes { display: flex; align-items: center; gap: 16px; }
+
+/* Seletor de idioma (bandeira + sigla), preenchido pelo i18n.js */
+#vlk-lang-html { position: relative; }
+.vlk-lang-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid rgba(154, 154, 154, .35); border-radius: 6px;
+  color: var(--texto-suave); font-family: inherit; font-size: 12.5px; font-weight: 500;
+  padding: 4px 8px; cursor: pointer;
+}
+.vlk-lang-btn img { width: 18px; height: 12.6px; display: block; }
+.vlk-lang-drop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 10;
+  background: #262626; border: 1px solid #3c3c3c; border-radius: 8px;
+  padding: 4px; min-width: 160px; box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+}
+.vlk-lang-drop button {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: none; border: 0; border-radius: 5px; color: var(--texto);
+  font-family: inherit; font-size: 13px; padding: 7px 9px; cursor: pointer; text-align: left;
+  white-space: nowrap;
+}
+.vlk-lang-drop button:hover { background: rgba(255, 255, 255, .08); }
+.vlk-lang-drop img { width: 18px; height: 12.6px; }
+
+h1 { font-size: 26px; font-weight: 500; margin-bottom: 6px; }
+h2 { font-size: 19px; font-weight: 500; color: var(--azul); margin: 28px 0 10px; }
+p, li { font-size: 15px; color: var(--texto); margin-bottom: 10px; }
+ul, ol { padding-left: 22px; margin-bottom: 12px; }
+li { margin-bottom: 6px; }
+a { color: var(--azul); }
+.suave { color: var(--texto-suave); }
+strong { font-weight: 500; }
+
+.cartao {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.nota-tecnica {
+  /* rgba fixo é o fallback; color-mix acompanha a cor do tenant */
+  background: rgba(0, 149, 190, .08);
+  background: color-mix(in srgb, var(--azul) 8%, transparent);
+  border: 1px solid rgba(0, 149, 190, .45);
+  border-color: color-mix(in srgb, var(--azul) 45%, transparent);
+  border-left: 4px solid var(--laranja);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 18px 0;
+}
+.nota-tecnica h3 {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--laranja);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+.nota-tecnica p { font-size: 14.5px; }
+.nota-tecnica p:last-child { margin-bottom: 0; }
+
+table.parametros { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+table.parametros th, table.parametros td {
+  text-align: left; padding: 7px 10px; font-size: 14px;
+  border-bottom: 1px solid #333;
+}
+table.parametros th { color: var(--azul); font-weight: 500; }
+code {
+  background: #000; border-radius: 4px; padding: 1px 6px;
+  font-size: 13.5px; color: #7fd4ea;
+}
+
+.rodape {
+  display: flex; align-items: center; justify-content: flex-end; gap: 7px;
+  margin-top: 40px; color: var(--texto-suave); font-size: 13px;
+}
+.rodape img { height: 15px; }

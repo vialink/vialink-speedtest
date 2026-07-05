@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title data-i18n="report.docTitle">Relatório de Velocidade — Vialink</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/tenants/vialink/favicon-32x32.png">
+  <link rel="shortcut icon" href="/assets/tenants/vialink/favicon.ico">
+  <link rel="stylesheet" href="/assets/css/vlk-pages.css">
+  <script src="/assets/js/tenants.js"></script>
+  <script src="/assets/js/i18n/i18n.js"></script>
+  <script src="/assets/js/i18n/en-US.js"></script>
+  <script src="/assets/js/i18n/pt-BR.js"></script>
+  <script src="/assets/js/i18n/es-ES.js"></script>
+  <script src="/assets/js/i18n/fr-FR.js"></script>
+  <script src="/assets/js/i18n/zh-CN.js"></script>
+  <script src="/assets/js/i18n/ja-JP.js"></script>
+  <script src="/assets/js/i18n/ru-RU.js"></script>
+  <script src="/assets/js/i18n/de-DE.js"></script>
+  <style>
+    /* Relatório é um documento: fundo claro, pronto para imprimir/PDF */
+    body { background: #f4f5f7; color: #222; }
+    .pagina { max-width: 720px; }
+    .folha {
+      background: #ffffff; border-radius: 10px; padding: 36px 40px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.10); color: #222;
+    }
+    .folha h1 { color: #143246; font-size: 24px; }
+    .folha .sub { color: #667; font-size: 14px; margin-bottom: 22px; }
+    .info { width: 100%; border-collapse: collapse; margin-bottom: 26px; }
+    .info td { padding: 6px 0; font-size: 14.5px; border-bottom: 1px solid #eceef1; color: #222; }
+    .info td:first-child { color: var(--azul); font-weight: 500; width: 175px; }
+    .metricas {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 14px; margin-bottom: 26px;
+    }
+    .metrica {
+      background: #f2f8fa; background: color-mix(in srgb, var(--azul) 6%, #fff);
+      border: 1px solid #d9e8ee; border-color: color-mix(in srgb, var(--azul) 18%, #fff); border-radius: 8px;
+      padding: 16px 14px; text-align: center;
+    }
+    .metrica .rotulo { font-size: 12.5px; letter-spacing: .06em; color: var(--azul); font-weight: 500; text-transform: uppercase; }
+    .metrica .valor { font-size: 34px; font-weight: 500; color: #143246; margin: 4px 0 0; }
+    .metrica .unidade { font-size: 13px; color: #667; }
+    .obs { font-size: 12.5px; color: #778; }
+    .acoes { margin: 22px 0 0; display: flex; gap: 12px; }
+    .acoes a, .acoes button {
+      font-family: inherit; font-size: 14.5px; font-weight: 500; cursor: pointer;
+      border: 0; border-radius: 6px; padding: 10px 18px; text-decoration: none;
+    }
+    .btn-azul { background: var(--azul); color: #fff; }
+    .btn-cinza { background: #e4e7ea; color: #333; }
+    .rodape-folha {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 30px; padding-top: 14px; border-top: 1px solid #eceef1;
+      color: #889; font-size: 12.5px;
+    }
+    .rodape-folha .marca { display: flex; align-items: center; gap: 6px; }
+    .rodape-folha img { height: 14px; }
+    #sem-resultado { display: none; text-align: center; padding: 30px 0; color: #445; }
+    #sem-resultado a { color: var(--azul); }
+    /* Seletor de idioma na versão clara (documento) */
+    .vlk-lang-btn { color: #667; border-color: #ccc; }
+    .vlk-lang-drop { background: #fff; border-color: #d8dcdf; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+    .vlk-lang-drop button { color: #333; }
+    .vlk-lang-drop button:hover { background: rgba(0,0,0,.05); }
+    /* Nota técnica em versão clara (documento imprimível) */
+    .nota-tecnica {
+      background: #fdf6f2; border: 1px solid #eecdbc; border-left: 4px solid #E15E30;
+      border-radius: 8px; padding: 14px 18px; margin: 20px 0 4px;
+    }
+    .nota-tecnica h3 {
+      font-size: 13px; font-weight: 500; color: #E15E30;
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+    }
+    .nota-tecnica p { font-size: 13px; color: #444; margin-bottom: 8px; }
+    .nota-tecnica p:last-child { margin-bottom: 0; }
+    @media print {
+      /* margin 0 remove o cabeçalho/rodapé do navegador (data, URL); as margens
+         reais do documento viram o padding da .folha */
+      @page { size: A4 portrait; margin: 0; }
+      body { background: #fff; }
+      .pagina { padding: 0; max-width: none; }
+      .folha { box-shadow: none; border-radius: 0; padding: 12mm 14mm; }
+      .acoes, .topo a.voltar, #vlk-lang-html { display: none !important; }
+      /* Esconde overlays injetados por extensões do navegador (tradutor, leitura) */
+      body > :not(.pagina) { display: none !important; }
+      /* Compacta para caber em uma única página A4 */
+      .folha h1 { font-size: 21px; }
+      .folha .sub { margin-bottom: 12px; }
+      .topo { margin-bottom: 10px !important; }
+      .topo img.logo { height: 36px; }
+      .info { margin-bottom: 14px; }
+      .info td { padding: 4px 0; font-size: 13px; }
+      .metricas { margin-bottom: 14px; gap: 10px; }
+      .metrica { padding: 10px 12px; }
+      .metrica .valor { font-size: 27px; }
+      .obs { font-size: 11.5px; margin-bottom: 6px; }
+      .nota-tecnica { margin: 12px 0 0; padding: 10px 14px; }
+      .nota-tecnica h3 { font-size: 12px; margin-bottom: 4px; }
+      .nota-tecnica p { font-size: 11.5px; margin-bottom: 6px; }
+      .rodape-folha { margin-top: 14px; padding-top: 8px; }
+    }
+  </style>
+</head>
+<body data-fundo="claro">
+  <div class="pagina">
+    <div class="folha">
+      <div class="topo" style="margin-bottom:18px">
+        <img class="logo" src="/assets/tenants/vialink/logo.svg" alt="Vialink">
+        <span class="topo-acoes">
+          <span id="vlk-lang-html"></span>
+          <a class="voltar" data-i18n="common.back" href="/">← Voltar ao teste</a>
+        </span>
+      </div>
+      <h1 data-i18n="report.title">Relatório de Teste de Velocidade</h1>
+      <p class="sub" id="data-hora">—</p>
+
+      <div id="conteudo">
+        <table class="info">
+          <tr><td data-i18n="pdf.ip">Endereço IP</td><td id="r-ip">—</td></tr>
+          <tr><td data-i18n="pdf.provider">Provedor / localidade</td><td id="r-org">—</td></tr>
+          <tr><td data-i18n="pdf.server">Servidor de teste</td><td id="r-servidor">—</td></tr>
+          <tr><td data-i18n="report.browser">Navegador</td><td id="r-navegador">—</td></tr>
+        </table>
+
+        <div class="metricas">
+          <div class="metrica"><div class="rotulo" data-i18n="app.download">Download</div><div class="valor" id="r-down">—</div><div class="unidade">Mbps</div></div>
+          <div class="metrica"><div class="rotulo" data-i18n="app.upload">Upload</div><div class="valor" id="r-up">—</div><div class="unidade">Mbps</div></div>
+          <div class="metrica"><div class="rotulo" data-i18n="app.ping">Ping</div><div class="valor" id="r-ping">—</div><div class="unidade">ms</div></div>
+          <div class="metrica"><div class="rotulo" data-i18n="app.jitter">Jitter</div><div class="valor" id="r-jitter">—</div><div class="unidade">ms</div></div>
+        </div>
+
+        <p class="obs" id="r-dados">—</p>
+        <p class="obs" data-i18n-html="report.note">Teste realizado no navegador contra o servidor da Vialink, dentro da nossa rede.
+          O resultado reflete a conexão entre o seu dispositivo e a Vialink no momento do teste —
+          Wi-Fi, cabeamento e uso simultâneo da conexão influenciam os números.
+          Consulte o <a href="/manual.html">manual</a> para interpretar os valores.</p>
+
+        <div class="nota-tecnica">
+          <h3 data-i18n="tech.title">Nota técnica — o que o teste realmente mede</h3>
+          <p data-i18n-html="tech.p1">O Velocímetro — como qualquer teste de velocidade da internet — mede a banda <strong>disponível</strong> no momento do teste, e não necessariamente a banda total do link. Se a conexão é de <strong>500 Mbps</strong> e a rede já está consumindo <strong>120 Mbps</strong>, o teste medirá no máximo <strong>380 Mbps</strong>.</p>
+          <p data-i18n-html="tech.p2">O próprio computador que executa o teste também influencia: uma atualização do Windows baixando em segundo plano, por exemplo, consome parte da banda e reduz o resultado. E há o limite do equipamento — placas de rede de <strong>100 Mbps</strong> não medem acima disso, e mesmo interfaces Gigabit podem não ter processamento suficiente para bandas próximas de <strong>1 Gbps</strong>.</p>
+          <p data-i18n-html="tech.p3">Para chegar o mais perto possível da banda real, teste em um computador <strong>sem outros programas ou atualizações rodando</strong>, conectado <strong>por cabo direto ao roteador</strong> e <strong>sem concorrência dos demais dispositivos da rede</strong>.</p>
+        </div>
+
+        <div class="acoes">
+          <button class="btn-azul" data-i18n="report.print" onclick="window.print()">Imprimir / salvar PDF</button>
+          <a class="btn-cinza" data-i18n="report.newTest" href="/">Fazer novo teste</a>
+        </div>
+      </div>
+
+      <div id="sem-resultado">
+        <p><strong data-i18n="report.noresTitle">Nenhum resultado recebido.</strong></p>
+        <p data-i18n-html="report.noresBody">Execute o teste de velocidade e depois clique em <strong>Relatório</strong> no menu.</p>
+        <p><a data-i18n="report.noresLink" href="/">→ Ir para o teste</a></p>
+      </div>
+
+      <div class="rodape-folha">
+        <span class="marca"><img src="/assets/tenants/vialink/engrenagem.svg" alt=""> Powered by Vialink - 2026</span>
+        <span id="r-dominio">—</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var loc = window.VLK_I18N ? VLK_I18N.locale() : 'pt-BR';
+      var fmt1 = function (v) {
+        var n = parseFloat(v);
+        return isFinite(n) ? n.toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—';
+      };
+      var agora = new Date();
+      document.getElementById('data-hora').textContent = vlkT('common.dateAt', {
+        date: agora.toLocaleDateString(loc, { day: '2-digit', month: 'long', year: 'numeric' }),
+        time: agora.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+      });
+      document.getElementById('r-servidor').textContent = location.hostname;
+      document.getElementById('r-dominio').textContent = location.hostname;
+      document.getElementById('r-navegador').textContent = navigator.userAgent;
+
+      if (!q.has('d')) {
+        document.getElementById('conteudo').style.display = 'none';
+        document.getElementById('sem-resultado').style.display = 'block';
+        return;
+      }
+      document.getElementById('r-down').textContent = fmt1(q.get('d'));
+      document.getElementById('r-up').textContent = fmt1(q.get('u'));
+      document.getElementById('r-ping').textContent = fmt1(q.get('p'));
+      document.getElementById('r-jitter').textContent = fmt1(q.get('j'));
+      if (q.get('ip')) document.getElementById('r-ip').textContent = q.get('ip');
+      if (q.get('org')) document.getElementById('r-org').textContent = q.get('org');
+      var dd = parseFloat(q.get('dd')), ud = parseFloat(q.get('ud'));
+      if (isFinite(dd) && isFinite(ud)) {
+        document.getElementById('r-dados').textContent =
+          vlkT('pdf.data', { dd: fmt1(dd), ud: fmt1(ud) });
+      }
+    })();
+  </script>
+  <script src="/assets/js/vlk-pages.js"></script>
+</body>
+</html>

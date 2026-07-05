@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="manual.docTitle">Manual — Velocímetro Vialink</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/tenants/vialink/favicon-32x32.png">
+  <link rel="shortcut icon" href="/assets/tenants/vialink/favicon.ico">
+  <link rel="stylesheet" href="/assets/css/vlk-pages.css">
+  <script src="/assets/js/tenants.js"></script>
+  <script src="/assets/js/i18n/i18n.js"></script>
+  <script src="/assets/js/i18n/en-US.js"></script>
+  <script src="/assets/js/i18n/pt-BR.js"></script>
+  <script src="/assets/js/i18n/es-ES.js"></script>
+  <script src="/assets/js/i18n/fr-FR.js"></script>
+  <script src="/assets/js/i18n/zh-CN.js"></script>
+  <script src="/assets/js/i18n/ja-JP.js"></script>
+  <script src="/assets/js/i18n/ru-RU.js"></script>
+  <script src="/assets/js/i18n/de-DE.js"></script>
+</head>
+<body>
+  <div class="pagina">
+    <div class="topo">
+      <img class="logo" src="/assets/tenants/vialink/logo.svg" alt="Vialink">
+      <span class="topo-acoes">
+        <span id="vlk-lang-html"></span>
+        <a class="voltar" data-i18n="common.back" href="/">← Voltar ao teste</a>
+      </span>
+    </div>
+
+    <h1 data-i18n="manual.title">Manual do Velocímetro</h1>
+    <p class="suave" data-i18n="manual.subtitle">Como usar o teste de velocidade da Vialink e interpretar cada resultado.</p>
+
+    <h2 data-i18n="manual.howTitle">Como usar</h2>
+    <div class="cartao">
+      <ol>
+        <li data-i18n-html="manual.how1">Clique em <strong>Iniciar</strong>. O teste mede primeiro o <strong>ping</strong>, depois o <strong>download</strong> e por fim o <strong>upload</strong> — leva cerca de 30 segundos.</li>
+        <li data-i18n-html="manual.how2">À direita ficam quatro cards: o primeiro mostra o seu <strong>IP e a rede de origem</strong>; os três seguintes mostram os resultados (<strong>download</strong>, <strong>upload</strong> e <strong>ping/jitter</strong>). Ao final, o botão <strong>Testar novamente</strong> permite repetir a medição.</li>
+        <li data-i18n-html="manual.how3">Para gerar um documento com o resultado (para imprimir ou salvar em PDF), clique em <strong>Relatório</strong> no menu do canto superior esquerdo.</li>
+      </ol>
+      <p class="suave" data-i18n="manual.howNote">O teste roda inteiramente no navegador, contra um servidor dentro da rede Vialink — não é preciso instalar nada.</p>
+    </div>
+
+    <div class="nota-tecnica">
+      <h3 data-i18n="tech.title">Nota técnica — o que o teste realmente mede</h3>
+      <p data-i18n-html="tech.p1">O Velocímetro — como qualquer teste de velocidade da internet — mede a banda <strong>disponível</strong> no momento do teste, e não necessariamente a banda total do link. Se a conexão é de <strong>500 Mbps</strong> e a rede já está consumindo <strong>120 Mbps</strong>, o teste medirá no máximo <strong>380 Mbps</strong>.</p>
+      <p data-i18n-html="tech.p2">O próprio computador que executa o teste também influencia: uma atualização do Windows baixando em segundo plano, por exemplo, consome parte da banda e reduz o resultado. E há o limite do equipamento — placas de rede de <strong>100 Mbps</strong> não medem acima disso, e mesmo interfaces Gigabit podem não ter processamento suficiente para bandas próximas de <strong>1 Gbps</strong>.</p>
+      <p data-i18n-html="tech.p3">Para chegar o mais perto possível da banda real, teste em um computador <strong>sem outros programas ou atualizações rodando</strong>, conectado <strong>por cabo direto ao roteador</strong> e <strong>sem concorrência dos demais dispositivos da rede</strong>.</p>
+    </div>
+
+    <h2 data-i18n="manual.downTitle">Download</h2>
+    <div class="cartao">
+      <p data-i18n-html="manual.downBody">É a velocidade com que você <strong>recebe</strong> dados da internet, medida em megabits por segundo (Mbps). É o que determina a qualidade de atividades como assistir vídeos em streaming, ouvir música, navegar e baixar arquivos ou atualizações.</p>
+    </div>
+
+    <h2 data-i18n="manual.upTitle">Upload</h2>
+    <div class="cartao">
+      <p data-i18n-html="manual.upBody">É a velocidade com que você <strong>envia</strong> dados, também em Mbps. Importa em videochamadas, envio de e-mails com anexos, publicação de vídeos e fotos, backups em nuvem e jogos online — qualquer situação em que seus dados vão para um servidor.</p>
+    </div>
+
+    <h2 data-i18n="manual.pingTitle">Ping</h2>
+    <div class="cartao">
+      <p data-i18n-html="manual.pingBody">É o tempo de ida e volta de um pacote entre o seu dispositivo e o servidor, medido em milissegundos (ms). Um ping baixo significa uma conexão mais responsiva — essencial em jogos online, chamadas de vídeo e qualquer aplicação em que o tempo de resposta importa mais do que o volume de dados.</p>
+    </div>
+
+    <h2 data-i18n="manual.jitterTitle">Jitter</h2>
+    <div class="cartao">
+      <p data-i18n-html="manual.jitterBody">É a <strong>variação</strong> do ping entre um pacote e outro, em ms. Ajuda a diagnosticar a estabilidade da conexão: quanto maior o jitter, mais instável ela está — o que aparece como voz picotada em chamadas e travadas em jogos, mesmo com boa velocidade.</p>
+    </div>
+
+    <h2 data-i18n="manual.tipsTitle">Dicas para um teste correto</h2>
+    <div class="cartao">
+      <ul>
+        <li data-i18n-html="manual.tip1"><strong>Prefira cabo de rede.</strong> Usando Wi-Fi, a distância do roteador e paredes reduzem a velocidade medida — o resultado reflete o seu ambiente, não só o plano contratado.</li>
+        <li data-i18n-html="manual.tip2"><strong>Repetidores Wi-Fi</strong> costumam reduzir a velocidade em até 50%. Teste perto do roteador principal para comparar.</li>
+        <li data-i18n-html="manual.tip3"><strong>Feche downloads, streaming e backups</strong> em outros dispositivos durante o teste — tudo que usa a conexão ao mesmo tempo divide a banda.</li>
+        <li data-i18n-html="manual.tip4"><strong>Extensões do navegador</strong> podem interferir na medição. Se o resultado parecer baixo, repita em uma janela anônima/privada.</li>
+        <li data-i18n-html="manual.tip5">Resultados diferentes entre dispositivos na mesma rede geralmente indicam limitação do equipamento (placa de rede, Wi-Fi antigo) e não da conexão.</li>
+      </ul>
+    </div>
+
+    <h2 data-i18n="manual.errTitle">Erro de rede</h2>
+    <div class="cartao">
+      <p data-i18n-html="manual.errBody">Se aparecer <strong>Erro de rede</strong>, o navegador não conseguiu se comunicar com o servidor de teste. Verifique se a conexão está ativa, recarregue a página e tente de novo. Persistindo, teste em outro dispositivo ou navegador — e, se nada resolver, fale com o suporte da Vialink.</p>
+    </div>
+
+    <h2 data-i18n="manual.paramsTitle">Opções avançadas (parâmetros de URL)</h2>
+    <div class="cartao">
+      <p data-i18n="manual.paramsIntro">Para diagnósticos, o teste aceita parâmetros na URL:</p>
+      <table class="parametros">
+        <tr><th data-i18n="manual.paramTh1">Parâmetro</th><th data-i18n="manual.paramTh2">Efeito</th></tr>
+        <tr><td><code>?Run</code></td><td data-i18n="manual.param1">Inicia o teste automaticamente ao abrir a página</td></tr>
+        <tr><td><code>?Run=10</code></td><td data-i18n="manual.param2">Inicia automaticamente após 10 segundos</td></tr>
+        <tr><td><code>?Stress=300</code></td><td data-i18n="manual.param3">Teste contínuo (stress) por 300 segundos em cada direção</td></tr>
+        <tr><td><code>?Test=Download</code></td><td data-i18n-html="manual.param4">Executa só uma etapa: <code>Download</code>, <code>Upload</code> ou <code>Ping</code></td></tr>
+        <tr><td><code>?Ping=500</code></td><td data-i18n="manual.param5">Aumenta a amostragem de ping (mais preciso, mais demorado)</td></tr>
+      </table>
+      <p class="suave"><span data-i18n="manual.example">Exemplo:</span> <code id="t-exemplo-url">https://medidor.vialink.com.br/?Run&amp;Stress=300</code></p>
+    </div>
+
+    <div class="rodape">
+      <img src="/assets/tenants/vialink/engrenagem.svg" alt=""> Powered by Vialink - 2026
+    </div>
+  </div>
+  <script src="/assets/js/vlk-pages.js"></script>
+</body>
+</html>

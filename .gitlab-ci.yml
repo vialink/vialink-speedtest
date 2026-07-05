@@ -1,0 +1,20 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  environment:
+    name: production
+    url: http://speedtest.vialink.com.br
+  script:
+    - git -C /var/www/speedtest remote set-url origin
+        "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git -C /var/www/speedtest fetch origin main
+    - git -C /var/www/speedtest reset --hard origin/main
+    # Garante arquivo de download de 100 MB (não versionado); gera só se ausente ou menor que 100 MB
+    - test $(stat -c%s /var/www/speedtest/downloading 2>/dev/null || echo 0) -ge 104857600 || dd if=/dev/urandom of=/var/www/speedtest/downloading bs=1M count=100 status=none
+    - sudo systemctl reload nginx
+  only:
+    - main
+  tags:
+    - speedtest

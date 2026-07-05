@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="about.docTitle">Sobre — Velocímetro Vialink</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/tenants/vialink/favicon-32x32.png">
+  <link rel="shortcut icon" href="/assets/tenants/vialink/favicon.ico">
+  <link rel="stylesheet" href="/assets/css/vlk-pages.css">
+  <script src="/assets/js/tenants.js"></script>
+  <script src="/assets/js/i18n/i18n.js"></script>
+  <script src="/assets/js/i18n/en-US.js"></script>
+  <script src="/assets/js/i18n/pt-BR.js"></script>
+  <script src="/assets/js/i18n/es-ES.js"></script>
+  <script src="/assets/js/i18n/fr-FR.js"></script>
+  <script src="/assets/js/i18n/zh-CN.js"></script>
+  <script src="/assets/js/i18n/ja-JP.js"></script>
+  <script src="/assets/js/i18n/ru-RU.js"></script>
+  <script src="/assets/js/i18n/de-DE.js"></script>
+</head>
+<body>
+  <div class="pagina">
+    <div class="topo">
+      <img class="logo" src="/assets/tenants/vialink/logo.svg" alt="Vialink">
+      <span class="topo-acoes">
+        <span id="vlk-lang-html"></span>
+        <a class="voltar" data-i18n="common.back" href="/">← Voltar ao teste</a>
+      </span>
+    </div>
+
+    <h1 data-i18n="about.title">Sobre o Velocímetro Vialink</h1>
+    <p class="suave" data-i18n="about.subtitle">A origem deste projeto e por que fizemos do nosso jeito.</p>
+
+    <h2 data-i18n="about.originTitle">A origem</h2>
+    <div class="cartao">
+      <p data-i18n-html="about.originBody">Este velocímetro é baseado no <a href="https://github.com/openspeedtest/Speed-Test" target="_blank" rel="noopener">OpenSpeedTest™</a>,
+      um projeto de código aberto iniciado em 2011 que mede a velocidade da conexão usando apenas
+      tecnologias nativas do navegador — HTML, CSS, JavaScript e SVG, sem plugins e sem coleta de dados
+      por terceiros. Ele é distribuído sob a licença MIT, que permite modificar e redistribuir o código.</p>
+    </div>
+
+    <h2 data-i18n="about.whyTitle">Por que um fork?</h2>
+    <div class="cartao">
+      <p data-i18n-html="about.whyBody1">Os medidores de velocidade populares testam contra servidores de terceiros, por caminhos de rede
+      que a Vialink não controla. Nós queríamos um velocímetro <strong>dentro da nossa própria rede</strong>:
+      quando um cliente testa aqui, o resultado mostra a conexão real entre o dispositivo dele e a
+      infraestrutura da Vialink — sem intermediários e sem ambiguidade na hora de diagnosticar um problema.</p>
+      <p data-i18n="about.whyBody2">A partir do projeto original, adaptamos e acrescentamos o que precisávamos:</p>
+      <ul>
+        <li data-i18n="about.li1">Identidade visual Vialink e interface em contexto brasileiro;</li>
+        <li data-i18n-html="about.li2">Card com o <strong>IP, provedor e localidade</strong> de quem está testando;</li>
+        <li data-i18n-html="about.li3">Escala do velocímetro <strong>dinâmica</strong>, ajustada à velocidade real da conexão;</li>
+        <li data-i18n="about.li4">Correções no gráfico ao vivo e na medição de upload;</li>
+        <li data-i18n-html="about.li5"><strong>Relatório apresentável</strong> do resultado, pronto para imprimir ou salvar em PDF;</li>
+        <li data-i18n="about.li6">Interface, manual e relatórios em vários idiomas;</li>
+        <li data-i18n="about.li7">Suporte a múltiplos domínios na mesma instalação, cada um respondendo com a
+        própria identidade visual — logo, cores, favicon e relatórios.</li>
+      </ul>
+    </div>
+
+    <h2 data-i18n="about.openTitle">Código aberto</h2>
+    <div class="cartao">
+      <p data-i18n-html="about.openBody">Assim como o projeto original, as modificações deste fork estão disponíveis publicamente no <a href="https://github.com/vialink/vialink-speedtest" target="_blank" rel="noopener">GitHub</a>,
+      mantendo a licença MIT e os créditos ao OpenSpeedTest™. Melhorias de interesse geral podem ser
+      propostas de volta ao projeto original.</p>
+      <p class="suave" data-i18n="about.openNote">OpenSpeedTest™ é marca do projeto original — © 2013–2023 OpenSpeedTest, licença MIT.</p>
+    </div>
+
+    <h2 data-i18n="about.vlkTitle">A Vialink</h2>
+    <div class="cartao">
+      <p data-i18n-html="about.vlkBody">A <a href="https://vialink.com.br" target="_blank" rel="noopener">Vialink</a> é um provedor de
+      internet e soluções de tecnologia, inovando desde 1994. Este velocímetro roda em servidores
+      próprios, no nosso datacenter, e está disponível em
+      <a href="https://medidor.vialink.com.br">medidor.vialink.com.br</a>.</p>
+    </div>
+
+    <div class="rodape">
+      <img src="/assets/tenants/vialink/engrenagem.svg" alt=""> Powered by Vialink - 2026
+    </div>
+  </div>
+  <script src="/assets/js/vlk-pages.js"></script>
+</body>
+</html>

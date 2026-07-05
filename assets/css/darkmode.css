@@ -1,0 +1,53 @@
+body {
+  background-color: #181818;
+}
+#ipDesk {
+  fill: aliceblue;
+}
+
+.oDoLive-Speed {
+  fill: #ffffff;
+}
+.oDoLive-Status {
+  fill: aliceblue;
+}
+#ipMob {
+  fill: aliceblue;
+}
+.rtextnum {
+  fill: #ffffff;
+}
+.rtextmbms {
+  fill: #ffffff;
+}
+.rtext {
+  fill: #ffffff;
+}
+.vlk-ip-addr { fill: #ffffff; }
+.vlk-ip-org { fill: #ffffff; }
+.vlk-footer { fill: #8b8b8b; }
+.vlk-lang-code { fill: #8b8b8b; }
+.vlk-share-fb { fill: #eaeaea; }
+.vlk-lang-menu-bg { fill: #2a2a2a; stroke: #3c3c3c; }
+.vlk-lang-name { fill: #eaeaea; }
+.vlk-lang-item:hover .vlk-lang-row { fill: rgba(255, 255, 255, 0.08); }
+.Cards {
+  fill: #000000;
+}
+
+.main-Gaugebg {
+  stroke: #000000;
+}
+.uiBg {
+  fill: #000000;
+}
+.progressbg {
+  stroke: #202020;
+}
+.jitter-Mob {
+  fill: #ffffff;
+}
+
+.ConnectError {
+  fill: #ffffff;
+}
