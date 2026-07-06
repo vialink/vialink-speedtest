@@ -134,9 +134,9 @@
 			<rect width="88.1" height="65.79" rx="5" />
 		</g>
 	</symbol>
-	<symbol id="ipInfoCard" viewBox="0 0 235.7 37">
+	<symbol id="ipInfoCard" viewBox="0 0 235.7 60">
 		<g>
-			<rect width="235.7" height="37" rx="5"/>
+			<rect width="235.7" height="57" rx="5"/>
 		</g>
 	</symbol>
 	<symbol id="resultCard-sm" viewBox="0 0 235.7 56">
@@ -293,113 +293,133 @@
 		<a id="resultsData">
 			<svg class="Desktop" viewBox="0 0 586 346">
 				<g id="UI-Desk">
-					<use id="mainGaugebg-Desk" class="main-Gaugebg" xlink:href="#mainGaugebg" x="10.28" y="36.11" width="273.94" height="245.39"></use>
-					<use id="mainGaugeBlue-Desk" class="main-GaugeBlue" xlink:href="#mainGaugeBlue" x="10.28" y="36.11" width="273.94" height="245.39"></use>
-					<use id="mainGaugeWhite-Desk" class="main-GaugeWhite" xlink:href="#mainGaugeWhite" x="10.28" y="36.11" width="273.94" height="245.39"></use>
-					<use id="ip-bg-ui" class="Cards" display="none" xlink:href="#ipInfoCard" x="307.4" y="36" width="235.7" height="37"></use>
-					<text id="ip-lbl-ui" display="none" data-i18n="app.yourIp" class="vlk-ip-lbl" x="318" y="51">SEU IP</text>
-					<text id="ip-addr-ui" display="none" class="vlk-ip-addr" x="318" y="64">—</text>
-					<text id="ip-org-ui" display="none" class="vlk-ip-org" x="532" y="64" text-anchor="end" opacity="0.65">—</text>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="82" width="235.7" height="56">
-						<title data-i18n="tip.downloadCard">The download speed is how fast you can pull data from the server to you in the form of images, videos, text and more. Activities such as listening to music on Spotify, downloading large files or streaming videos on Netflix all require you to download data.</title>
-					</use>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="147" width="235.7" height="56">
-						<title data-i18n="tip.uploadCard">The upload speed is how fast you send data from you to others in the form of images, videos, text and more. Activities such as uploading to YouTube or Sending email, playing live games like PubG, Voice and Video calling a friend require fast upload speeds for you to send data to someone else’s server.</title>
-					</use>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="212" width="235.7" height="56">
-						<title data-i18n="tip.pingCard">Ping "Round-trip time" is more or less well defined as the network delay from point A to B and back. This is the sum of all encoding, queueing, processing, decoding, and propagation delays in both directions. Essentially, it’s the delay when A may be expecting an answer from B for a request that requires very little processing. A fast ping means a more responsive connection, especially in applications where timing is everything (like video games). Ping is measured in Milliseconds (ms). Jitter is simply the difference in Ping "Round-trip time" . In other words, jitter is measuring time difference in packet inter-arrival time. Jitter helps diagnose internet connection stability. The higher the jitter value, the worse the stability of the connection.</title>
-					</use>
-					<use id="downSymbolDesk" xlink:href="#downSymbol" class="Desktop" x="133" y="99" width="32.21" height="41.62"></use>
-					<use id="upSymbolDesk" xlink:href="#upSymbol" class="Desktop" x="133" y="99" width="32.21" height="41.62"></use>
-					<use id="ConnectErrorDesk" xlink:href="#ConnectError" class="ConnectError" x="135" y="107.8" width="32.21" height="41.62"></use>
-					<use class="oDo-Meter" xlink:href="#oDoMeter" x="10.28" y="36.11" width="273.94" height="245.39"></use>
-					<use id="vlk-progress-desk" xlink:href="#progressBar" x="1" y="295" width="293.53" height="18.38"></use>
-					<use id="progressStatus-Desk" class="intro-Progress" xlink:href="#introProgress" x="29" y="295" width="234" height="21"></use>
-					<use xlink:href="#downloadRc1" x="335.05" y="87.5" width="67" height="16">
-						<title data-i18n="tip.downloadUnit">Download speed is measured in megabits per second (Mbps).</title>
-					</use>
-					<use xlink:href="#uploadRc2" x="345.33" y="152.5" width="47" height="16">
-						<title data-i18n="tip.uploadUnit">Upload speed is measured in megabits per second (Mbps).</title>
-					</use>
-					<use xlink:href="#pingSymbol" x="351.4" y="218" width="14.3" height="14.4"></use>
-					<use xlink:href="#pingSymbol" x="421" y="218" width="14.33" height="14.4"></use>
-					<use xlink:href="#pingRc3" x="367.01" y="217.5" width="28" height="16">
-						<title data-i18n="tip.pingUnit">Ping is measured in Milliseconds (ms).</title>
-					</use>
-					<use xlink:href="#jitterRc3" x="435.3" y="217.5" width="39.95" height="13.85">
-						<title data-i18n="tip.jitterUnit">Jitter is measured in Milliseconds (ms).</title>
-					</use>
-					<use xlink:href="#upSymbol" class="Symbol" x="329" y="154" width="11.8" height="13.9"></use>
-					<use xlink:href="#downSymbol" class="Symbol" x="318.7" y="89" width="11.8" height="13.8"></use>
-					<use xlink:href="#graphc2" x="421" y="148" width="117" height="54" preserveAspectRatio="none">
-						<title data-i18n="tip.graphUp">Shows you real-time network traffic graph for Upload!</title>
-					</use>
-					<use xlink:href="#graphc1" x="421" y="83" width="117" height="54" preserveAspectRatio="none">
-						<title data-i18n="tip.graphDown">Shows you real-time network traffic graph for Download!</title>
-					</use>
-					<use xlink:href="#downResultC1" x="294.4" y="102.5" width="200" height="29.75">
-						<title data-i18n="tip.yourDown">Your download speed!</title>
-					</use>
-					<use xlink:href="#upResultC2" x="294.4" y="167.5" width="200" height="29.75">
-						<title data-i18n="tip.yourUp">Your upload speed!</title>
-					</use>
-					<use xlink:href="#pingResultC3" x="301.1" y="233.5" width="200" height="29.75">
-						<title data-i18n="tip.yourPing">Your ping!</title>
-					</use>
-					<use xlink:href="#jitterResultC3" x="358.2" y="233.5" width="200" height="29.75">
-						<title data-i18n="tip.yourJitter">Your jitter!</title>
-					</use>
+					<!-- Central Gauge Area -->
+					<g id="ui-gauge-desk" transform="translate(10.28, 36.11)">
+						<use id="mainGaugebg-Desk" class="main-Gaugebg" xlink:href="#mainGaugebg" x="0" y="0" width="273.94" height="245.39"></use>
+						<use id="mainGaugeBlue-Desk" class="main-GaugeBlue" xlink:href="#mainGaugeBlue" x="0" y="0" width="273.94" height="245.39"></use>
+						<use id="mainGaugeWhite-Desk" class="main-GaugeWhite" xlink:href="#mainGaugeWhite" x="0" y="0" width="273.94" height="245.39"></use>
+						<use class="oDo-Meter" xlink:href="#oDoMeter" x="0" y="0" width="273.94" height="245.39"></use>
+						
+						<use id="downSymbolDesk" xlink:href="#downSymbol" class="Desktop" x="122.7" y="62.9" width="32.21" height="41.62"></use>
+						<use id="upSymbolDesk" xlink:href="#upSymbol" class="Desktop" x="122.7" y="62.9" width="32.21" height="41.62"></use>
+						<use id="ConnectErrorDesk" xlink:href="#ConnectError" class="ConnectError" x="124.7" y="71.7" width="32.21" height="41.62"></use>
+						
+						<use id="vlk-progress-desk" xlink:href="#progressBar" x="-9.28" y="258.9" width="293.53" height="18.38"></use>
+						<use id="progressStatus-Desk" class="intro-Progress" xlink:href="#introProgress" x="18.7" y="258.9" width="234" height="21"></use>
+					</g>
+
+					<!-- Info Column (IP + Results) -->
+					<g id="ui-info-desk" transform="translate(307.4, 36)">
+						<!-- IP Info block -->
+						<g id="vlk-ip-block-ui">
+							<use id="ip-bg-ui" class="Cards" display="none" xlink:href="#ipInfoCard" x="0" y="0" width="235.7" height="37"></use>
+							<text id="ip-lbl-ui" display="none" data-i18n="app.yourIp" class="vlk-ip-lbl" x="10.6" y="15">SEU IP</text>
+							<text id="ip-addr-ui" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
+							<text id="ip-v4-lbl-ui" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="10.6" y="15">—</text>
+							<text id="ip-v4-addr-ui" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
+							<text id="ip-org-ui" display="none" class="vlk-ip-org" x="224.6" y="28" text-anchor="end" opacity="0.65">—</text>
+						</g>
+						
+						<!-- Results block -->
+						<g id="vlk-res-col-ui" transform="translate(0, 46)">
+							<!-- Cards -->
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56"></use>
+							
+							<!-- Labels & Icons -->
+							<g id="vlk-res-labels-ui">
+								<use xlink:href="#downSymbol" class="Symbol" x="11.3" y="7" width="11.8" height="13.8"></use>
+								<use xlink:href="#upSymbol" class="Symbol" x="21.6" y="72" width="11.8" height="13.9"></use>
+								<use xlink:href="#pingSymbol" x="44" y="136" width="14.3" height="14.4"></use>
+								<use xlink:href="#pingSymbol" x="113.6" y="136" width="14.33" height="14.4"></use>
+								
+								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16"></use>
+								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16"></use>
+								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16"></use>
+								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85"></use>
+							</g>
+							
+							<!-- Results Values -->
+							<g id="vlk-res-values-ui">
+								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75"></use>
+								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75"></use>
+								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75"></use>
+								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75"></use>
+							</g>
+							
+							<!-- Graphs -->
+							<g id="vlk-res-graphs-ui">
+								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none"></use>
+								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none"></use>
+							</g>
+						</g>
+					</g>
 				</g>
 				<g id="intro-Desk">
-					<use id="logo-Desk" xlink:href="#logo" x="35" y="140" width="222.8" height="50.22"></use>
-					<use id="deskStart" class="deskStart" xlink:href="#mainGaugebg" x="10.28" y="36.11" width="273.94" height="245.39"></use>
-					<use id="ip-bg-intro" class="Cards" display="none" xlink:href="#ipInfoCard" x="307.4" y="36" width="235.7" height="37"></use>
-					<text id="ip-lbl-intro" display="none" data-i18n="app.yourIp" class="vlk-ip-lbl" x="318" y="51">SEU IP</text>
-					<text id="ip-addr-intro" display="none" class="vlk-ip-addr" x="318" y="64">—</text>
-					<text id="ip-org-intro" display="none" class="vlk-ip-org" x="532" y="64" text-anchor="end" opacity="0.65">—</text>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="82" width="235.7" height="56"></use>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="212" width="235.7" height="56"></use>
-					<use xlink:href="#resultCard-sm" class="Cards" x="307.4" y="147" width="235.7" height="56"></use>
-					<use xlink:href="#downloadRc1" x="335.05" y="87.5" width="67" height="16">
-						<title data-i18n="tip.downloadUnit">Download speed is measured in megabits per second (Mbps).</title>
-					</use>
-					<use xlink:href="#uploadRc2" x="345.33" y="152.5" width="47" height="16">
-						<title data-i18n="tip.uploadUnit">Upload speed is measured in megabits per second (Mbps).</title>
-					</use>
-					<use xlink:href="#pingSymbol" x="351.4" y="218" width="14.3" height="14.4"></use>
-					<use xlink:href="#pingSymbol" x="421" y="218" width="14.33" height="14.4"></use>
-					<use xlink:href="#pingRc3" x="367.01" y="217.5" width="28" height="16">
-						<title data-i18n="tip.pingUnit">Ping is measured in Milliseconds (ms).</title>
-					</use>
-					<use xlink:href="#jitterRc3" x="435.3" y="217.5" width="39.95" height="13.85">
-						<title data-i18n="tip.jitterUnit">Jitter is measured in Milliseconds (ms).</title>
-					</use>
-					<use xlink:href="#upSymbol" class="Symbol" x="329" y="154" width="11.8" height="13.9"></use>
-					<use xlink:href="#downSymbol" class="Symbol" x="318.7" y="89" width="11.8" height="13.8"></use>
-					<use xlink:href="#graphc2" x="421" y="148" width="117" height="54" preserveAspectRatio="none">
-						<title data-i18n="tip.graphUp">Shows you real-time network traffic graph for Upload!</title>
-					</use>
-					<use xlink:href="#graphc1" x="421" y="83" width="117" height="54" preserveAspectRatio="none">
-						<title data-i18n="tip.graphDown">Shows you real-time network traffic graph for Download!</title>
-					</use>
-					<use xlink:href="#downResultC1" x="294.4" y="102.5" width="200" height="29.75">
-						<title data-i18n="tip.yourDown">Your download speed!</title>
-					</use>
-					<use xlink:href="#upResultC2" x="294.4" y="167.5" width="200" height="29.75">
-						<title data-i18n="tip.yourUp">Your upload speed!</title>
-					</use>
-					<use xlink:href="#pingResultC3" x="301.1" y="233.5" width="200" height="29.75">
-						<title data-i18n="tip.yourPing">Your ping!</title>
-					</use>
-					<use xlink:href="#jitterResultC3" x="358.2" y="233.5" width="200" height="29.75">
-						<title data-i18n="tip.yourJitter">Your jitter!</title>
-					</use>
-					<use id="startButtonDesk" class="startButton" xlink:href="#playButton" x="125" y="300.6" width="50.2" height="50.2">
-						<title data-i18n="tip.start">Click here to Run a Speed Test! Or Press "Enter"</title>
-					</use>
-					<use id="settingsDesk" class="Startsettings" xlink:href="#settings" x="100" y="260" width="100" height="40">
-						<title data-i18n="tip.options">Options</title>
-					</use>
+					<!-- Branding/Logo -->
+					<g id="intro-branding-desk" transform="translate(35, 140)">
+						<use id="logo-Desk" xlink:href="#logo" x="0" y="0" width="222.8" height="50.22"></use>
+					</g>
+
+					<!-- Central Gauge Area -->
+					<g id="intro-gauge-desk" transform="translate(10.28, 36.11)">
+						<use id="deskStart" class="deskStart" xlink:href="#mainGaugebg" x="0" y="0" width="273.94" height="245.39"></use>
+						<use id="startButtonDesk" class="startButton" xlink:href="#playButton" x="114.7" y="264.5" width="50.2" height="50.2">
+							<title data-i18n="tip.start">Click here to Run a Speed Test! Or Press "Enter"</title>
+						</use>
+						<use id="settingsDesk" class="Startsettings" xlink:href="#settings" x="89.7" y="223.9" width="100" height="40">
+							<title data-i18n="tip.options">Options</title>
+						</use>
+					</g>
+
+					<!-- Info Column (IP + Results) -->
+					<g id="intro-info-desk" transform="translate(307.4, 40)">
+						<!-- IP Info block -->
+						<g id="vlk-ip-block-intro">
+							<use id="ip-bg-intro" class="Cards" display="none" xlink:href="#ipInfoCard" x="0" y="0" width="235.7" height="37"></use>
+							<text id="ip-lbl-intro" display="none" data-i18n="app.yourIp" class="vlk-ip-lbl" x="10.6" y="15">SEU IP</text>
+							<text id="ip-addr-intro" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
+							<text id="ip-v4-lbl-intro" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="10.6" y="15">—</text>
+							<text id="ip-v4-addr-intro" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
+							<text id="ip-org-intro" display="none" class="vlk-ip-org" x="224.6" y="28" text-anchor="end" opacity="0.65">—</text>
+						</g>
+						
+						<!-- Results block -->
+						<g id="vlk-res-col-intro" transform="translate(0, 68)">
+							<!-- Cards -->
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56"></use>
+							
+							<!-- Labels & Icons -->
+							<g id="vlk-res-labels-intro">
+								<use xlink:href="#downSymbol" class="Symbol" x="11.3" y="7" width="11.8" height="13.8"></use>
+								<use xlink:href="#upSymbol" class="Symbol" x="21.6" y="72" width="11.8" height="13.9"></use>
+								<use xlink:href="#pingSymbol" x="44" y="136" width="14.3" height="14.4"></use>
+								<use xlink:href="#pingSymbol" x="113.6" y="136" width="14.33" height="14.4"></use>
+								
+								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16"></use>
+								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16"></use>
+								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16"></use>
+								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85"></use>
+							</g>
+							
+							<!-- Results Values -->
+							<g id="vlk-res-values-intro">
+								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75"></use>
+								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75"></use>
+								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75"></use>
+								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75"></use>
+							</g>
+							
+							<!-- Graphs -->
+							<g id="vlk-res-graphs-intro">
+								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none"></use>
+								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none"></use>
+							</g>
+						</g>
+					</g>
 					<use class="Desktop" id="ipDesk" xlink:href="#YourIP" x="7" y="70"></use>
 				</g>
 				<use id="nightmode"  class="darkmode" onclick="toggleSkin()" xlink:href="#dark" x="472" y="8" width="22" height="22"></use>
@@ -415,8 +435,8 @@
 					<text id="vlk-share-txt" x="200" y="20.3" class="vlk-share-fb"></text>
 				</g>
 				<g id="vlk-footer-desk">
-					<use xlink:href="#vlk-gear" x="437.5" y="273.5" width="9" height="10.5"></use>
-					<text class="vlk-footer" x="543" y="282" text-anchor="end">Powered by Vialink - 2026</text>
+					<use xlink:href="#vlk-gear" x="437.5" y="308.5" width="9" height="10.5"></use>
+					<text class="vlk-footer" x="543" y="317" text-anchor="end">Powered by Vialink - 2026</text>
 				</g>
 				<g id="vlk-retest" display="none" onclick="location.reload()" style="cursor:pointer">
 					<rect x="99" y="294.5" width="96.5" height="23" rx="5" fill="#0095BE" class="vlk-fill-accent"></rect>
@@ -501,6 +521,8 @@
 				<use id="ip-bg-mob" class="Cards" display="none" xlink:href="#ipInfoCard" x="1" y="396" width="294.2" height="46.18"></use>
 				<text id="ip-lbl-mob" display="none" data-i18n="app.yourIp" class="vlk-ip-lbl" x="12" y="413">SEU IP</text>
 				<text id="ip-addr-mob" display="none" class="vlk-ip-addr" x="12" y="428">—</text>
+				<text id="ip-v4-lbl-mob" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="12" y="413">—</text>
+				<text id="ip-v4-addr-mob" display="none" class="vlk-ip-addr" x="12" y="428">—</text>
 				<text id="ip-org-mob" display="none" class="vlk-ip-org" x="284" y="428" text-anchor="end" opacity="0.65">—</text>
 				<g id="vlk-footer-mob">
 					<use xlink:href="#vlk-gear" x="189.5" y="449.5" width="9" height="10.5"></use>

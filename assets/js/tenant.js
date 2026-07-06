@@ -13,22 +13,65 @@
 
   // Busca IP/rede de forma assíncrona e armazena globalmente.
   // injectTenantBranding() usa esses dados quando o SVG estiver pronto.
-  fetch('https://ipapi.co/json/')
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      window._vlkIpData = { ip: d.ip || '—', asn: d.asn || '', city: d.city || '' };
-      applyIpToSvg();
-    })
-    .catch(function () {
-      fetch('https://api.ipify.org?format=json')
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          window._vlkIpData = { ip: d.ip || '—', asn: '', city: '' };
-          applyIpToSvg();
+  var detectStacks = function (data) {
+    if (!data.ip || data.ip === '—') return;
+    window._vlkIpData = data;
+    applyIpToSvg();
+
+    var isV6 = data.ip.indexOf(':') !== -1;
+    // Se temos um v6, buscamos o v4. Se temos um v4, buscamos o v6.
+    var sources = isV6
+      ? ['https://api.ipify.org', 'https://ipv4.icanhazip.com', 'https://ident.me']
+      : ['https://api64.ipify.org', 'https://ipv6.icanhazip.com', 'https://v6.ident.me'];
+
+    var trySource = function (idx) {
+      if (idx >= sources.length) return;
+      fetch(sources[idx], { mode: 'cors' })
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          var otherIp = text.trim();
+          var isOtherV6 = otherIp.indexOf(':') !== -1;
+          if (otherIp && isOtherV6 !== isV6 && otherIp.length > 6) {
+            if (isV6) {
+              data.ipv4 = otherIp;
+            } else {
+              data.ipv4 = data.ip;
+              data.ip = otherIp;
+            }
+            window._vlkIpData = data;
+            applyIpToSvg();
+          } else {
+            trySource(idx + 1);
+          }
         })
+        .catch(function () { trySource(idx + 1); });
+    };
+    trySource(0);
+  };
+
+  var processIP = function (d) {
+    if (!d || !d.ip) return;
+    detectStacks({
+      ip: d.ip,
+      asn: d.asn || (d.connection && d.connection.asn) || d.org || '',
+      city: d.city || d.city_name || ''
+    });
+  };
+
+  // Provedores com suporte robusto a CORS e limites altos. 
+  // Evitamos ipapi.co no início para reduzir erros de console 429/CORS.
+  fetch('https://ipwho.is/')
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.success) processIP(d); else throw 1; })
+    .catch(function () {
+      fetch('https://api64.ipify.org?format=json')
+        .then(function (r) { return r.json(); })
+        .then(processIP)
         .catch(function () {
-          window._vlkIpData = { ip: '—', asn: '', city: '' };
-          applyIpToSvg();
+          fetch('https://ipapi.co/json/')
+            .then(function (r) { if (!r.ok) throw 1; return r.json(); })
+            .then(processIP)
+            .catch(function () { processIP({ ip: '—' }); });
         });
     });
 })();
@@ -63,32 +106,117 @@ function applyIpToSvg() {
   var d = window._vlkIpData;
   if (!d) return;
 
-  var ip  = d.ip;
+  var ip = d.ip;
+  var ipv4 = d.ipv4;
   var org = [d.asn, d.city].filter(Boolean).join(' · ');
 
   // IPv6 (ou qualquer IP com mais de 16 chars) não cabe ao lado do ASN·cidade:
-  // o org sobe para a linha do rótulo "SEU IP" e o endereço usa o card inteiro,
-  // encolhendo a fonte só se ainda não couber.
   var longo = ip.indexOf(':') !== -1 || ip.length > 16;
-  var orgY    = { 'ip-org-ui': ['64', '51'], 'ip-org-intro': ['64', '51'], 'ip-org-mob': ['428', '413'] };
   var largura = { 'ip-addr-ui': 214, 'ip-addr-intro': 214, 'ip-addr-mob': 272 };
+  var svgDoc = window._vlkSvgDoc || document;
 
-  // Após window.onload o SVG é inline — getElementById funciona diretamente
-  var ids = { addr: ['ip-addr-ui', 'ip-addr-intro', 'ip-addr-mob'], org: ['ip-org-ui', 'ip-org-intro', 'ip-org-mob'] };
-  ids.addr.forEach(function (id) {
-    var el = document.getElementById(id) ||
-             (window._vlkSvgDoc && window._vlkSvgDoc.getElementById(id));
+  // Atualiza os rótulos de "SEU IP"
+  ['ip-lbl-ui', 'ip-lbl-intro', 'ip-lbl-mob'].forEach(function (id) {
+    var el = document.getElementById(id) || svgDoc.getElementById(id);
     if (!el) return;
-    el.textContent = ip;
-    var fs = Math.min(11, (largura[id] || 214) / (ip.length * 0.58));
-    el.style.fontSize = (longo && fs < 11) ? fs.toFixed(1) + 'px' : '';
+    el.setAttribute('display', 'inline');
+    if (ipv4) {
+      el.textContent = window.VLK_I18N ? window.VLK_I18N.t('app.yourIpV6') : 'SEU IP - IPv6';
+      var isMob = id.indexOf('mob') !== -1;
+      el.setAttribute('y', isMob ? '409' : '12');
+    } else {
+      el.textContent = window.VLK_I18N ? window.VLK_I18N.t('app.yourIp') : 'SEU IP';
+      var isMob = id.indexOf('mob') !== -1;
+      el.setAttribute('y', isMob ? '395' : '15');
+    }
   });
-  ids.org.forEach(function (id) {
-    var el = document.getElementById(id) ||
-             (window._vlkSvgDoc && window._vlkSvgDoc.getElementById(id));
+
+  // Endereços e organização
+  var ids = {
+    addr: ['ip-addr-ui', 'ip-addr-intro', 'ip-addr-mob'],
+    v4lbl: ['ip-v4-lbl-ui', 'ip-v4-lbl-intro', 'ip-v4-lbl-mob'],
+    v4addr: ['ip-v4-addr-ui', 'ip-v4-addr-intro', 'ip-v4-addr-mob'],
+    org: ['ip-org-ui', 'ip-org-intro', 'ip-org-mob']
+  };
+
+  ids.addr.forEach(function (id) {
+    var el = document.getElementById(id) || svgDoc.getElementById(id);
     if (!el) return;
-    el.textContent = org;
-    if (orgY[id]) el.setAttribute('y', orgY[id][longo ? 1 : 0]);
+    el.setAttribute('display', 'inline');
+    el.textContent = ip;
+    var fs = Math.min(10.5, (largura[id] || 214) / (ip.length * 0.58));
+    el.style.fontSize = (longo && fs < 10.5) ? fs.toFixed(1) + 'px' : '';
+    if (ipv4) {
+      var isMob = id.indexOf('mob') !== -1;
+      el.setAttribute('y', isMob ? '421' : '25');
+    } else {
+      var isMob = id.indexOf('mob') !== -1;
+      el.setAttribute('y', isMob ? '409' : '28');
+    }
+  });
+
+  ids.v4addr.forEach(function (id, idx) {
+    var el = document.getElementById(id) || svgDoc.getElementById(id);
+    var lblId = ids.v4lbl[idx];
+    var lblEl = document.getElementById(lblId) || svgDoc.getElementById(lblId);
+    if (!el || !lblEl) return;
+
+    if (ipv4) {
+      var isMob = id.indexOf('mob') !== -1;
+      el.textContent = ipv4;
+      el.setAttribute('display', 'inline');
+      el.style.fontSize = ipv4.length > 16 ? '9px' : '';
+      el.setAttribute('y', isMob ? '446' : '51');
+      lblEl.setAttribute('display', 'inline');
+      lblEl.setAttribute('y', isMob ? '434' : '38');
+      if (window.VLK_I18N) {
+        lblEl.textContent = window.VLK_I18N.t('app.yourIpV4');
+      }
+    } else {
+      el.setAttribute('display', 'none');
+      lblEl.setAttribute('display', 'none');
+    }
+  });
+
+  ids.org.forEach(function (id) {
+    var el = document.getElementById(id) || svgDoc.getElementById(id);
+    if (!el) return;
+
+    var isMob = id.indexOf('mob') !== -1;
+    var bgId = id.replace('org', 'bg');
+    var bgEl = document.getElementById(bgId) || svgDoc.getElementById(bgId);
+
+    if (ipv4) {
+      // Caso dual-stack: esconde ASN/Cidade e mostra o segundo IP
+      el.setAttribute('display', 'none');
+      if (bgEl) {
+        bgEl.setAttribute('display', 'inline');
+        bgEl.setAttribute('height', isMob ? '62' : '62');
+      }
+    } else {
+      // Caso normal: mostra ASN e Cidade
+      el.setAttribute('display', 'inline');
+      el.textContent = org;
+      el.setAttribute('text-anchor', 'end');
+      el.setAttribute('x', isMob ? '284' : '224.6');
+      var orgY = { 'ip-org-ui': ['28', '15'], 'ip-org-intro': ['28', '15'], 'ip-org-mob': ['428', '413'] };
+      if (orgY[id]) el.setAttribute('y', orgY[id][longo ? 1 : 0]);
+      el.setAttribute('opacity', '0.65');
+      el.style.fontSize = '';
+      if (bgEl) {
+        bgEl.setAttribute('display', 'inline');
+        bgEl.setAttribute('height', isMob ? '46.18' : '37');
+      }
+    }
+  });
+
+  // Desloca os resultados se dual stack carregar para evitar sobreposição no Desktop
+  ['vlk-res-col-ui', 'vlk-res-col-intro'].forEach(function (id) {
+    var g = document.getElementById(id) || svgDoc.getElementById(id);
+    if (g) {
+      // 46 é o padrão no SVG; 78 é o novo valor para dual-stack
+      g.setAttribute('transform', ipv4 ? 'translate(0, 78)' : 'translate(0, 46)');
+    }
   });
 }
 
@@ -104,7 +232,9 @@ function injectTenantBranding() {
   var vlkIpOrg = function () {
     var ip = window._vlkIpData;
     if (!ip || !ip.ip || ip.ip === '—') return null;
-    return { ip: ip.ip, org: [ip.asn, ip.city].filter(Boolean).join(' · ') };
+    var d = { ip: ip.ip, org: [ip.asn, ip.city].filter(Boolean).join(' · ') };
+    if (ip.ipv4) d.ipv4 = ip.ipv4;
+    return d;
   };
 
   // Menu "Relatório": injeta os resultados do teste (e IP) na URL antes de navegar.
@@ -120,6 +250,7 @@ function injectTenantBranding() {
       if (dados) {
         q.push('ip=' + encodeURIComponent(dados.ip));
         if (dados.org) q.push('org=' + encodeURIComponent(dados.org));
+        if (dados.ipv4) q.push('ipv4=' + encodeURIComponent(dados.ipv4));
       }
       if (window._tenantParam) q.push(window._tenantParam);
       var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
@@ -216,10 +347,14 @@ function injectTenantBranding() {
 
     // Informações
     var linhas = [
-      [pT('pdf.ip'), dados ? dados.ip : '—'],
-      [pT('pdf.provider'), dados && dados.org ? dados.org : '—'],
-      [pT('pdf.server'), location.hostname]
+      [pT(dados && dados.ipv4 ? 'pdf.ipv6' : 'pdf.ip'), dados ? dados.ip : '—']
     ];
+    if (dados && dados.ipv4) {
+      linhas.push([pT('pdf.ipv4'), dados.ipv4]);
+    }
+    linhas.push([pT('pdf.provider'), dados && dados.org ? dados.org : '—']);
+    linhas.push([pT('pdf.server'), location.hostname]);
+
     var y = 58;
     doc.setFontSize(10.5);
     linhas.forEach(function (l) {
@@ -235,6 +370,7 @@ function injectTenantBranding() {
     });
 
     // Métricas (4 caixas)
+    y = 92 + (dados && dados.ipv4 ? 9 : 0);
     var met = [
       [pT('app.download'), fmt1(r.d), 'Mbps'],
       [pT('app.upload'), fmt1(r.u), 'Mbps'],
@@ -242,7 +378,6 @@ function injectTenantBranding() {
       [pT('app.jitter'), fmt1(r.j), 'ms']
     ];
     var bx = 15, bw = 42, bh = 30, gap = 4;
-    y = 92;
     met.forEach(function (m, i) {
       var x = bx + i * (bw + gap);
       doc.setFillColor(242, 248, 250);
@@ -264,15 +399,16 @@ function injectTenantBranding() {
     // Observações
     doc.setFontSize(9);
     doc.setTextColor(cinza[0], cinza[1], cinza[2]);
+    var obsY = 132 + (dados && dados.ipv4 ? 9 : 0);
     var obs = pT('pdf.data', { dd: fmt1(r.dd), ud: fmt1(r.ud) });
-    doc.text(obs, 15, 132);
+    doc.text(obs, 15, obsY);
     var nota = doc.splitTextToSize(pT('pdf.note', { name: tName }), 180);
-    doc.text(nota, 15, 139);
+    doc.text(nota, 15, obsY + 7);
 
     // Nota técnica (caixa em destaque)
     var laranja = [225, 94, 48];
     var notaTec = doc.splitTextToSize(pT('pdf.tech'), 170);
-    var notaY = 154, notaH = 13 + notaTec.length * 3.6;
+    var notaY = obsY + 22, notaH = 13 + notaTec.length * 3.6;
     doc.setFillColor(253, 246, 242);
     doc.setDrawColor(238, 205, 188);
     doc.roundedRect(15, notaY, 180, notaH, 2, 2, 'FD');

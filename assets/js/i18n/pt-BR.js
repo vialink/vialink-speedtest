@@ -25,6 +25,8 @@ window.VLK_I18N.register({
     'app.menu.about': 'Sobre',
     'app.share': 'Compartilhar',
     'app.retest': 'Testar novamente',
+    'app.yourIpV4': 'SEU IP - IPv4',
+    'app.yourIpV6': 'SEU IP - IPv6',
 
     // ---- Mensagens de status durante o teste (app-2.5.4.js) ----
     'status.wait': 'Aguarde..',
@@ -68,6 +70,8 @@ window.VLK_I18N.register({
     'pdf.tagline': 'Velocímetro',
     'pdf.title': 'Relatório de Teste de Velocidade',
     'pdf.ip': 'Endereço IP',
+    'pdf.ipv4': 'Endereço IPv4',
+    'pdf.ipv6': 'Endereço IPv6',
     'pdf.provider': 'Provedor / localidade',
     'pdf.server': 'Servidor de teste',
     'pdf.data': 'Dados transferidos durante o teste: {dd} MB em download e {ud} MB em upload.',

@@ -32,7 +32,7 @@ body {
 .vlk-lang-name { fill: #eaeaea; }
 .vlk-lang-item:hover .vlk-lang-row { fill: rgba(255, 255, 255, 0.08); }
 .Cards {
-  fill: #000000;
+  fill: #1f1f1f;
 }
 
 .main-Gaugebg {
