@@ -28,6 +28,8 @@ window.VLK_I18N.register({
     'app.menu.about': '情報',
     'app.share': '共有',
     'app.retest': 'もう一度測定',
+    'app.yourIpV4': 'あなたのIP - IPv4',
+    'app.yourIpV6': 'あなたのIP - IPv6',
 
     // ---- テスト中のステータス表示（app-2.5.4.js）----
     'status.wait': 'お待ちください..',
@@ -71,6 +73,8 @@ window.VLK_I18N.register({
     'pdf.tagline': 'スピードテスト',
     'pdf.title': 'スピードテスト レポート',
     'pdf.ip': 'IP アドレス',
+    'pdf.ipv4': 'IPv4 アドレス',
+    'pdf.ipv6': 'IPv6 アドレス',
     'pdf.provider': 'プロバイダー / 所在地',
     'pdf.server': 'テストサーバー',
     'pdf.data': 'テスト中に転送されたデータ：下り {dd} MB、上り {ud} MB。',

@@ -28,6 +28,8 @@ window.VLK_I18N.register({
     'app.menu.about': 'Инфо',
     'app.share': 'Поделиться',
     'app.retest': 'Повторить тест',
+    'app.yourIpV4': 'ВАШ IP - IPv4',
+    'app.yourIpV6': 'ВАШ IP - IPv6',
 
     // ---- Сообщения о статусе во время теста (app-2.5.4.js) ----
     'status.wait': 'Подождите..',
@@ -71,6 +73,8 @@ window.VLK_I18N.register({
     'pdf.tagline': 'Тест скорости',
     'pdf.title': 'Отчёт о тесте скорости',
     'pdf.ip': 'IP-адрес',
+    'pdf.ipv4': 'IPv4-адрес',
+    'pdf.ipv6': 'IPv6-адрес',
     'pdf.provider': 'Провайдер / город',
     'pdf.server': 'Тестовый сервер',
     'pdf.data': 'Передано данных за время теста: {dd} МБ загрузки и {ud} МБ отдачи.',

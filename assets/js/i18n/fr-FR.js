@@ -25,6 +25,8 @@ window.VLK_I18N.register({
     'app.menu.about': 'Infos',
     'app.share': 'Partager',
     'app.retest': 'Refaire le test',
+    'app.yourIpV4': 'VOTRE IP - IPv4',
+    'app.yourIpV6': 'VOTRE IP - IPv6',
 
     // ---- Messages d'état pendant le test (app-2.5.4.js) ----
     'status.wait': 'Veuillez patienter..',
@@ -68,6 +70,8 @@ window.VLK_I18N.register({
     'pdf.tagline': 'Test de Débit',
     'pdf.title': 'Rapport du Test de Débit',
     'pdf.ip': 'Adresse IP',
+    'pdf.ipv4': 'Adresse IPv4',
+    'pdf.ipv6': 'Adresse IPv6',
     'pdf.provider': 'Fournisseur / localité',
     'pdf.server': 'Serveur de test',
     'pdf.data': 'Données transférées pendant le test : {dd} Mo en réception et {ud} Mo en envoi.',

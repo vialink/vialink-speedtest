@@ -25,6 +25,8 @@ window.VLK_I18N.register({
     'app.menu.about': 'Info',
     'app.share': 'Teilen',
     'app.retest': 'Erneut testen',
+    'app.yourIpV4': 'IHRE IP - IPv4',
+    'app.yourIpV6': 'IHRE IP - IPv6',
 
     // ---- Statusmeldungen während des Tests (app-2.5.4.js) ----
     'status.wait': 'Bitte warten..',
@@ -68,6 +70,8 @@ window.VLK_I18N.register({
     'pdf.tagline': 'Speedtest',
     'pdf.title': 'Speedtest-Bericht',
     'pdf.ip': 'IP-Adresse',
+    'pdf.ipv4': 'IPv4-Adresse',
+    'pdf.ipv6': 'IPv6-Adresse',
     'pdf.provider': 'Anbieter / Ort',
     'pdf.server': 'Testserver',
     'pdf.data': 'Während des Tests übertragene Daten: {dd} MB Download und {ud} MB Upload.',

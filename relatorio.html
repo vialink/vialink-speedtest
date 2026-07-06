@@ -198,8 +198,12 @@
         if (row) row.style.display = 'table-row';
         document.getElementById('r-ipv4').textContent = ipv4;
         // Se temos ambos, muda o rótulo do primeiro para "Endereço IPv6"
+        // (troca também o data-i18n — o i18n reaplica o dicionário pelo atributo)
         var ipLabel = document.querySelector('[data-i18n="pdf.ip"]');
-        if (ipLabel) ipLabel.textContent = vlkT('pdf.ipv6');
+        if (ipLabel) {
+          ipLabel.setAttribute('data-i18n', 'pdf.ipv6');
+          ipLabel.textContent = vlkT('pdf.ipv6');
+        }
       }
       if (q.get('org')) document.getElementById('r-org').textContent = q.get('org');
       var dd = parseFloat(q.get('dd')), ud = parseFloat(q.get('ud'));

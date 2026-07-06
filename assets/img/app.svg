@@ -134,9 +134,9 @@
 			<rect width="88.1" height="65.79" rx="5" />
 		</g>
 	</symbol>
-	<symbol id="ipInfoCard" viewBox="0 0 235.7 60">
+	<symbol id="ipInfoCard" viewBox="0 0 235.7 60" preserveAspectRatio="none">
 		<g>
-			<rect width="235.7" height="57" rx="5"/>
+			<rect width="235.7" height="60" rx="5"/>
 		</g>
 	</symbol>
 	<symbol id="resultCard-sm" viewBox="0 0 235.7 56">
@@ -323,9 +323,15 @@
 						<!-- Results block -->
 						<g id="vlk-res-col-ui" transform="translate(0, 46)">
 							<!-- Cards -->
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56"></use>
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56"></use>
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56">
+								<title data-i18n="tip.downloadCard">The download speed is how fast you can pull data from the server to you in the form of images, videos, text and more. Activities such as listening to music on Spotify, downloading large files or streaming videos on Netflix all require you to download data.</title>
+							</use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56">
+								<title data-i18n="tip.uploadCard">The upload speed is how fast you send data from you to others in the form of images, videos, text and more. Activities such as uploading to YouTube or Sending email, playing live games like PubG, Voice and Video calling a friend require fast upload speeds for you to send data to someone else’s server.</title>
+							</use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56">
+								<title data-i18n="tip.pingCard">Ping "Round-trip time" is more or less well defined as the network delay from point A to B and back. This is the sum of all encoding, queueing, processing, decoding, and propagation delays in both directions. Essentially, it’s the delay when A may be expecting an answer from B for a request that requires very little processing. A fast ping means a more responsive connection, especially in applications where timing is everything (like video games). Ping is measured in Milliseconds (ms). Jitter is simply the difference in Ping "Round-trip time" . In other words, jitter is measuring time difference in packet inter-arrival time. Jitter helps diagnose internet connection stability. The higher the jitter value, the worse the stability of the connection.</title>
+							</use>
 							
 							<!-- Labels & Icons -->
 							<g id="vlk-res-labels-ui">
@@ -334,24 +340,44 @@
 								<use xlink:href="#pingSymbol" x="44" y="136" width="14.3" height="14.4"></use>
 								<use xlink:href="#pingSymbol" x="113.6" y="136" width="14.33" height="14.4"></use>
 								
-								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16"></use>
-								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16"></use>
-								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16"></use>
-								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85"></use>
+								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16">
+									<title data-i18n="tip.downloadUnit">Download speed is measured in megabits per second (Mbps).</title>
+								</use>
+								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16">
+									<title data-i18n="tip.uploadUnit">Upload speed is measured in megabits per second (Mbps).</title>
+								</use>
+								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16">
+									<title data-i18n="tip.pingUnit">Ping is measured in Milliseconds (ms).</title>
+								</use>
+								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85">
+									<title data-i18n="tip.jitterUnit">Jitter is measured in Milliseconds (ms).</title>
+								</use>
 							</g>
 							
 							<!-- Results Values -->
 							<g id="vlk-res-values-ui">
-								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75"></use>
-								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75"></use>
-								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75"></use>
-								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75"></use>
+								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75">
+									<title data-i18n="tip.yourDown">Your download speed!</title>
+								</use>
+								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75">
+									<title data-i18n="tip.yourUp">Your upload speed!</title>
+								</use>
+								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75">
+									<title data-i18n="tip.yourPing">Your ping!</title>
+								</use>
+								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75">
+									<title data-i18n="tip.yourJitter">Your jitter!</title>
+								</use>
 							</g>
 							
 							<!-- Graphs -->
 							<g id="vlk-res-graphs-ui">
-								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none"></use>
-								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none"></use>
+								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none">
+									<title data-i18n="tip.graphDown">Shows you real-time network traffic graph for Download!</title>
+								</use>
+								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none">
+									<title data-i18n="tip.graphUp">Shows you real-time network traffic graph for Upload!</title>
+								</use>
 							</g>
 						</g>
 					</g>
@@ -388,9 +414,15 @@
 						<!-- Results block -->
 						<g id="vlk-res-col-intro" transform="translate(0, 68)">
 							<!-- Cards -->
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56"></use>
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56"></use>
-							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56"></use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="0" width="235.7" height="56">
+								<title data-i18n="tip.downloadCard">The download speed is how fast you can pull data from the server to you in the form of images, videos, text and more. Activities such as listening to music on Spotify, downloading large files or streaming videos on Netflix all require you to download data.</title>
+							</use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="65" width="235.7" height="56">
+								<title data-i18n="tip.uploadCard">The upload speed is how fast you send data from you to others in the form of images, videos, text and more. Activities such as uploading to YouTube or Sending email, playing live games like PubG, Voice and Video calling a friend require fast upload speeds for you to send data to someone else’s server.</title>
+							</use>
+							<use xlink:href="#resultCard-sm" class="Cards" x="0" y="130" width="235.7" height="56">
+								<title data-i18n="tip.pingCard">Ping "Round-trip time" is more or less well defined as the network delay from point A to B and back. This is the sum of all encoding, queueing, processing, decoding, and propagation delays in both directions. Essentially, it’s the delay when A may be expecting an answer from B for a request that requires very little processing. A fast ping means a more responsive connection, especially in applications where timing is everything (like video games). Ping is measured in Milliseconds (ms). Jitter is simply the difference in Ping "Round-trip time" . In other words, jitter is measuring time difference in packet inter-arrival time. Jitter helps diagnose internet connection stability. The higher the jitter value, the worse the stability of the connection.</title>
+							</use>
 							
 							<!-- Labels & Icons -->
 							<g id="vlk-res-labels-intro">
@@ -399,24 +431,44 @@
 								<use xlink:href="#pingSymbol" x="44" y="136" width="14.3" height="14.4"></use>
 								<use xlink:href="#pingSymbol" x="113.6" y="136" width="14.33" height="14.4"></use>
 								
-								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16"></use>
-								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16"></use>
-								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16"></use>
-								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85"></use>
+								<use xlink:href="#downloadRc1" x="27.65" y="5.5" width="67" height="16">
+									<title data-i18n="tip.downloadUnit">Download speed is measured in megabits per second (Mbps).</title>
+								</use>
+								<use xlink:href="#uploadRc2" x="37.93" y="70.5" width="47" height="16">
+									<title data-i18n="tip.uploadUnit">Upload speed is measured in megabits per second (Mbps).</title>
+								</use>
+								<use xlink:href="#pingRc3" x="59.61" y="135.5" width="28" height="16">
+									<title data-i18n="tip.pingUnit">Ping is measured in Milliseconds (ms).</title>
+								</use>
+								<use xlink:href="#jitterRc3" x="127.9" y="135.5" width="39.95" height="13.85">
+									<title data-i18n="tip.jitterUnit">Jitter is measured in Milliseconds (ms).</title>
+								</use>
 							</g>
 							
 							<!-- Results Values -->
 							<g id="vlk-res-values-intro">
-								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75"></use>
-								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75"></use>
-								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75"></use>
-								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75"></use>
+								<use xlink:href="#downResultC1" x="-13" y="20.5" width="200" height="29.75">
+									<title data-i18n="tip.yourDown">Your download speed!</title>
+								</use>
+								<use xlink:href="#upResultC2" x="-13" y="85.5" width="200" height="29.75">
+									<title data-i18n="tip.yourUp">Your upload speed!</title>
+								</use>
+								<use xlink:href="#pingResultC3" x="-6.3" y="151.5" width="200" height="29.75">
+									<title data-i18n="tip.yourPing">Your ping!</title>
+								</use>
+								<use xlink:href="#jitterResultC3" x="50.8" y="151.5" width="200" height="29.75">
+									<title data-i18n="tip.yourJitter">Your jitter!</title>
+								</use>
 							</g>
 							
 							<!-- Graphs -->
 							<g id="vlk-res-graphs-intro">
-								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none"></use>
-								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none"></use>
+								<use xlink:href="#graphc1" x="113.6" y="1" width="117" height="54" preserveAspectRatio="none">
+									<title data-i18n="tip.graphDown">Shows you real-time network traffic graph for Download!</title>
+								</use>
+								<use xlink:href="#graphc2" x="113.6" y="66" width="117" height="54" preserveAspectRatio="none">
+									<title data-i18n="tip.graphUp">Shows you real-time network traffic graph for Upload!</title>
+								</use>
 							</g>
 						</g>
 					</g>

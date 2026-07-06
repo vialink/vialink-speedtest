@@ -36,8 +36,15 @@ Registro de tudo que este fork mudou em relação ao
 - **Coluna direita redesenhada** (desktop): card de IP/rede no topo + três
   cards de resultado uniformes com cantos arredondados; gráficos ao vivo
   desenhados dentro dos próprios cards; bloco ping/jitter realocado.
-- **Card "SEU IP"**: endereço, ASN e cidade de quem testa (via `ipapi.co`),
-  com layout adaptativo para IPv6 (endereços longos reorganizam o card).
+- **Card "SEU IP"**: endereço, ASN e cidade de quem testa, com layout
+  adaptativo para IPv6 (endereços longos reorganizam o card).
+- **Card "SEU IP" dual-stack** (contribuição de Mauricio Nunes, 2026-07-06):
+  quando a conexão tem IPv4 e IPv6, o card mostra os dois endereços
+  ("SEU IP - IPv6" / "SEU IP - IPv4"), o relatório e o PDF ganham a linha
+  "Endereço IPv4". Detecção do IP primário via `ipapi.co` (fallbacks
+  `ipwho.is` → `api64.ipify.org`) e sonda do outro protocolo via
+  ipify/icanhazip/ident.me. Coluna direita do desktop reestruturada em
+  grupos SVG reposicionáveis; cards em tom `#1f1f1f` no tema escuro.
 - **Tema escuro como padrão**, com toggle sol/lua sempre visível (persistência
   em cookie de 365 dias) e logo alternativo por tema quando o tenant tiver.
 - **Layout mobile refeito**: faixa superior própria para o menu, card de IP e

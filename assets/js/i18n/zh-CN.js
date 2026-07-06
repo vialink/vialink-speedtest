@@ -28,6 +28,8 @@ window.VLK_I18N.register({
     'app.menu.about': '关于',
     'app.share': '分享',
     'app.retest': '再次测试',
+    'app.yourIpV4': '您的 IP - IPv4',
+    'app.yourIpV6': '您的 IP - IPv6',
 
     // ---- 测试过程中的状态信息（app-2.5.4.js）----
     'status.wait': '请稍候..',
@@ -71,6 +73,8 @@ window.VLK_I18N.register({
     'pdf.tagline': '网速测试',
     'pdf.title': '网速测试报告',
     'pdf.ip': 'IP 地址',
+    'pdf.ipv4': 'IPv4 地址',
+    'pdf.ipv6': 'IPv6 地址',
     'pdf.provider': '运营商 / 城市',
     'pdf.server': '测试服务器',
     'pdf.data': '测试期间传输的数据：下载 {dd} MB，上传 {ud} MB。',

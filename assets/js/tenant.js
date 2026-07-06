@@ -58,18 +58,19 @@
     });
   };
 
-  // Provedores com suporte robusto a CORS e limites altos. 
-  // Evitamos ipapi.co no início para reduzir erros de console 429/CORS.
-  fetch('https://ipwho.is/')
-    .then(function (r) { return r.json(); })
-    .then(function (d) { if (d && d.success) processIP(d); else throw 1; })
+  // Ordem dos provedores: ipapi.co primeiro — ASN ("AS263946") e cidade no
+  // formato original (decisão do dono, 2026-07-06); ipwho.is e ipify como
+  // fallbacks para quando o ipapi.co falhar (429/CORS).
+  fetch('https://ipapi.co/json/')
+    .then(function (r) { if (!r.ok) throw 1; return r.json(); })
+    .then(function (d) { if (d && d.ip) processIP(d); else throw 1; })
     .catch(function () {
-      fetch('https://api64.ipify.org?format=json')
+      fetch('https://ipwho.is/')
         .then(function (r) { return r.json(); })
-        .then(processIP)
+        .then(function (d) { if (d && d.success) processIP(d); else throw 1; })
         .catch(function () {
-          fetch('https://ipapi.co/json/')
-            .then(function (r) { if (!r.ok) throw 1; return r.json(); })
+          fetch('https://api64.ipify.org?format=json')
+            .then(function (r) { return r.json(); })
             .then(processIP)
             .catch(function () { processIP({ ip: '—' }); });
         });
@@ -120,14 +121,17 @@ function applyIpToSvg() {
     var el = document.getElementById(id) || svgDoc.getElementById(id);
     if (!el) return;
     el.setAttribute('display', 'inline');
+    // data-i18n acompanha o estado: troca de idioma ao vivo reescreve pelo atributo
+    el.setAttribute('data-i18n', ipv4 ? 'app.yourIpV6' : 'app.yourIp');
     if (ipv4) {
       el.textContent = window.VLK_I18N ? window.VLK_I18N.t('app.yourIpV6') : 'SEU IP - IPv6';
       var isMob = id.indexOf('mob') !== -1;
-      el.setAttribute('y', isMob ? '409' : '12');
+      el.setAttribute('y', isMob ? '406' : '12');
     } else {
       el.textContent = window.VLK_I18N ? window.VLK_I18N.t('app.yourIp') : 'SEU IP';
       var isMob = id.indexOf('mob') !== -1;
-      el.setAttribute('y', isMob ? '395' : '15');
+      // Posições originais do layout single-stack (mobile: card em y=396..442)
+      el.setAttribute('y', isMob ? '413' : '15');
     }
   });
 
@@ -148,10 +152,10 @@ function applyIpToSvg() {
     el.style.fontSize = (longo && fs < 10.5) ? fs.toFixed(1) + 'px' : '';
     if (ipv4) {
       var isMob = id.indexOf('mob') !== -1;
-      el.setAttribute('y', isMob ? '421' : '25');
+      el.setAttribute('y', isMob ? '418' : '25');
     } else {
       var isMob = id.indexOf('mob') !== -1;
-      el.setAttribute('y', isMob ? '409' : '28');
+      el.setAttribute('y', isMob ? '428' : '28');
     }
   });
 
@@ -166,9 +170,9 @@ function applyIpToSvg() {
       el.textContent = ipv4;
       el.setAttribute('display', 'inline');
       el.style.fontSize = ipv4.length > 16 ? '9px' : '';
-      el.setAttribute('y', isMob ? '446' : '51');
+      el.setAttribute('y', isMob ? '442' : '51');
       lblEl.setAttribute('display', 'inline');
-      lblEl.setAttribute('y', isMob ? '434' : '38');
+      lblEl.setAttribute('y', isMob ? '430' : '38');
       if (window.VLK_I18N) {
         lblEl.textContent = window.VLK_I18N.t('app.yourIpV4');
       }
@@ -191,7 +195,8 @@ function applyIpToSvg() {
       el.setAttribute('display', 'none');
       if (bgEl) {
         bgEl.setAttribute('display', 'inline');
-        bgEl.setAttribute('height', isMob ? '62' : '62');
+        // Mobile mais baixo (51) para não invadir o rodapé "Powered by" (y=449.5)
+        bgEl.setAttribute('height', isMob ? '51' : '62');
       }
     } else {
       // Caso normal: mostra ASN e Cidade

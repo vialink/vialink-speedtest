@@ -36,9 +36,15 @@ A record of everything this fork changed compared to the original
 - **Right column redesigned** (desktop): IP/network card on top + three
   uniform result cards with rounded corners; live graphs drawn inside the
   cards themselves; ping/jitter block relocated.
-- **"YOUR IP" card**: address, ASN and city of whoever is testing (via
-  `ipapi.co`), with an adaptive layout for IPv6 (long addresses rearrange
-  the card).
+- **"YOUR IP" card**: address, ASN and city of whoever is testing, with an
+  adaptive layout for IPv6 (long addresses rearrange the card).
+- **Dual-stack "YOUR IP" card** (contributed by Mauricio Nunes, 2026-07-06):
+  when the connection has both IPv4 and IPv6, the card shows both addresses
+  ("YOUR IP - IPv6" / "YOUR IP - IPv4") and the report/PDF gain an
+  "IPv4 address" row. Primary IP detected via `ipapi.co` (fallbacks
+  `ipwho.is` -> `api64.ipify.org`), the other protocol probed via
+  ipify/icanhazip/ident.me. Desktop right column restructured into
+  repositionable SVG groups; cards use a `#1f1f1f` tone in dark theme.
 - **Dark theme by default**, with an always-visible sun/moon toggle
   (365-day cookie persistence) and an alternate per-theme logo when the
   tenant provides one.
