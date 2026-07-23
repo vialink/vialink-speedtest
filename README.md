@@ -22,7 +22,11 @@ backend — any web server will do.
   Russian and German, with a flag selector, browser-language detection and a
   cookie-stored preference. [Contribute your language](assets/js/i18n/README.md)
   — it's a single JS file.
-- **Report and PDF** — printable report page (single A4 sheet) and a PDF
+- **Fast & Complete tests** — the classic speed test, or a **Complete** run
+  that also measures **network health**: latency, jitter and packet loss to
+  popular destinations (Google, Netflix, WhatsApp, DNS resolvers…), from **two
+  vantage points** — the browser *and* the server (real `traceroute`/ICMP).
+- **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.
 - **IP/provider card**, **dynamic** gauge scale, dark theme by default,
@@ -36,7 +40,8 @@ backend — any web server will do.
   against *your* infrastructure.
 
 <p align="center">
-  <img src="docs/img/screenshot-idiomas.png" alt="Language selector (8 languages)" width="68%">
+  <img src="docs/img/screenshot-network.png" alt="Complete test — network analysis (client + server layers)" width="46%">
+  <img src="docs/img/screenshot-idiomas.png" alt="Language selector (8 languages)" width="46%">
 </p>
 
 ## Self-hosting

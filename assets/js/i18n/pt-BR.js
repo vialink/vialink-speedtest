@@ -176,6 +176,7 @@ window.VLK_I18N.register({
     'connect.thLat': 'Latência',
     'connect.min': 'mín',
     'connect.ocaSub': 'Open Connect (CDN local)',
+    'connect.dest.intl': 'Internacional (EUA)',
     'connect.thJit': 'Jitter',
     'connect.thFail': 'Falhas',
     'connect.thSamples': 'Amostras',

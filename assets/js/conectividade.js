@@ -204,10 +204,16 @@
       : (t.host + (t.ip && t.ip !== t.host ? ' (' + t.ip + ')' : ''));
   }
 
+  // Rótulo do destino: marcas ficam como estão; rótulos genéricos (ex.: o de
+  // referência internacional) trazem labelKey para tradução via i18n.
+  function rotulo(t) {
+    return t.labelKey ? tr(t.labelKey, t.label) : t.label;
+  }
+
   function linhaClienteInicial(t, idx) {
     var sub = subDestino(t);
     return '<tr id="cli-' + idx + '">' +
-      '<td class="destino">' + t.label + '<br><span class="host">' + sub + '</span></td>' +
+      '<td class="destino">' + rotulo(t) + '<br><span class="host">' + sub + '</span></td>' +
       '<td class="estado" colspan="4">' + tr('connect.pending', 'aguardando…') + '</td></tr>';
   }
 
@@ -231,7 +237,7 @@
 
   function linhaServidorInicial(t, idx) {
     return '<tr id="srv-' + idx + '">' +
-      '<td class="destino">' + t.label + '<br><span class="host">' + t.host + '</span></td>' +
+      '<td class="destino">' + rotulo(t) + '<br><span class="host">' + t.host + '</span></td>' +
       '<td class="estado" colspan="4">' + tr('connect.pending', 'aguardando…') + '</td></tr>';
   }
 
@@ -302,7 +308,7 @@
         preencheServidor(idx, j);
         var d = j && j.dest;
         resServidor[idx] = {
-          label: t.label, host: t.host,
+          label: rotulo(t), host: t.host,
           hops: (j && j.hops != null) ? j.hops : null,
           avg: d ? d.avg : null, jitter: d ? d.jitter : null,
           loss: d ? d.loss : null, filtered: !!(d && d.filtered), na: !d
@@ -321,7 +327,7 @@
       })(estado));
       preencheCliente(a, r);
       resCliente[a] = {
-        label: alvos[a].label, sub: subDestino(alvos[a]),
+        label: rotulo(alvos[a]), sub: subDestino(alvos[a]),
         latency: r.latency, min: r.min, jitter: r.jitter,
         loss: r.loss, amostras: r.amostras
       };

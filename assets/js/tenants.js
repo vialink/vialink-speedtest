@@ -27,7 +27,7 @@
     { label: 'Microsoft 365',     host: 'www.microsoft.com' },
     { label: 'WhatsApp',          host: 'whatsapp.com' },
     { label: 'Globo',             host: 'www.globo.com' },
-    { label: 'Internacional (EUA)', host: 'whitehouse.gov' }
+    { label: 'Internacional (EUA)', labelKey: 'connect.dest.intl', host: 'whitehouse.gov' }
   ];
 
   var TENANTS = {

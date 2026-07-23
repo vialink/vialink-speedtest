@@ -21,8 +21,12 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   russo e alemão, com seletor de bandeira, detecção do idioma do navegador e
   preferência em cookie. [Contribua com o seu idioma](assets/js/i18n/README.md)
   — é um único arquivo JS.
-- **Relatório e PDF** — página de relatório imprimível (1 página A4) e PDF
-  gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
+- **Testes Rápido e Completo** — o teste de velocidade clássico, ou um teste
+  **Completo** que também mede a **saúde da rede**: latência, jitter e perda de
+  pacotes até destinos populares (Google, Netflix, WhatsApp, resolvedores DNS…),
+  de **duas origens** — o navegador *e* o servidor (`traceroute`/ICMP real).
+- **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
+  PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.
 - **Card de IP/provedor**, escala do velocímetro **dinâmica**, tema escuro
   por padrão, layout mobile dedicado.
@@ -35,7 +39,8 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   roda contra a *sua* infraestrutura.
 
 <p align="center">
-  <img src="docs/img/screenshot-idiomas.png" alt="Seletor de idiomas (8 idiomas)" width="68%">
+  <img src="docs/img/screenshot-network.png" alt="Teste Completo — análise de rede (camadas cliente + servidor)" width="46%">
+  <img src="docs/img/screenshot-idiomas.png" alt="Seletor de idiomas (8 idiomas)" width="46%">
 </p>
 
 ## Instalação em servidor próprio
