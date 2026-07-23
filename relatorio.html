@@ -60,6 +60,10 @@
     .rodape-folha img { height: 14px; }
     #sem-resultado { display: none; text-align: center; padding: 30px 0; color: #445; }
     #sem-resultado a { color: var(--azul); }
+    /* Na tela, a tabela-envelope colapsa para blocos (layout normal) e o
+       cabeçalho de impressão (logo) fica oculto. */
+    .doc-print, .doc-print > tbody, .doc-print > tbody > tr, .doc-print > tbody > tr > td { display: block; }
+    .doc-print-head { display: none; }
     /* Seletor de idioma na versão clara (documento) */
     .vlk-lang-btn { color: #667; border-color: #ccc; }
     .vlk-lang-drop { background: #fff; border-color: #d8dcdf; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
@@ -77,20 +81,43 @@
     .nota-tecnica p { font-size: 13px; color: #444; margin-bottom: 8px; }
     .nota-tecnica p:last-child { margin-bottom: 0; }
     @media print {
-      /* margin 0 remove o cabeçalho/rodapé do navegador (data, URL); as margens
-         reais do documento viram o padding da .folha */
-      @page { size: A4 portrait; margin: 0; }
+      /* O logo repete no topo de cada página via <thead> da tabela-envelope
+         (table-header-group repete em toda quebra de página); a numeração usa a
+         margin box @bottom-center do @page (counter(page)/counter(pages),
+         Chrome 131+).
+         Margem SUPERIOR e laterais do @page = 0: sem margem no topo, o Chrome não
+         desenha o cabeçalho nativo (título da aba + data) acima do conteúdo. O
+         espaço acima do logo vem do padding do <thead> (repete por página) e as
+         margens laterais do padding da .folha. A margem inferior (15mm) fica só
+         para a margin box da numeração. */
+      @page {
+        size: A4 portrait;
+        margin: 0 0 15mm;
+        @bottom-center {
+          content: "Powered by Vialink   ·   " counter(page) " / " counter(pages);
+          font: 400 8.5pt system-ui, -apple-system, sans-serif;
+          color: #889;
+        }
+      }
       body { background: #fff; }
       .pagina { padding: 0; max-width: none; }
-      .folha { box-shadow: none; border-radius: 0; padding: 12mm 14mm; }
-      .acoes, .topo a.voltar, #vlk-lang-html { display: none !important; }
-      /* Esconde overlays injetados por extensões do navegador (tradutor, leitura) */
+      .folha { box-shadow: none; border-radius: 0; padding: 0 12mm; }
+      /* Tabela-envelope vira tabela de verdade → o <thead> (logo) repete no
+         topo de cada página impressa. */
+      .doc-print { display: table; width: 100%; }
+      .doc-print > .doc-print-head { display: table-header-group; }
+      .doc-print > tbody { display: table-row-group; }
+      .doc-print > tbody > tr { display: table-row; }
+      .doc-print > tbody > tr > td { display: table-cell; }
+      .doc-print-head td { padding: 12mm 0 6mm; border: 0; }
+      #print-logo { display: block; height: 10mm; width: auto; }
+      /* Some com o que é só de tela (topo, ações, rodapé da folha, seletor de idioma) */
+      .acoes, .topo, #vlk-lang-html, .rodape-folha { display: none !important; }
+      /* Esconde overlays de extensões do navegador */
       body > :not(.pagina) { display: none !important; }
-      /* Compacta para caber em uma única página A4 */
-      .folha h1 { font-size: 21px; }
+      /* Compacta para aproveitar a página */
+      .folha h1 { font-size: 21px; margin-top: 0; }
       .folha .sub { margin-bottom: 12px; }
-      .topo { margin-bottom: 10px !important; }
-      .topo img.logo { height: 36px; }
       .info { margin-bottom: 14px; }
       .info td { padding: 4px 0; font-size: 13px; }
       .metricas { margin-bottom: 14px; gap: 10px; }
@@ -100,8 +127,29 @@
       .nota-tecnica { margin: 12px 0 0; padding: 10px 14px; }
       .nota-tecnica h3 { font-size: 12px; margin-bottom: 4px; }
       .nota-tecnica p { font-size: 11.5px; margin-bottom: 6px; }
-      .rodape-folha { margin-top: 14px; padding-top: 8px; }
+      #rede-secao { margin-top: 14px; }
+      .net-tabela { font-size: 11.5px; }
+      .net-tabela th, .net-tabela td { padding: 4px 6px; }
+      .rede-titulo { font-size: 15px; margin: 16px 0 4px; }
+      .rede-sub { font-size: 13px; margin: 10px 0 4px; }
+      /* Evita cortar linhas/blocos no meio da quebra de página */
+      .net-tabela tr, .metrica, .nota-tecnica { break-inside: avoid; }
+      .rede-titulo, .rede-sub { break-after: avoid; }
     }
+    /* Análise de conectividade no relatório (teste Complete) — versão clara */
+    #rede-secao { margin-top: 20px; }
+    .rede-titulo { color: #143246; font-size: 18px; font-weight: 500; margin: 24px 0 4px; }
+    .rede-sub { color: var(--azul); font-size: 14.5px; font-weight: 500; margin: 16px 0 6px; }
+    .net-tabela { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
+    .net-tabela th, .net-tabela td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eceef1; white-space: nowrap; }
+    .net-tabela th { color: var(--azul); font-weight: 500; }
+    .net-tabela td.destino { white-space: normal; }
+    .net-tabela td.destino small { color: #889; display: block; font-size: 11px; }
+    .net-tabela td.na { color: #889; font-style: italic; }
+    .net-tabela td.bom   { color: #1f9d4d; font-weight: 500; }
+    .net-tabela td.medio { color: #b8860b; font-weight: 500; }
+    .net-tabela td.ruim  { color: #d3362b; font-weight: 500; }
+    .rede-nota { font-size: 12px; color: #778; margin-top: 4px; }
   </style>
 </head>
 <body data-fundo="claro">
@@ -114,7 +162,14 @@
           <a class="voltar" data-i18n="common.back" href="/">← Voltar ao teste</a>
         </span>
       </div>
-      <h1 data-i18n="report.title">Relatório de Teste de Velocidade</h1>
+      <!-- Tabela usada só para repetir o logo no topo de cada página impressa
+           (thead). Na tela colapsa para blocos (layout idêntico ao normal). -->
+      <table class="doc-print"><thead class="doc-print-head"><tr><td>
+        <img id="print-logo" src="/assets/tenants/vialink/logo-print.png"
+             srcset="/assets/tenants/vialink/logo-print.png 1x, /assets/tenants/vialink/logo-print@2x.png 2x"
+             alt="Vialink">
+      </td></tr></thead><tbody><tr><td>
+      <h1 data-i18n="report.title">Relatório de Teste de Velocidade e Rede</h1>
       <p class="sub" id="data-hora">—</p>
 
       <div id="conteudo">
@@ -146,6 +201,32 @@
           <p data-i18n-html="tech.p3">Para chegar o mais perto possível da banda real, teste em um computador <strong>sem outros programas ou atualizações rodando</strong>, conectado <strong>por cabo direto ao roteador</strong> e <strong>sem concorrência dos demais dispositivos da rede</strong>.</p>
         </div>
 
+        <div id="rede-secao" style="display:none">
+          <h2 class="rede-titulo" data-i18n="connect.title">Análise de conectividade</h2>
+          <h3 class="rede-sub" data-i18n="connect.cliTitle">Da sua conexão até cada destino</h3>
+          <table class="net-tabela">
+            <thead><tr>
+              <th data-i18n="connect.thDest">Destino</th>
+              <th data-i18n="connect.thLat">Latência</th>
+              <th data-i18n="connect.thJit">Jitter</th>
+              <th data-i18n="connect.thFail">Falhas</th>
+            </tr></thead>
+            <tbody id="rede-cli"></tbody>
+          </table>
+          <h3 class="rede-sub" data-i18n="connect.srvTitle">Da rede Vialink até cada destino (traceroute)</h3>
+          <table class="net-tabela">
+            <thead><tr>
+              <th data-i18n="connect.thDest">Destino</th>
+              <th data-i18n="connect.thHops">Saltos</th>
+              <th data-i18n="connect.thLat">Latência</th>
+              <th data-i18n="connect.thJit">Jitter</th>
+              <th data-i18n="connect.thLoss">Perda</th>
+            </tr></thead>
+            <tbody id="rede-srv"></tbody>
+          </table>
+          <p id="rede-nota-filtrado" class="rede-nota" style="display:none" data-i18n="connect.filteredNote">≈ o destino não responde a ICMP — a latência é medida até o último salto que respondeu.</p>
+        </div>
+
         <div class="acoes">
           <button class="btn-azul" data-i18n="report.print" onclick="window.print()">Imprimir / salvar PDF</button>
           <a class="btn-cinza" data-i18n="report.newTest" href="/">Fazer novo teste</a>
@@ -162,6 +243,7 @@
         <span class="marca"><img src="/assets/tenants/vialink/engrenagem.svg" alt=""> Powered by Vialink - 2026</span>
         <span id="r-dominio">—</span>
       </div>
+      </td></tr></tbody></table>
     </div>
   </div>
 
@@ -210,6 +292,58 @@
       if (isFinite(dd) && isFinite(ud)) {
         document.getElementById('r-dados').textContent =
           vlkT('pdf.data', { dd: fmt1(dd), ud: fmt1(ud) });
+      }
+
+      // ---- Análise de conectividade (teste "Complete") ----
+      // Os dados são gravados no localStorage pela página do teste; net=1 na URL
+      // sinaliza que este relatório deve exibi-los.
+      if (q.has('net')) renderRede();
+
+      function trFb(key, fb) { var s = window.vlkT ? vlkT(key) : key; return (s && s !== key) ? s : fb; }
+      function ms(v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; }
+      function pct(v) { return (v == null || !isFinite(v)) ? '—' : Math.round(v) + '%'; }
+      function clsLat(v)  { return v == null ? '' : v < 50 ? 'bom' : v < 120 ? 'medio' : 'ruim'; }
+      function clsJit(v)  { return v == null ? '' : v < 10 ? 'bom' : v < 30  ? 'medio' : 'ruim'; }
+      function clsLoss(v) { return v == null ? '' : v <= 0 ? 'bom' : v < 3  ? 'medio' : 'ruim'; }
+      function td(v, c) { return '<td class="' + (c || '') + '">' + v + '</td>'; }
+      function destTd(label, sub) {
+        return '<td class="destino">' + label + (sub ? '<small>' + sub + '</small>' : '') + '</td>';
+      }
+
+      function renderRede() {
+        var nd;
+        try { nd = JSON.parse(localStorage.getItem('vlkNetResults') || 'null'); } catch (e) { nd = null; }
+        if (!nd || (!(nd.cliente || []).length && !(nd.servidor || []).length)) return;
+
+        var cli = nd.cliente || [], srv = nd.servidor || [];
+        var htmlCli = cli.map(function (r) {
+          if (!r.amostras) {
+            return '<tr>' + destTd(r.label, r.sub) +
+              '<td class="ruim" colspan="3">' + trFb('connect.unreachable', 'sem resposta no navegador') + '</td></tr>';
+          }
+          return '<tr>' + destTd(r.label, r.sub) +
+            td(ms(r.latency), clsLat(r.latency)) +
+            td(ms(r.jitter), clsJit(r.jitter)) +
+            td(pct(r.loss), clsLoss(r.loss)) + '</tr>';
+        }).join('');
+        var htmlSrv = srv.map(function (r) {
+          if (r.na) {
+            return '<tr>' + destTd(r.label, r.host) +
+              '<td class="na" colspan="4">' + trFb('connect.srvNa', 'indisponível') + '</td></tr>';
+          }
+          var lat = r.filtered ? '≈ ' + ms(r.avg) : ms(r.avg);
+          var perda = r.filtered ? '—' : pct(r.loss);
+          return '<tr>' + destTd(r.label, r.host) +
+            td(r.hops != null ? r.hops : '—') +
+            td(lat, clsLat(r.avg)) +
+            td(ms(r.jitter), clsJit(r.jitter)) +
+            td(perda, r.filtered ? '' : clsLoss(r.loss)) + '</tr>';
+        }).join('');
+
+        document.getElementById('rede-cli').innerHTML = htmlCli;
+        document.getElementById('rede-srv').innerHTML = htmlSrv;
+        if (nd.houveFiltrado) document.getElementById('rede-nota-filtrado').style.display = '';
+        document.getElementById('rede-secao').style.display = 'block';
       }
     })();
   </script>

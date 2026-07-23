@@ -71,7 +71,7 @@ window.VLK_I18N.register({
     'share.title': '{name} 速度レポート',
     'share.file': 'speedtest-report-{tenant}.pdf',
     'pdf.tagline': 'スピードテスト',
-    'pdf.title': 'スピードテスト レポート',
+    'pdf.title': 'スピード・ネットワークテスト レポート',
     'pdf.ip': 'IP アドレス',
     'pdf.ipv4': 'IPv4 アドレス',
     'pdf.ipv6': 'IPv6 アドレス',
@@ -86,7 +86,7 @@ window.VLK_I18N.register({
 
     // ---- レポートページ（relatorio.html）----
     'report.docTitle': '速度レポート — {name}',
-    'report.title': 'スピードテスト レポート',
+    'report.title': 'スピード・ネットワークテスト レポート',
     'report.browser': 'ブラウザー',
     'report.note': 'このテストはブラウザー上で、当社ネットワーク内の {name} サーバーに対して実行されました。結果は測定時点のお使いの端末と {name} の間の接続状態を反映します — Wi-Fi、配線、回線の同時利用が数値に影響します。数値の読み方は<a href="/manual.html">ガイド</a>をご覧ください。',
     'report.print': '印刷 / PDF として保存',

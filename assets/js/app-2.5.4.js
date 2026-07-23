@@ -640,8 +640,15 @@ window.onload = function() {
     var init = true;
     Get.addEvt(Show.settingsMob.el, "click", ShowIP);
     Get.addEvt(Show.settingsDesk.el, "click", ShowIP);
-    Get.addEvt(Show.startButtonDesk.el, "click", runTasks);
-    Get.addEvt(Show.startButtonMob.el, "click", runTasks);
+    // Fast: teste de velocidade só (comportamento clássico do "Start").
+    // Complete: velocidade + análise de rede em sequência (tenant.js dispara a
+    // rede no fim do teste, quando window.vlkTestMode === "complete").
+    var vlkCompleteDesk = document.getElementById("vlk-btn-complete-desk");
+    var vlkCompleteMob = document.getElementById("vlk-btn-complete-mob");
+    Get.addEvt(Show.startButtonDesk.el, "click", runFast);
+    Get.addEvt(Show.startButtonMob.el, "click", runFast);
+    if (vlkCompleteDesk) Get.addEvt(vlkCompleteDesk, "click", runComplete);
+    if (vlkCompleteMob) Get.addEvt(vlkCompleteMob, "click", runComplete);
     Get.addEvt(document, "keypress", hiEnter);
     var addEvent = true;
     var getParams = function(url) {
@@ -851,10 +858,14 @@ window.onload = function() {
     function removeEvts() {
       Get.remEvt(Show.settingsMob.el, "click", ShowIP);
       Get.remEvt(Show.settingsDesk.el, "click", ShowIP);
-      Get.remEvt(Show.startButtonDesk.el, "click", runTasks);
-      Get.remEvt(Show.startButtonMob.el, "click", runTasks);
+      Get.remEvt(Show.startButtonDesk.el, "click", runFast);
+      Get.remEvt(Show.startButtonMob.el, "click", runFast);
+      if (vlkCompleteDesk) Get.remEvt(vlkCompleteDesk, "click", runComplete);
+      if (vlkCompleteMob) Get.remEvt(vlkCompleteMob, "click", runComplete);
       Get.remEvt(document, "keypress", hiEnter);
     }
+    function runFast() { window.vlkTestMode = "fast"; runTasks(); }
+    function runComplete() { window.vlkTestMode = "complete"; runTasks(); }
     var requestIP = false;
     function ShowIP() {
       if (requestIP) {
@@ -913,7 +924,7 @@ window.onload = function() {
     var ost = myname + osttm;
     function hiEnter(e) {
       if (e.key === "Enter") {
-        runTasks();
+        runFast();
       }
     }
     var showResult = 0;
@@ -1063,6 +1074,8 @@ window.onload = function() {
           window.vlkResults = {
             d: downloadSpeed.toFixed(3),
             u: uploadSpeed.toFixed(3),
+            dRaw: (downloadSpeed / vlkFactor()).toFixed(3),
+            uRaw: (uploadSpeed / vlkFactor()).toFixed(3),
             p: pingEstimate,
             j: jitterEstimate,
             dd: (dataUsedfordl / 1048576).toFixed(3),
@@ -1134,7 +1147,7 @@ window.onload = function() {
           }
         }
         var elapsed = (window.performance.now() - startTime) / 1000;
-        var speed = (elapsed > 0 && estimBytes > 0) ? (estimBytes * 8) / elapsed / 1000000 : 0;
+        var speed = (elapsed > 0 && estimBytes > 0) ? (estimBytes * 8) / elapsed / 1000000 * vlkFactor() : 0;
         Show.adjustScale(speed);
         Status = "Download";
       }, duration);
@@ -1159,6 +1172,9 @@ window.onload = function() {
     var neXT = dlDuration * 1000 - 6000;
     var dualupReset;
     var neXTUp = ulDuration * 1000 - 6000;
+    function vlkFactor() {
+      return (typeof vlkCorrectionFactor !== "undefined" && isFinite(vlkCorrectionFactor) && vlkCorrectionFactor > 0) ? vlkCorrectionFactor : 1;
+    }
     function reportCurrentSpeed(now) {
       if (now === "dl") {
         var dTime = downloadTimeing * 1000;
@@ -1180,7 +1196,7 @@ window.onload = function() {
         dtDiff = dTime;
         dtTotal += dtLoad;
         if (dTotal > 0) {
-          LiveSpeedArr = dTotal / dtTotal / 125 * upAdjust;
+          LiveSpeedArr = dTotal / dtTotal / 125 * upAdjust * vlkFactor();
           currentSpeed = LiveSpeedArr;
         }
       }
@@ -1204,7 +1220,7 @@ window.onload = function() {
         utDiff = Tym;
         utTotal += utLoad;
         if (uTotal > 0) {
-          LiveSpeedArr = uTotal / utTotal / 125 * upAdjust;
+          LiveSpeedArr = uTotal / utTotal / 125 * upAdjust * vlkFactor();
           currentSpeed = LiveSpeedArr;
         }
       }

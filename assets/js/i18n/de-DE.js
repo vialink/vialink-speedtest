@@ -68,7 +68,7 @@ window.VLK_I18N.register({
     'share.title': '{name} Geschwindigkeitsbericht',
     'share.file': 'speedtest-bericht-{tenant}.pdf',
     'pdf.tagline': 'Speedtest',
-    'pdf.title': 'Speedtest-Bericht',
+    'pdf.title': 'Speed- und Netzwerktest-Bericht',
     'pdf.ip': 'IP-Adresse',
     'pdf.ipv4': 'IPv4-Adresse',
     'pdf.ipv6': 'IPv6-Adresse',
@@ -83,7 +83,7 @@ window.VLK_I18N.register({
 
     // ---- Berichtsseite (relatorio.html) ----
     'report.docTitle': 'Geschwindigkeitsbericht — {name}',
-    'report.title': 'Speedtest-Bericht',
+    'report.title': 'Speed- und Netzwerktest-Bericht',
     'report.browser': 'Browser',
     'report.note': 'Test im Browser gegen den {name}-Server durchgeführt, innerhalb unseres Netzes. Das Ergebnis spiegelt die Verbindung zwischen Ihrem Gerät und {name} zum Zeitpunkt des Tests wider — WLAN, Verkabelung und gleichzeitige Nutzung der Verbindung beeinflussen die Zahlen. Hinweise zur Interpretation finden Sie im <a href="/manual.html">Handbuch</a>.',
     'report.print': 'Drucken / als PDF speichern',

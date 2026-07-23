@@ -54,7 +54,10 @@
     detectStacks({
       ip: d.ip,
       asn: d.asn || (d.connection && d.connection.asn) || d.org || '',
-      city: d.city || d.city_name || ''
+      // Estado (UF) em vez da cidade: o geo-IP acerta o estado, mas erra a
+      // cidade com frequência. ipapi.co/ipwho.is → region (nome do estado);
+      // region_code (sigla) como reforço.
+      region: d.region || d.region_name || d.region_code || ''
     });
   };
 
@@ -77,29 +80,89 @@
     });
 })();
 
+// UID do teste (por carregamento de página): liga a gravação da velocidade
+// (salvar-teste.php) às linhas de conectividade gravadas depois
+// (salvar-conectividade.php). 32 chars hex.
+function vlkTesteUid() {
+  if (window._vlkTesteUid) return window._vlkTesteUid;
+  var hex = '';
+  try {
+    var a = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    for (var i = 0; i < a.length; i++) hex += ('0' + a[i].toString(16)).slice(-2);
+  } catch (e) {
+    for (var j = 0; j < 32; j++) hex += Math.floor(Math.random() * 16).toString(16);
+  }
+  window._vlkTesteUid = hex;
+  return hex;
+}
+
+// POST resiliente melhor-esforço: fetch → 1 retry (1,5s) → sendBeacon (sobrevive
+// a navegação/fechamento da aba). Falha nunca afeta a experiência do usuário.
+// O endpoint lê php://input, então o content-type do Blob não atrapalha.
+function vlkPostResiliente(url, corpo) {
+  function enviar() {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: corpo,
+      keepalive: true
+    }).then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp;
+    });
+  }
+  function viaBeacon() {
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([corpo], { type: 'application/json' }));
+      }
+    } catch (e) { /* melhor-esforço */ }
+  }
+  try {
+    enviar()
+      .catch(function () {
+        // 1 retry após breve espera (cobre saturação momentânea do PHP-FPM)
+        return new Promise(function (res) { setTimeout(res, 1500); }).then(enviar);
+      })
+      .catch(viaBeacon); // se ainda falhar, tenta o beacon
+  } catch (e) {
+    viaBeacon();
+  }
+}
+
 // Envia o resultado do teste para gravação no servidor (estatísticas).
 // Chamada pelo app.js no bloco "SendR", logo após window.vlkResults existir —
 // o "All done" do fim do upload aparece ANTES dos resultados, cedo demais.
-// Melhor-esforço: falha de rede não afeta a experiência do usuário.
 var vlkResultadoSalvo = false;
 function vlkSalvarResultado() {
   if (vlkResultadoSalvo || !window.vlkResults) return;
   vlkResultadoSalvo = true;
   var r = window.vlkResults;
   var ipd = window._vlkIpData || {};
-  var corpo = JSON.stringify({
-    d: r.d, u: r.u, p: r.p, j: r.j, dd: r.dd, ud: r.ud,
+  vlkPostResiliente('/api/salvar-teste.php', JSON.stringify({
+    uid: vlkTesteUid(),
+    // o banco recebe a medição bruta, sem o fator de correção da exibição
+    d: r.dRaw || r.d, u: r.uRaw || r.u, p: r.p, j: r.j, dd: r.dd, ud: r.ud,
     tenant: (window._tenantConfig && window._tenantConfig.key) || '',
-    asn: ipd.asn || '', cidade: ipd.city || ''
-  });
-  try {
-    fetch('/api/salvar-teste.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: corpo,
-      keepalive: true
-    }).catch(function () { /* gravação é melhor-esforço */ });
-  } catch (e) { /* idem */ }
+    // coluna `cidade` do banco passa a guardar o estado (UF/região) — o geo-IP
+    // erra a cidade; o nome real do cliente vem depois do enriquecimento NetBox
+    asn: ipd.asn || '', cidade: ipd.region || ''
+  }));
+}
+
+// Grava a análise de conectividade (teste "Complete") — uma linha por destino
+// em testes_rede, ligada ao teste pai pelo mesmo uid. Chamada quando
+// window.vlkNetResults fica pronto (vlkRunNetworkInline).
+var vlkConectSalva = false;
+function vlkSalvarConectividade(res) {
+  if (vlkConectSalva || !res) return;
+  var cli = res.cliente || [], srv = res.servidor || [];
+  if (!cli.length && !srv.length) return;
+  vlkConectSalva = true;
+  vlkPostResiliente('/api/salvar-conectividade.php', JSON.stringify({
+    uid: vlkTesteUid(), cliente: cli, servidor: srv
+  }));
 }
 
 // Aplica dados de IP nos elementos SVG (chamada quando o fetch ou o SVG estiver pronto)
@@ -109,7 +172,7 @@ function applyIpToSvg() {
 
   var ip = d.ip;
   var ipv4 = d.ipv4;
-  var org = [d.asn, d.city].filter(Boolean).join(' · ');
+  var org = [d.asn, d.region].filter(Boolean).join(' · ');
 
   // IPv6 (ou qualquer IP com mais de 16 chars) não cabe ao lado do ASN·cidade:
   var longo = ip.indexOf(':') !== -1 || ip.length > 16;
@@ -237,32 +300,49 @@ function injectTenantBranding() {
   var vlkIpOrg = function () {
     var ip = window._vlkIpData;
     if (!ip || !ip.ip || ip.ip === '—') return null;
-    var d = { ip: ip.ip, org: [ip.asn, ip.city].filter(Boolean).join(' · ') };
+    var d = { ip: ip.ip, org: [ip.asn, ip.region].filter(Boolean).join(' · ') };
     if (ip.ipv4) d.ipv4 = ip.ipv4;
     return d;
   };
 
   // Menu "Relatório": injeta os resultados do teste (e IP) na URL antes de navegar.
   // Independe de tenant — vale para qualquer hostname.
-  ['vlk-menu-relatorio', 'vlk-menu-relatorio-mob'].forEach(function (id) {
-    var a = svgDoc.getElementById(id);
+  // Só é habilitado DEPOIS que um teste for realizado (window.vlkResults existe):
+  // até lá fica com opacity 0.45 (SVG) e o clique não navega. O observer do
+  // "All done" (abaixo) reativa esses elementos junto com o botão Compartilhar.
+  var vlkSetHrefRelatorio = function (a) {
+    var q = [];
+    var r = window.vlkResults;
+    if (r) q.push('d=' + r.d, 'u=' + r.u, 'p=' + r.p, 'j=' + r.j, 'dd=' + r.dd, 'ud=' + r.ud);
+    var dados = vlkIpOrg();
+    if (dados) {
+      q.push('ip=' + encodeURIComponent(dados.ip));
+      if (dados.org) q.push('org=' + encodeURIComponent(dados.org));
+      if (dados.ipv4) q.push('ipv4=' + encodeURIComponent(dados.ipv4));
+    }
+    // Teste "Complete": sinaliza a rede (o relatório lê os dados do localStorage)
+    if (window.vlkNetResults) q.push('net=1');
+    if (window._tenantParam) q.push(window._tenantParam);
+    var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
+    if (a.setAttributeNS) a.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
+    a.setAttribute('href', url);
+  };
+  var relatorioEls = [];
+  var vlkLigaRelatorio = function (a) {
     if (!a) return;
-    a.addEventListener('click', function () {
-      var q = [];
-      var r = window.vlkResults;
-      if (r) q.push('d=' + r.d, 'u=' + r.u, 'p=' + r.p, 'j=' + r.j, 'dd=' + r.dd, 'ud=' + r.ud);
-      var dados = vlkIpOrg();
-      if (dados) {
-        q.push('ip=' + encodeURIComponent(dados.ip));
-        if (dados.org) q.push('org=' + encodeURIComponent(dados.org));
-        if (dados.ipv4) q.push('ipv4=' + encodeURIComponent(dados.ipv4));
-      }
-      if (window._tenantParam) q.push(window._tenantParam);
-      var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
-      this.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
-      this.setAttribute('href', url);
+    relatorioEls.push(a);
+    a.addEventListener('click', function (ev) {
+      // Sem teste realizado, o botão está desabilitado: não navega.
+      if (!window.vlkResults) { if (ev.preventDefault) ev.preventDefault(); return; }
+      vlkSetHrefRelatorio(this);
     });
+  };
+  // Menu do SVG (desktop + mobile)
+  ['vlk-menu-relatorio', 'vlk-menu-relatorio-mob'].forEach(function (id) {
+    vlkLigaRelatorio(svgDoc.getElementById(id));
   });
+  // Menu superior fixo do modo "Complete" (HTML, fora do SVG)
+  vlkLigaRelatorio(document.getElementById('vlk-sticky-relatorio'));
 
   // ---- Botão "Compartilhar": gera o PDF do relatório e abre o painel nativo ----
   var vlkLocale = function () {
@@ -330,16 +410,19 @@ function injectTenantBranding() {
       time: agora.toLocaleTimeString(pLoc, { hour: '2-digit', minute: '2-digit' })
     });
 
-    // Cabeçalho
-    if (gear) doc.addImage(gear, 'PNG', 15, 12, 12, 12);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor(azul[0], azul[1], azul[2]);
-    doc.text(tName.toUpperCase(), 30, 19.5);
-    doc.setFontSize(9);
-    doc.setTextColor(cinza[0], cinza[1], cinza[2]);
-    doc.setFont('helvetica', 'normal');
-    doc.text(pT('pdf.tagline'), 30.4, 24);
+    // Cabeçalho (logo + marca + tagline) — repetido no topo de cada página
+    var desenhaCabecalho = function () {
+      if (gear) doc.addImage(gear, 'PNG', 15, 12, 12, 12);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(azul[0], azul[1], azul[2]);
+      doc.text(tName.toUpperCase(), 30, 19.5);
+      doc.setFontSize(9);
+      doc.setTextColor(cinza[0], cinza[1], cinza[2]);
+      doc.setFont('helvetica', 'normal');
+      doc.text(pT('pdf.tagline'), 30.4, 24);
+    };
+    desenhaCabecalho();
 
     doc.setFontSize(17);
     doc.setFont('helvetica', 'bold');
@@ -428,12 +511,85 @@ function injectTenantBranding() {
     doc.setTextColor(80, 85, 90);
     doc.text(notaTec, 21, notaY + 13);
 
-    // Rodapé — "Powered by Vialink" é o crédito do fork (desabilitável por tenant)
-    doc.setDrawColor(236, 238, 241);
-    doc.line(15, 280, 195, 280);
-    doc.setFontSize(8.5);
-    if (tcfg.poweredBy !== false) doc.text('Powered by Vialink - 2026', 15, 285.5);
-    doc.text(location.hostname, 195, 285.5, { align: 'right' });
+    // ---- Análise de conectividade (teste "Complete") — página extra ----
+    var net = window.vlkNetResults;
+    if (net && ((net.cliente || []).length || (net.servidor || []).length)) {
+      var qcor = function (cls) {
+        return cls === 'bom' ? [31, 157, 77] : cls === 'medio' ? [184, 134, 11]
+             : cls === 'ruim' ? [211, 54, 43] : [60, 60, 60];
+      };
+      var clsLat  = function (v) { return v == null ? '' : v < 50 ? 'bom' : v < 120 ? 'medio' : 'ruim'; };
+      var clsJit  = function (v) { return v == null ? '' : v < 10 ? 'bom' : v < 30  ? 'medio' : 'ruim'; };
+      var clsLoss = function (v) { return v == null ? '' : v <= 0 ? 'bom' : v < 3  ? 'medio' : 'ruim'; };
+      var msf  = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; };
+      var pctf = function (v) { return (v == null || !isFinite(v)) ? '—' : Math.round(v) + '%'; };
+      var cor = function (rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); };
+
+      doc.addPage();
+      desenhaCabecalho();
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      cor(escuro); doc.text(pT('connect.title'), 15, 40);
+
+      var yy = 50;
+      // Tabela cliente
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+      doc.text(pT('connect.cliTitle'), 15, yy); yy += 6;
+      var colsC = [15, 95, 130, 165];
+      var hdrC = [pT('connect.thDest'), pT('connect.thLat'), pT('connect.thJit'), pT('connect.thFail')];
+      doc.setFontSize(9); cor(azul);
+      hdrC.forEach(function (h, i) { doc.text(h, colsC[i], yy); });
+      doc.setDrawColor(220, 224, 228); doc.line(15, yy + 1.5, 195, yy + 1.5); yy += 6.5;
+      doc.setFont('helvetica', 'normal');
+      (net.cliente || []).forEach(function (rr) {
+        cor([40, 40, 40]); doc.text(String(rr.label || ''), colsC[0], yy);
+        if (!rr.amostras) {
+          cor(qcor('ruim')); doc.text(pT('connect.unreachable'), colsC[1], yy);
+        } else {
+          cor(qcor(clsLat(rr.latency)));  doc.text(msf(rr.latency), colsC[1], yy);
+          cor(qcor(clsJit(rr.jitter)));   doc.text(msf(rr.jitter),  colsC[2], yy);
+          cor(qcor(clsLoss(rr.loss)));    doc.text(pctf(rr.loss),   colsC[3], yy);
+        }
+        doc.setDrawColor(240, 241, 243); doc.line(15, yy + 1.6, 195, yy + 1.6); yy += 6.5;
+      });
+
+      // Tabela servidor
+      yy += 6;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+      doc.text(pT('connect.srvTitle'), 15, yy); yy += 6;
+      var colsS = [15, 85, 115, 150, 178];
+      var hdrS = [pT('connect.thDest'), pT('connect.thHops'), pT('connect.thLat'), pT('connect.thJit'), pT('connect.thLoss')];
+      doc.setFontSize(9); cor(azul);
+      hdrS.forEach(function (h, i) { doc.text(h, colsS[i], yy); });
+      doc.setDrawColor(220, 224, 228); doc.line(15, yy + 1.5, 195, yy + 1.5); yy += 6.5;
+      doc.setFont('helvetica', 'normal');
+      (net.servidor || []).forEach(function (rr) {
+        cor([40, 40, 40]); doc.text(String(rr.label || ''), colsS[0], yy);
+        if (rr.na) {
+          cor([130, 130, 130]); doc.text(pT('connect.srvNa'), colsS[1], yy);
+        } else {
+          cor([60, 60, 60]); doc.text(rr.hops != null ? String(rr.hops) : '—', colsS[1], yy);
+          cor(qcor(clsLat(rr.avg)));    doc.text((rr.filtered ? '~ ' : '') + msf(rr.avg), colsS[2], yy);
+          cor(qcor(clsJit(rr.jitter))); doc.text(msf(rr.jitter), colsS[3], yy);
+          if (rr.filtered) { cor([60, 60, 60]); doc.text('—', colsS[4], yy); }
+          else { cor(qcor(clsLoss(rr.loss))); doc.text(pctf(rr.loss), colsS[4], yy); }
+        }
+        doc.setDrawColor(240, 241, 243); doc.line(15, yy + 1.6, 195, yy + 1.6); yy += 6.5;
+      });
+    }
+
+    // Rodapé + numeração de páginas (N/total) em TODAS as páginas
+    var totalPg = doc.getNumberOfPages();
+    for (var pg = 1; pg <= totalPg; pg++) {
+      doc.setPage(pg);
+      doc.setDrawColor(236, 238, 241);
+      doc.line(15, 280, 195, 280);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(cinza[0], cinza[1], cinza[2]);
+      if (tcfg.poweredBy !== false) doc.text('Powered by Vialink - 2026', 15, 285.5);
+      doc.text(pg + '/' + totalPg, 105, 285.5, { align: 'center' });
+      doc.text(location.hostname, 195, 285.5, { align: 'right' });
+    }
 
     return doc.output('blob');
   };
@@ -446,6 +602,32 @@ function injectTenantBranding() {
     setTimeout(function () { t.textContent = ''; }, 2500);
   };
 
+  // Gera o PDF do relatório e abre o painel nativo de compartilhamento (ou baixa,
+  // se o navegador não suportar Web Share). Reutilizada pela pílula do menu (SVG)
+  // e pelos botões da página do teste "Complete". `feedback(msg)` mostra o aviso.
+  var vlkExecShare = function (feedback) {
+    if (!window.vlkResults) { feedback(vlkT('share.first')); return; }
+    Promise.all([vlkLoadJsPdf(), vlkLoadGear()]).then(function (res) {
+      var blob = vlkGerarPdfBlob(res[1]);
+      var pdfNome = vlkT('share.file', { tenant: tcfg.key || 'vialink' });
+      var file = new File([blob], pdfNome, { type: 'application/pdf' });
+      var r = window.vlkResults;
+      var texto = vlkT('share.text', { name: tName, d: fmt1(r.d), u: fmt1(r.u), p: fmt1(r.p) });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: vlkT('share.title', { name: tName }), text: texto })
+          .catch(function () { /* usuário cancelou */ });
+      } else {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = pdfNome;
+        a.click();
+        feedback(vlkT('share.downloaded'));
+      }
+    }).catch(function () {
+      feedback(vlkT('share.error'));
+    });
+  };
+
   var shareEls = pegaEls2(['vlk-share', 'vlk-share-mob']);
   function pegaEls2(ids) {
     return ids.map(function (id) { return svgDoc.getElementById(id); })
@@ -454,31 +636,70 @@ function injectTenantBranding() {
   shareEls.forEach(function (g) {
     var txtId = g.id === 'vlk-share' ? 'vlk-share-txt' : 'vlk-share-txt-mob';
     g.addEventListener('click', function () {
-      if (!window.vlkResults) {
-        vlkShareFeedback(g, txtId, vlkT('share.first'));
-        return;
-      }
-      Promise.all([vlkLoadJsPdf(), vlkLoadGear()]).then(function (res) {
-        var blob = vlkGerarPdfBlob(res[1]);
-        var pdfNome = vlkT('share.file', { tenant: tcfg.key || 'vialink' });
-        var file = new File([blob], pdfNome, { type: 'application/pdf' });
-        var r = window.vlkResults;
-        var texto = vlkT('share.text', { name: tName, d: fmt1(r.d), u: fmt1(r.u), p: fmt1(r.p) });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: vlkT('share.title', { name: tName }), text: texto })
-            .catch(function () { /* usuário cancelou */ });
-        } else {
-          var a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = pdfNome;
-          a.click();
-          vlkShareFeedback(g, txtId, vlkT('share.downloaded'));
-        }
-      }).catch(function () {
-        vlkShareFeedback(g, txtId, vlkT('share.error'));
-      });
+      vlkExecShare(function (msg) { vlkShareFeedback(g, txtId, msg); });
     });
   });
+
+  // Botões "Relatório" e "Compartilhar" da resposta do teste "Complete" (HTML,
+  // dentro de #vlk-net-inline). A seção só abre depois do teste, então já nascem
+  // ativos. O Relatório reusa vlkLigaRelatorio (injeta os resultados na URL).
+  vlkLigaRelatorio(document.getElementById('vlk-net-report'));
+  var netShareBtn = document.getElementById('vlk-net-share');
+  if (netShareBtn) {
+    netShareBtn.addEventListener('click', function () {
+      vlkExecShare(function (msg) {
+        var fb = document.getElementById('vlk-net-share-fb');
+        if (!fb) return;
+        fb.textContent = msg;
+        setTimeout(function () { fb.textContent = ''; }, 2500);
+      });
+    });
+  }
+
+  // Teste "Complete": ao fim da velocidade, revela a seção de rede embutida,
+  // rola até ela e roda a análise de conectividade (mesma engine da aba Rede).
+  // Os resultados vão para window.vlkNetResults e localStorage (para o relatório).
+  // Barra de menu fixa: no modo Complete, mostra o menu superior (com o botão
+  // Relatório) assim que o usuário rola para baixo do topo — onde o menu do SVG
+  // já saiu da viewport. No topo fica oculta para não duplicar o menu do SVG.
+  var vlkStickyScrollBound = false;
+  function vlkSetupStickyScroll() {
+    if (vlkStickyScrollBound) return;
+    vlkStickyScrollBound = true;
+    var onScroll = function () {
+      var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+      document.body.classList.toggle('vlk-scrolled', y > 60);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  function vlkRunNetworkInline() {
+    var sec = document.getElementById('vlk-net-inline');
+    if (!sec || !window.VLK_CONECT) return;
+    document.body.classList.add('vlk-complete-open');
+    vlkSetupStickyScroll();
+    sec.classList.add('aberto');
+    sec.setAttribute('aria-hidden', 'false');
+    setTimeout(function () {
+      try { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    }, 60);
+    window.VLK_CONECT.run({
+      clienteId: 'vlk-net-cli', servidorId: 'vlk-net-srv',
+      avisoId: 'vlk-net-aviso', notaId: 'vlk-net-nota'
+    }).then(function (res) {
+      if (res && (res.cliente.length || res.servidor.length)) {
+        window.vlkNetResults = res;
+        try {
+          localStorage.setItem('vlkNetResults', JSON.stringify({
+            cliente: res.cliente, servidor: res.servidor,
+            houveFiltrado: res.houveFiltrado, ts: Date.now()
+          }));
+        } catch (e) {}
+        vlkSalvarConectividade(res); // grava a conectividade no banco (testes_rede)
+      }
+    });
+  }
 
   // Observa oDoLiveStatus: quando "All done", troca a barra de progresso pelo
   // botão "Testar novamente" (grupos SVG, alinhados no lugar exato da barra).
@@ -509,10 +730,13 @@ function injectTenantBranding() {
         setDisplay(barEls, true);
         setDisplay(retestEls, false);
         statusEl.setAttribute('visibility', 'hidden');
-        // Ativa o botão Compartilhar e pré-carrega o gerador de PDF
+        // Ativa os botões Compartilhar e Relatório e pré-carrega o gerador de PDF
         shareEls.forEach(function (el) { el.removeAttribute('opacity'); });
+        relatorioEls.forEach(function (el) { if (el.removeAttribute) el.removeAttribute('opacity'); });
         vlkLoadJsPdf();
         vlkLoadGear();
+        // Teste "Complete": encadeia a análise de rede logo após a velocidade
+        if (window.vlkTestMode === 'complete') vlkRunNetworkInline();
       }
     });
     statusObs.observe(statusEl, { childList: true, characterData: true, subtree: true });

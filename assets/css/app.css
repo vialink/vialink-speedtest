@@ -455,3 +455,120 @@ color: #14b0fe;
 #gaugeGradient stop:nth-child(1) { stop-color: var(--vlk-gauge-start, #56c4fb); }
 #gaugeGradient stop:nth-child(2) { stop-color: var(--vlk-accent, #0095BE); }
 #gaugeGradient stop:nth-child(3) { stop-color: var(--vlk-gauge-end, #005A73); }
+
+/* --- Rótulo dos botões Fast / Complete (dentro do app.svg) --- */
+.vlk-startbtn-txt {
+  font-size: 13px;
+  fill: #ffffff;
+  font-family: Roboto-Medium, Roboto, Arial, sans-serif;
+  font-weight: 500;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* --- Menu superior fixo no teste "Complete" (index.html) --- */
+/* Só aparece no modo Complete E depois que o usuário rola (o menu do SVG some da
+   viewport ao descer para a resposta de rede). No topo fica oculto para não
+   duplicar o menu do próprio SVG. */
+#vlk-sticky-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  align-items: center;
+  gap: 24px;
+  padding: 11px 22px;
+  background: rgba(15, 15, 15, .93);
+  border-bottom: 1px solid #2a2a2a;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+body.vlk-complete-open.vlk-scrolled #vlk-sticky-nav { display: flex; }
+#vlk-sticky-nav a {
+  color: var(--vlk-accent, #0095BE);
+  font-family: Roboto-Medium, Roboto, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1;
+}
+#vlk-sticky-nav a:hover { text-decoration: underline; }
+#vlk-sticky-nav a#vlk-sticky-relatorio { font-weight: 700; }
+
+/* --- Seção de rede embutida no teste "Complete" (index.html) --- */
+/* Fundo escuro para a faixa abaixo do teste quando o Complete abre a seção */
+body.vlk-complete-open { background: #0f0f0f; }
+#vlk-net-inline {
+  display: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 20px 48px;
+  background: #0f0f0f;
+  font-family: Roboto, Arial, sans-serif;
+  color: #e7e7e8;
+}
+#vlk-net-inline.aberto { display: block; }
+#vlk-net-inline .net-inner { max-width: 860px; margin: 0 auto; }
+/* Botões de ação (Relatório / Compartilhar) no fim da resposta do Complete */
+#vlk-net-inline .vlk-net-acoes {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 12px; margin: 28px 0 6px;
+}
+#vlk-net-inline .vlk-net-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 999px;
+  border: 1px solid var(--vlk-accent, #0095BE);
+  background: var(--vlk-accent, #0095BE); color: #fff;
+  font-family: Roboto-Medium, Roboto, Arial, sans-serif;
+  font-size: 14px; font-weight: 500; line-height: 1;
+  text-decoration: none; cursor: pointer;
+}
+#vlk-net-inline .vlk-net-btn.ghost { background: transparent; color: var(--vlk-accent, #0095BE); }
+#vlk-net-inline .vlk-net-btn:hover { filter: brightness(1.12); }
+#vlk-net-inline .vlk-net-btn.ghost:hover { background: rgba(255, 255, 255, .06); filter: none; }
+#vlk-net-inline .vlk-net-fb { color: #9a9a9c; font-size: 13px; }
+#vlk-net-inline h2 {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--vlk-accent, #0095BE);
+  margin: 26px 0 4px;
+}
+#vlk-net-inline h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--vlk-accent, #0095BE);
+  margin: 22px 0 6px;
+}
+#vlk-net-inline .suave { color: #9a9a9c; font-size: 13.5px; margin: 0 0 8px; }
+#vlk-net-inline .tabela-wrap { overflow-x: auto; margin-bottom: 8px; }
+#vlk-net-inline table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 480px;
+  background: #1b1b1b;
+  border-radius: 8px;
+  overflow: hidden;
+}
+#vlk-net-inline th, #vlk-net-inline td {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+}
+#vlk-net-inline th {
+  color: var(--vlk-accent, #0095BE);
+  font-weight: 500;
+  background: rgba(255, 255, 255, .02);
+}
+#vlk-net-inline tr:last-child td { border-bottom: 0; }
+#vlk-net-inline td.destino { white-space: normal; }
+#vlk-net-inline td.destino .host { color: #9a9a9c; font-size: 12px; }
+#vlk-net-inline td.estado { color: #9a9a9c; font-style: italic; }
+#vlk-net-inline td.bom   { color: #35c759; font-weight: 500; }
+#vlk-net-inline td.medio { color: #e6b800; font-weight: 500; }
+#vlk-net-inline td.ruim  { color: #ff453a; font-weight: 500; }
+#vlk-net-inline .aviso { font-size: 13.5px; color: #9a9a9c; }

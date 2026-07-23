@@ -9,6 +9,61 @@ Registro de tudo que este fork mudou em relação ao
 > Convenção: as mudanças estão agrupadas por área, não por data — este fork
 > não versiona releases; a história detalhada está no log do git.
 
+## Testes Fast e Complete (dois botões)
+
+- O botão circular único de "Start" deu lugar a **dois botões**: **Fast** e
+  **Complete** (rótulos traduzidos por idioma — pt-BR "Rápido"/"Completo").
+- **Fast** roda apenas o teste de velocidade (download, upload, ping e jitter) —
+  o comportamento clássico do Start. Também é o disparado por **Enter**.
+- **Complete** roda o teste de velocidade **e, em seguida, a análise de rede
+  completa na mesma página**: ao terminar a velocidade, a página cresce para
+  baixo revelando as duas tabelas de conectividade (sua conexão + traceroute do
+  servidor), com rolagem automática até elas. A engine de rede é a mesma da aba
+  Rede (`assets/js/conectividade.js`, agora exposta como `window.VLK_CONECT.run`).
+- **Relatório reflete o teste Complete**: quando há análise de rede, o
+  `relatorio.html` acrescenta, após o bloco de velocidade, as duas tabelas de
+  conectividade (dados passados via `localStorage` + `net=1` na URL).
+- A **aba Rede** (`conectividade.html`) continua existindo como página autônoma.
+- Item **"Rede"/"Network"** do menu (desktop) reposicionado com mais espaço
+  antes do botão Compartilhar.
+- **Botão "Relatório" só é habilitado depois que um teste é realizado**: começa
+  esmaecido (`opacity` reduzida) e o clique não navega; ao terminar o teste
+  ("All done"), é reativado junto com o botão Compartilhar.
+- **Menu superior fixo no teste Complete**: como a página cresce para baixo com a
+  resposta de rede, uma barra de navegação fixa no topo aparece assim que o
+  usuário rola (some no topo para não duplicar o menu do próprio velocímetro),
+  mantendo o acesso ao Relatório a qualquer momento.
+- **Botões "Relatório" e "Compartilhar" na resposta do Complete**: no topo da
+  seção de conectividade, dois botões (pílula preenchida e contornada) dão acesso
+  direto ao relatório e ao compartilhamento do PDF — a mesma ação da pílula do
+  menu superior —, sem obrigar o usuário a subir até o menu do velocímetro.
+
+## Análise de conectividade (`conectividade.html`)
+
+- **Nova página "Rede"** (item no menu do app): mede **latência, jitter e perda
+  de pacotes** até uma lista de destinos configurável por tenant
+  (`connectivityTargets` no `tenants.js`), em duas camadas independentes:
+  - **Cliente** (`assets/js/conectividade.js`): latência, jitter e taxa de falhas
+    de cada destino, medidas no navegador com requisições HTTPS cronometradas via
+    `Image()` (robusto a `Cross-Origin-Resource-Policy`/ORB, ao contrário do
+    `fetch` no-cors). A latência é a **mediana das amostras mais rápidas** (descarta
+    20% de picos) + o **mínimo** (melhor caso). O navegador não faz ICMP/traceroute
+    — é uma aproximação (limite superior) da experiência real da conexão do usuário.
+  - **Servidor** (`api/diagnostico.php`): roda `mtr` (traceroute/ICMP real) e
+    devolve saltos, latência, jitter e **perda de pacotes reais** da rota do
+    servidor até o destino. O cliente envia só o índice do destino; o host vem da
+    allowlist server-side (`api/diagnostico-targets.php`), nunca do request —
+    trava contra injeção de comando/SSRF. Resultado cacheado 60 s.
+- Degrada com elegância: sem o endpoint (ou sem `mtr`), a seção do servidor
+  mostra "indisponível" e a página segue funcionando só com a camada do cliente.
+- **Medição por tipo de destino** (o cliente mede o que de fato importa em cada um):
+  servidores de DNS por uma **query DNS-over-HTTPS** real (~10ms, não o favicon);
+  **Netflix pela OCA local** (Open Connect, ~10ms) em vez do site em AWS-EUA (~170ms),
+  via `api/netflix-oca.php` (proxy da API do fast.com; a URL da OCA é ligada ao ASN);
+  demais hosts pela forma canônica (www, sem redirect). Latência = mediana dos 80%
+  mais rápidos + mínimo (melhor caso).
+- i18n pt-BR + en-US; instalação documentada no manual (§10).
+
 ## Medição (engine — `assets/js/app-2.5.4.js`)
 
 - **Correção: o gráfico ao vivo nunca renderizava.** No início da medição a
@@ -25,6 +80,12 @@ Registro de tudo que este fork mudou em relação ao
   milissegundos); `ulDataSize` 30 → 100 MB.
 - Threads de download/upload 8 → 6 (HTTP/1.1 limita a 6 conexões por origem —
   as threads 7 e 8 nunca rodavam).
+- **Fator de correção configurável** (`vlkCorrectionFactor`, default `1.0` = sem
+  correção): os valores de download/upload apresentados são a medição
+  multiplicada por esse fator; a escala do velocímetro acompanha. A
+  persistência opcional grava o valor bruto, sem o fator. Configurado por
+  instalação em `assets/js/vlk-config-local.js` (não versionado — sobrevive
+  a upgrades; ver `vlk-config-local.example.js`).
 - Resultados do teste publicados em `window.vlkResults` para consumo do
   relatório, do PDF e da gravação (o upstream só montava uma URL de redirect).
 - **Sem redirects para openspeedtest.com**: o número final não vira link, o
@@ -64,8 +125,11 @@ Registro de tudo que este fork mudou em relação ao
 ## Páginas novas
 
 - **`relatorio.html`** — relatório do resultado pronto para imprimir/salvar em
-  PDF (1 página A4, sem cabeçalhos do navegador, overlays de extensões
-  ocultos); recebe os números por query string a partir do menu.
+  PDF; recebe os números por query string a partir do menu. Logo repetido no
+  topo de cada página e numeração "N/total" no rodapé (teste Complete gera 2
+  páginas). Margem superior do `@page` zerada para o navegador **não** desenhar
+  seu cabeçalho nativo (título da aba + data) acima do conteúdo; o espaço no topo
+  vem do padding do cabeçalho da tabela (que repete por página).
 - **`manual.html`** — como usar, o que significa cada métrica, dicas para um
   teste correto e parâmetros de URL.
 - **`sobre.html`** — a origem do fork, o que mudou e o licenciamento.

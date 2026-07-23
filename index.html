@@ -92,6 +92,12 @@
         var upAdjust = 1.04;
         var dlAdjust = 1.04;
 
+    // Correction factor (Vialink fork): displayed download and upload values are the
+    // measured values multiplied by this factor (recorded values stay raw). 1 = no correction.
+    // Do NOT change it here: set it per installation in assets/js/vlk-config-local.js
+    // (not versioned — survives upgrades). See vlk-config-local.example.js.
+        var vlkCorrectionFactor = 1.0;
+
    // You can pass "Clean" or "C" as a URL Parameter and reset the Overhead Compensation factor to Zero or set any value between 0 and 4. 1 = 1% to 4 = 4% 
    // "clean" will not accept values above 4, so Compensation is limited to a maximum of 4%.
         var enableClean = true;
@@ -144,6 +150,11 @@ function ostOnload() {
 
   </script>
 
+  <!-- Local per-installation overrides (optional, NOT versioned — survives upgrades).
+       Copy assets/js/vlk-config-local.example.js to assets/js/vlk-config-local.js.
+       A 404 here is harmless: it just means no local overrides. -->
+  <script src="assets/js/vlk-config-local.js"></script>
+
 <!--
 Speed Test by OpenSpeedTest™️ is Free and Open-Source Software with MIT License.
 
@@ -165,9 +176,66 @@ please get in touch with support@openspeedtest.com.
     <a href="https://openspeedtest.com?ref=Self-Hosted&Run">SpeedTest by OpenSpeedTest™</a> is a Free and <a href="https://github.com/openspeedtest/Speed-Test">Open-Source HTML5 Network Speed Test</a> Software.
     <p style="font-size: 12px;">&copy; Copyright 2013-2024 OpenSpeedTest™ All Rights Reserved.</p>
 </div>
-  
+
+  <!-- Menu superior fixo: aparece só no teste "Complete", quando o usuário rola
+       para ver a resposta de rede (o menu do SVG sai da viewport). Dá acesso ao
+       botão Relatório a qualquer momento. Oculto no teste "Fast" e no topo. -->
+  <nav id="vlk-sticky-nav" aria-hidden="true">
+    <a id="vlk-sticky-relatorio" href="/relatorio.html" target="_blank" data-i18n="app.menu.report">Relatório</a>
+    <a href="/manual.html" target="_blank" data-i18n="app.menu.manual">Manual</a>
+    <a href="/sobre.html" target="_blank" data-i18n="app.menu.about">Sobre</a>
+    <a href="/conectividade.html" target="_blank" data-i18n="app.menu.network">Rede</a>
+  </nav>
+
+  <!-- Seção de rede embutida: preenchida pelo teste "Complete" (tenant.js dispara
+       VLK_CONECT.run ao fim do teste de velocidade). Oculta no teste "Fast". -->
+  <section id="vlk-net-inline" aria-hidden="true">
+    <div class="net-inner">
+      <h2 data-i18n="connect.title">Análise de conectividade</h2>
+      <h3 data-i18n="connect.cliTitle">Da sua conexão até cada destino</h3>
+      <p class="suave" data-i18n="connect.cliIntro">Medido do seu navegador. Reflete a experiência real da sua conexão.</p>
+      <div class="tabela-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="connect.thDest">Destino</th>
+            <th data-i18n="connect.thLat">Latência média</th>
+            <th data-i18n="connect.thJit">Jitter</th>
+            <th data-i18n="connect.thFail">Falhas</th>
+            <th data-i18n="connect.thSamples">Amostras</th>
+          </tr></thead>
+          <tbody id="vlk-net-cli"></tbody>
+        </table>
+      </div>
+      <h3 data-i18n="connect.srvTitle">Da rede Vialink até cada destino (traceroute)</h3>
+      <p class="suave" data-i18n="connect.srvIntro">Medido do nosso servidor, com traceroute/ICMP real (saltos e perda de pacotes).</p>
+      <div class="tabela-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="connect.thDest">Destino</th>
+            <th data-i18n="connect.thHops">Saltos</th>
+            <th data-i18n="connect.thLat">Latência</th>
+            <th data-i18n="connect.thJit">Jitter</th>
+            <th data-i18n="connect.thLoss">Perda</th>
+          </tr></thead>
+          <tbody id="vlk-net-srv"></tbody>
+        </table>
+      </div>
+      <p id="vlk-net-aviso" class="aviso" style="display:none" data-i18n="connect.srvUnavailable">O diagnóstico de traceroute do servidor não está disponível nesta instalação.</p>
+      <p id="vlk-net-nota" class="aviso" style="display:none" data-i18n="connect.filteredNote">≈ o destino não responde a ICMP — a latência é medida até o último salto que respondeu, e a perda até o destino não é mensurável por ICMP (não indica problema).</p>
+      <!-- Atalhos no FIM do relatório do teste "Complete": abrir o relatório e
+           compartilhar o PDF (mesma ação da pílula do menu superior). A seção só
+           aparece após o teste, então os botões já nascem ativos. -->
+      <div class="vlk-net-acoes">
+        <a id="vlk-net-report" class="vlk-net-btn" href="/relatorio.html" target="_blank" data-i18n="app.menu.report">Relatório</a>
+        <button id="vlk-net-share" type="button" class="vlk-net-btn ghost" data-i18n="app.share">Compartilhar</button>
+        <span id="vlk-net-share-fb" class="vlk-net-fb" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+
   <script src="assets/js/tenant.js"></script>
   <script src="assets/js/app-2.5.4.js"></script>
+  <script src="assets/js/conectividade.js"></script>
   <script src="assets/js/darkmode.js"></script>
 
 </body>

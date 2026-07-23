@@ -69,6 +69,11 @@ function classificaSite(string $host): string {
 }
 $site = classificaSite($hostname);
 
+// UID do teste (gerado no front): liga esta linha às linhas de conectividade
+// gravadas depois (salvar-conectividade.php). Só hex, no máx. 32 chars.
+$uid = substr(preg_replace('/[^a-f0-9]/', '', strtolower((string)($dados['uid'] ?? ''))), 0, 32);
+if ($uid === '') $uid = null;
+
 $cfg = parse_ini_file('/etc/vlk-speedtest/db.ini', true);
 if (!$cfg || empty($cfg['db'])) {
     http_response_code(500);
@@ -83,15 +88,15 @@ try {
     ]);
     $stmt = $pdo->prepare(
         'INSERT INTO testes
-           (tenant, hostname, site, ip, download_mbps, upload_mbps, ping_ms, jitter_ms,
+           (uid, tenant, hostname, site, ip, download_mbps, upload_mbps, ping_ms, jitter_ms,
             dl_dados_mb, ul_dados_mb, user_agent, asn, cidade)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
-        $tenant, $hostname, $site, $ip, $download, $upload, $ping, $jitter,
+        $uid, $tenant, $hostname, $site, $ip, $download, $upload, $ping, $jitter,
         $dlDados, $ulDados, $ua, $asn, $cidade,
     ]);
-    echo '{"ok":true}';
+    echo json_encode(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
 } catch (PDOException $e) {
     error_log('salvar-teste: ' . $e->getMessage());
     http_response_code(500);

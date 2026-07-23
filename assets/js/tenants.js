@@ -5,6 +5,31 @@
 //
 // Para testar um tenant em qualquer hostname: ?tenant=<chave>
 (function () {
+  // Destinos padrão da análise de conectividade (conectividade.html).
+  // Hosts públicos e genéricos, servem como sugestão inicial — cada tenant
+  // pode sobrescrever com o próprio array `connectivityTargets`.
+  // `host` é o alvo do probe (cliente) e do traceroute (servidor); `ip` é só
+  // informativo; `probe` (opcional) sobrescreve a URL de sonda do cliente.
+  //   - Forma CANÔNICA (www) quando o apex redireciona: o 301 apex→www custa
+  //     uma conexão/handshake extra e inflava a latência do cliente ~2-3×
+  //     (ex.: google.com 279ms → www.google.com 86ms).
+  //   - Servidores de DNS (`doh`): o cliente mede o TEMPO DE UMA QUERY real via
+  //     DNS-over-HTTPS (CORS liberado nos dois) — é o que importa num resolver,
+  //     e mede ~10ms em vez dos ~130ms que o favicon dava. Nome fixo (cache do
+  //     resolver = RTT à rede) + param aleatório só p/ furar o cache HTTP. O
+  //     servidor continua traçando o IP (8.8.8.8 / 1.1.1.1) por `mtr`.
+  var DEFAULT_TARGETS = [
+    { label: 'Google',            host: 'www.google.com' },
+    { label: 'YouTube',           host: 'www.youtube.com' },
+    { label: 'Netflix',           host: 'www.netflix.com', oca: true },
+    { label: 'Cloudflare DNS',    host: '1.1.1.1', doh: 'https://1.1.1.1/dns-query?name=example.com&type=A', dohAccept: 'application/dns-json' },
+    { label: 'Google DNS',        host: 'dns.google', ip: '8.8.8.8', doh: 'https://dns.google/resolve?name=example.com&type=A' },
+    { label: 'Microsoft 365',     host: 'www.microsoft.com' },
+    { label: 'WhatsApp',          host: 'whatsapp.com' },
+    { label: 'Globo',             host: 'www.globo.com' },
+    { label: 'Internacional (EUA)', host: 'whitehouse.gov' }
+  ];
+
   var TENANTS = {
     vialink: {
       name: 'Vialink',
@@ -29,7 +54,8 @@
         gaugeEnd: '#005A73'
       },
       poweredBy: true,
-      sobre: true
+      sobre: true,
+      connectivityTargets: DEFAULT_TARGETS
     },
   };
   var DEFAULT_TENANT = 'vialink';

@@ -20,6 +20,16 @@
     logo.alt = cfg.name;
   }
 
+  // Logo de impressão (relatorio.html): repetido no topo de cada página do PDF
+  // via <thead>. Usa o PNG dimensionado do tenant (logo-print.png), pois as
+  // margin boxes/thead do Chrome não redimensionam SVG sem tamanho intrínseco.
+  var plogo = document.getElementById('print-logo');
+  if (plogo && cfg.iconsDir) {
+    plogo.src = cfg.iconsDir + '/logo-print.png';
+    plogo.srcset = cfg.iconsDir + '/logo-print.png 1x, ' + cfg.iconsDir + '/logo-print@2x.png 2x';
+    plogo.alt = cfg.name;
+  }
+
   // Domínio de exemplo do manual acompanha o hostname atual
   var exemplo = document.getElementById('t-exemplo-url');
   if (exemplo) exemplo.textContent = 'https://' + location.hostname + '/?Run&Stress=300';

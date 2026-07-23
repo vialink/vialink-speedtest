@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="connect.docTitle">Conectividade — Velocímetro Vialink</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/tenants/vialink/favicon-32x32.png">
+  <link rel="shortcut icon" href="/assets/tenants/vialink/favicon.ico">
+  <link rel="stylesheet" href="/assets/css/vlk-pages.css">
+  <script src="/assets/js/tenants.js"></script>
+  <script src="/assets/js/i18n/i18n.js"></script>
+  <script src="/assets/js/i18n/en-US.js"></script>
+  <script src="/assets/js/i18n/pt-BR.js"></script>
+  <script src="/assets/js/i18n/es-ES.js"></script>
+  <script src="/assets/js/i18n/fr-FR.js"></script>
+  <script src="/assets/js/i18n/zh-CN.js"></script>
+  <script src="/assets/js/i18n/ja-JP.js"></script>
+  <script src="/assets/js/i18n/ru-RU.js"></script>
+  <script src="/assets/js/i18n/de-DE.js"></script>
+</head>
+<body>
+  <div class="pagina">
+    <div class="topo">
+      <img class="logo" src="/assets/tenants/vialink/logo.svg" alt="Vialink">
+      <span class="topo-acoes">
+        <span id="vlk-lang-html"></span>
+        <a class="voltar" data-i18n="common.back" href="/">← Voltar ao teste</a>
+      </span>
+    </div>
+
+    <h1 data-i18n="connect.title">Análise de conectividade</h1>
+    <p class="suave" data-i18n="connect.subtitle">Latência, jitter e perda de pacotes até um conjunto de destinos na internet.</p>
+
+    <div style="text-align:center; margin: 22px 0 8px;">
+      <button id="btn-analisar" class="botao-acao" data-i18n="connect.start">Iniciar análise</button>
+    </div>
+
+    <h2 data-i18n="connect.cliTitle">Da sua conexão até cada destino</h2>
+    <p class="suave" data-i18n="connect.cliIntro">Medido do seu navegador. Reflete a experiência real da sua conexão. É a latência de conexão (TCP/TLS) — próxima, mas não idêntica, a um ping ICMP.</p>
+    <div class="tabela-wrap">
+      <table class="tabela-conect">
+        <thead>
+          <tr>
+            <th data-i18n="connect.thDest">Destino</th>
+            <th data-i18n="connect.thLat">Latência média</th>
+            <th data-i18n="connect.thJit">Jitter</th>
+            <th data-i18n="connect.thFail">Falhas</th>
+            <th data-i18n="connect.thSamples">Amostras</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-cliente">
+          <tr><td colspan="5" class="estado" data-i18n="connect.clickStart">Clique em “Iniciar análise”.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 data-i18n="connect.srvTitle">Da rede Vialink até cada destino (traceroute)</h2>
+    <p class="suave" data-i18n="connect.srvIntro">Medido do nosso servidor, com traceroute/ICMP real (saltos e perda de pacotes). Diagnostica o caminho da nossa rede até o destino — é igual para todos os clientes, independente da sua conexão.</p>
+    <div class="tabela-wrap">
+      <table class="tabela-conect">
+        <thead>
+          <tr>
+            <th data-i18n="connect.thDest">Destino</th>
+            <th data-i18n="connect.thHops">Saltos</th>
+            <th data-i18n="connect.thLat">Latência</th>
+            <th data-i18n="connect.thJit">Jitter</th>
+            <th data-i18n="connect.thLoss">Perda</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-servidor">
+          <tr><td colspan="5" class="estado" data-i18n="connect.clickStart">Clique em “Iniciar análise”.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="aviso-servidor" class="suave aviso" style="display:none" data-i18n="connect.srvUnavailable">O diagnóstico de traceroute do servidor não está disponível nesta instalação.</p>
+    <p id="nota-filtrado" class="suave aviso" style="display:none" data-i18n="connect.filteredNote">≈ o destino não responde a ICMP — a latência é medida até o último salto que respondeu, e a perda até o destino não é mensurável por ICMP (não indica problema).</p>
+
+    <div class="nota-tecnica">
+      <h3 data-i18n="connect.noteTitle">Como interpretar</h3>
+      <p data-i18n-html="connect.note1"><strong>Latência</strong> é o tempo de ida e volta até o destino (ms) — quanto menor, mais responsiva a conexão. <strong>Jitter</strong> é a variação dessa latência: valores altos indicam instabilidade, mesmo com boa velocidade. <strong>Perda de pacotes</strong> é a fração de pacotes que não voltaram — acima de 1–2% já degrada chamadas de vídeo e jogos.</p>
+      <p data-i18n-html="connect.note2">O navegador não executa <em>ping</em> ICMP nem <em>traceroute</em> — por isso a tabela da sua conexão usa requisições HTTPS cronometradas (uma boa aproximação), e o traceroute salto a salto vem do nosso servidor. As duas medições partem de pontos diferentes: a primeira é a <strong>sua</strong> conexão; a segunda é a <strong>nossa rede</strong>.</p>
+    </div>
+
+    <div class="rodape">
+      <img src="/assets/tenants/vialink/engrenagem.svg" alt=""> Powered by Vialink - 2026
+    </div>
+  </div>
+  <script src="/assets/js/conectividade.js"></script>
+  <script src="/assets/js/vlk-pages.js"></script>
+</body>
+</html>

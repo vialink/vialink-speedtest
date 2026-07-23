@@ -71,7 +71,7 @@ window.VLK_I18N.register({
     'share.title': '{name} 网速报告',
     'share.file': 'speedtest-report-{tenant}.pdf',
     'pdf.tagline': '网速测试',
-    'pdf.title': '网速测试报告',
+    'pdf.title': '网速与网络测试报告',
     'pdf.ip': 'IP 地址',
     'pdf.ipv4': 'IPv4 地址',
     'pdf.ipv6': 'IPv6 地址',
@@ -86,7 +86,7 @@ window.VLK_I18N.register({
 
     // ---- 报告页（relatorio.html）----
     'report.docTitle': '网速报告 — {name}',
-    'report.title': '网速测试报告',
+    'report.title': '网速与网络测试报告',
     'report.browser': '浏览器',
     'report.note': '本测试在浏览器中对 {name} 服务器进行，位于我们的网络内部。结果反映测试时您的设备与 {name} 之间的连接情况 — Wi-Fi、布线和连接的同时使用都会影响数值。如何解读数值请参阅<a href="/manual.html">指南</a>。',
     'report.print': '打印 / 保存为 PDF',

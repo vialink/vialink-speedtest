@@ -391,9 +391,17 @@
 					<!-- Central Gauge Area -->
 					<g id="intro-gauge-desk" transform="translate(10.28, 36.11)">
 						<use id="deskStart" class="deskStart" xlink:href="#mainGaugebg" x="0" y="0" width="273.94" height="245.39"></use>
-						<use id="startButtonDesk" class="startButton" xlink:href="#playButton" x="114.7" y="264.5" width="50.2" height="50.2">
-							<title data-i18n="tip.start">Click here to Run a Speed Test! Or Press "Enter"</title>
-						</use>
+						<!-- Botões Fast (teste de velocidade) e Complete (velocidade + análise de rede) -->
+						<g id="vlk-startbtns-desk">
+							<rect id="startButtonDesk" x="42" y="258" width="90" height="30" rx="6" fill="#0095BE" class="vlk-fill-accent" style="cursor:pointer">
+								<title data-i18n="tip.startFast">Roda um teste rápido de velocidade (download, upload, ping e jitter).</title>
+							</rect>
+							<text data-i18n="app.fast" class="vlk-startbtn-txt" x="87" y="277.5">Fast</text>
+							<rect id="vlk-btn-complete-desk" x="142" y="258" width="90" height="30" rx="6" fill="#0095BE" class="vlk-fill-accent" style="cursor:pointer">
+								<title data-i18n="tip.startComplete">Roda o teste de velocidade e a análise de rede completa, tudo numa página só.</title>
+							</rect>
+							<text data-i18n="app.complete" class="vlk-startbtn-txt" x="187" y="277.5">Complete</text>
+						</g>
 						<use id="settingsDesk" class="Startsettings" xlink:href="#settings" x="89.7" y="223.9" width="100" height="40">
 							<title data-i18n="tip.options">Options</title>
 						</use>
@@ -477,14 +485,15 @@
 				<use id="nightmode"  class="darkmode" onclick="toggleSkin()" xlink:href="#dark" x="472" y="8" width="22" height="22"></use>
 				<use id="daymode"  class="darkmode" onclick="toggleSkin()" xlink:href="#light" x="472" y="8" width="22" height="22"></use>
 				<g id="vlk-lang-desk"></g>
-				<a id="vlk-menu-relatorio" xlink:href="/relatorio.html" target="_blank"><text data-i18n="app.menu.report" class="vlk-menu" x="12" y="22">Relatório</text></a>
+				<a id="vlk-menu-relatorio" opacity="0.45" xlink:href="/relatorio.html" target="_blank"><text data-i18n="app.menu.report" class="vlk-menu" x="12" y="22">Relatório</text></a>
 				<a xlink:href="/manual.html" target="_blank"><text data-i18n="app.menu.manual" class="vlk-menu" x="72" y="22">Manual</text></a>
 				<a id="vlk-menu-sobre" xlink:href="/sobre.html" target="_blank"><text data-i18n="app.menu.about" class="vlk-menu" x="125" y="22">Sobre</text></a>
+				<a id="vlk-menu-rede" xlink:href="/conectividade.html" target="_blank"><text data-i18n="app.menu.network" class="vlk-menu" x="174" y="22">Rede</text></a>
 				<g id="vlk-share" opacity="0.45" style="cursor:pointer">
 					<title data-i18n="app.share">Compartilhar</title>
-					<rect x="170" y="8.5" width="24" height="17" rx="8.5" fill="#0095BE" class="vlk-fill-accent"></rect>
-					<use xlink:href="#vlk-share-icon" x="177" y="12" width="10" height="10"></use>
-					<text id="vlk-share-txt" x="200" y="20.3" class="vlk-share-fb"></text>
+					<rect x="224" y="8.5" width="24" height="17" rx="8.5" fill="#0095BE" class="vlk-fill-accent"></rect>
+					<use xlink:href="#vlk-share-icon" x="231" y="12" width="10" height="10"></use>
+					<text id="vlk-share-txt" x="254" y="20.3" class="vlk-share-fb"></text>
 				</g>
 				<g id="vlk-footer-desk">
 					<use xlink:href="#vlk-gear" x="437.5" y="308.5" width="9" height="10.5"></use>
@@ -546,9 +555,17 @@
 				<g id="intro-Mob">
 					<use id="logo-Desk" xlink:href="#logo" x="38" y="134" width="218.8" height="50.22"></use>
 					<use id="deskStartMob" class="deskStart" xlink:href="#mainGaugebg" x="11.18" y="36" width="273.94" height="245.39"></use>
-					<use id="startButtonMob" class="startButton" xlink:href="#playButton" x="125" y="304" width="50.2" height="50.2">
-						<title data-i18n="tip.start">Click here to run a speed!</title>
-					</use>
+					<!-- Botões Fast e Complete (mobile) -->
+					<g id="vlk-startbtns-mob">
+						<rect id="startButtonMob" x="38" y="300" width="100" height="30" rx="6" fill="#0095BE" class="vlk-fill-accent" style="cursor:pointer">
+							<title data-i18n="tip.startFast">Roda um teste rápido de velocidade.</title>
+						</rect>
+						<text data-i18n="app.fast" class="vlk-startbtn-txt" x="88" y="319.5">Fast</text>
+						<rect id="vlk-btn-complete-mob" x="158" y="300" width="100" height="30" rx="6" fill="#0095BE" class="vlk-fill-accent" style="cursor:pointer">
+							<title data-i18n="tip.startComplete">Roda velocidade + análise de rede completa.</title>
+						</rect>
+						<text data-i18n="app.complete" class="vlk-startbtn-txt" x="208" y="319.5">Complete</text>
+					</g>
 					<use id="settingsMob" class="Startsettings" xlink:href="#settings" x="100" y="264" width="100" height="40">
 						<title data-i18n="tip.options">Options</title>
 					</use>
@@ -557,14 +574,15 @@
 				<use id="nightmode-Mob"  class="darkmode" onclick="toggleSkin()" xlink:href="#dark" x="266" y="7" width="22" height="22"></use>
 				<use id="daymode-Mob"  class="darkmode" onclick="toggleSkin()" xlink:href="#light" x="266" y="7" width="22" height="22"></use>
 				<g id="vlk-lang-mob"></g>
-				<a id="vlk-menu-relatorio-mob" xlink:href="/relatorio.html" target="_blank"><text data-i18n="app.menu.report" class="vlk-menu" x="10" y="22">Relatório</text></a>
-				<a xlink:href="/manual.html" target="_blank"><text data-i18n="app.menu.manual" class="vlk-menu" x="62" y="22">Manual</text></a>
-				<a id="vlk-menu-sobre-mob" xlink:href="/sobre.html" target="_blank"><text data-i18n="app.menu.about" class="vlk-menu" x="108" y="22">Sobre</text></a>
+				<a id="vlk-menu-relatorio-mob" opacity="0.45" xlink:href="/relatorio.html" target="_blank"><text data-i18n="app.menu.report" class="vlk-menu" x="8" y="22">Relatório</text></a>
+				<a xlink:href="/manual.html" target="_blank"><text data-i18n="app.menu.manual" class="vlk-menu" x="56" y="22">Manual</text></a>
+				<a id="vlk-menu-sobre-mob" xlink:href="/sobre.html" target="_blank"><text data-i18n="app.menu.about" class="vlk-menu" x="100" y="22">Sobre</text></a>
+				<a id="vlk-menu-rede-mob" xlink:href="/conectividade.html" target="_blank"><text data-i18n="app.menu.network" class="vlk-menu" x="134" y="22">Rede</text></a>
 				<g id="vlk-share-mob" opacity="0.45" style="cursor:pointer">
 					<title data-i18n="app.share">Compartilhar</title>
-					<rect x="142" y="9.5" width="24" height="17" rx="8.5" fill="#0095BE" class="vlk-fill-accent"></rect>
-					<use xlink:href="#vlk-share-icon" x="149" y="13" width="10" height="10"></use>
-					<text id="vlk-share-txt-mob" x="170" y="21.1" class="vlk-share-fb" style="font-size:7.5px"></text>
+					<rect x="190" y="9.5" width="24" height="17" rx="8.5" fill="#0095BE" class="vlk-fill-accent"></rect>
+					<use xlink:href="#vlk-share-icon" x="197" y="13" width="10" height="10"></use>
+					<text id="vlk-share-txt-mob" x="218" y="21.1" class="vlk-share-fb" style="font-size:7.5px"></text>
 				</g>
 				<g id="vlk-retest-mob" display="none" onclick="location.reload()" style="cursor:pointer">
 					<rect x="100" y="294" width="97" height="23" rx="5" fill="#0095BE" class="vlk-fill-accent"></rect>

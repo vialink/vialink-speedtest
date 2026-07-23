@@ -68,7 +68,7 @@ window.VLK_I18N.register({
     'share.title': 'Informe de velocidad {name}',
     'share.file': 'informe-velocidad-{tenant}.pdf',
     'pdf.tagline': 'Test de Velocidad',
-    'pdf.title': 'Informe del Test de Velocidad',
+    'pdf.title': 'Informe del Test de Velocidad y Red',
     'pdf.ip': 'Dirección IP',
     'pdf.ipv4': 'Dirección IPv4',
     'pdf.ipv6': 'Dirección IPv6',
@@ -83,7 +83,7 @@ window.VLK_I18N.register({
 
     // ---- Página de informe (relatorio.html) ----
     'report.docTitle': 'Informe de Velocidad — {name}',
-    'report.title': 'Informe del Test de Velocidad',
+    'report.title': 'Informe del Test de Velocidad y Red',
     'report.browser': 'Navegador',
     'report.note': 'Prueba realizada en el navegador contra el servidor de {name}, dentro de nuestra red. El resultado refleja la conexión entre tu dispositivo y {name} en el momento de la prueba — el Wi-Fi, el cableado y el uso simultáneo de la conexión influyen en los números. Consulta el <a href="/manual.html">manual</a> para interpretar los valores.',
     'report.print': 'Imprimir / guardar PDF',

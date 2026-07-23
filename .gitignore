@@ -6,5 +6,9 @@
 # arquivo binário gerado pelo CI/CD (100 MB); não versionar
 downloading
 
+# configuração local da instalação (fator de correção etc.); não versionar —
+# sobrevive a upgrades (o deploy faz reset --hard, sem git clean)
+assets/js/vlk-config-local.js
+
 # log de sessão local (hook), não versionar
 .claude/progress.log

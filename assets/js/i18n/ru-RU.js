@@ -71,7 +71,7 @@ window.VLK_I18N.register({
     'share.title': 'Отчёт о скорости {name}',
     'share.file': 'speedtest-report-{tenant}.pdf',
     'pdf.tagline': 'Тест скорости',
-    'pdf.title': 'Отчёт о тесте скорости',
+    'pdf.title': 'Отчёт о тесте скорости и сети',
     'pdf.ip': 'IP-адрес',
     'pdf.ipv4': 'IPv4-адрес',
     'pdf.ipv6': 'IPv6-адрес',
@@ -86,7 +86,7 @@ window.VLK_I18N.register({
 
     // ---- Страница отчёта (relatorio.html) ----
     'report.docTitle': 'Отчёт о скорости — {name}',
-    'report.title': 'Отчёт о тесте скорости',
+    'report.title': 'Отчёт о тесте скорости и сети',
     'report.browser': 'Браузер',
     'report.note': 'Тест выполнен в браузере с сервером {name}, внутри нашей сети. Результат отражает соединение между вашим устройством и {name} на момент теста — Wi-Fi, кабели и одновременное использование канала влияют на цифры. Как интерпретировать значения — см. <a href="/manual.html">справку</a>.',
     'report.print': 'Печать / сохранить в PDF',

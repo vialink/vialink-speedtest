@@ -22,9 +22,10 @@ opcional com código de servidor é a gravação de resultados (PHP + MariaDB, �
 7. [Criar um novo idioma](#7-criar-um-novo-idioma)
 8. [Persistência de resultados (opcional)](#8-persistência-de-resultados-opcional)
 9. [Ajustes do teste](#9-ajustes-do-teste)
-10. [Atualizações](#10-atualizações)
-11. [Solução de problemas](#11-solução-de-problemas)
-12. [Licença e créditos](#12-licença-e-créditos)
+10. [Análise de conectividade (opcional)](#10-análise-de-conectividade-opcional)
+11. [Atualizações](#11-atualizações)
+12. [Solução de problemas](#12-solução-de-problemas)
+13. [Licença e créditos](#13-licença-e-créditos)
 
 ---
 
@@ -493,7 +494,95 @@ do próprio velocímetro): `?Run` (inicia sozinho), `?Stress=300` (teste
 contínuo), `?Test=Download|Upload|Ping` (uma etapa só), `?Ping=500` (mais
 amostras), `?lang=` (idioma), `?tenant=` (marca).
 
-## 10. Atualizações
+### 9.1. Configuração local da instalação (`vlk-config-local.js`)
+
+Ajustes específicos da **sua** instalação não devem ser feitos no
+`index.html` — um upgrade (`git pull` ou deploy com `git reset --hard`)
+desfaria a mudança. Use o arquivo local, que **não é versionado** e por isso
+sobrevive a atualizações:
+
+```bash
+cp assets/js/vlk-config-local.example.js assets/js/vlk-config-local.js
+# editar e definir os valores desejados
+```
+
+Se o arquivo não existir, valem os padrões do `index.html` (o 404 dele no
+console é inofensivo). Opções disponíveis:
+
+| Variável | Padrão | Significado |
+|---|---|---|
+| `vlkCorrectionFactor` | 1.0 | Fator de correção: os valores de download/upload **apresentados** são a medição multiplicada por ele (a escala do velocímetro acompanha). A persistência (§8) grava sempre o valor **bruto**, sem o fator. `1.0` = sem correção |
+
+## 10. Análise de conectividade (opcional)
+
+A página `conectividade.html` (item **Rede** no menu) mede **latência, jitter e
+perda de pacotes** até uma lista de destinos, em duas camadas independentes:
+
+- **Cliente (sempre disponível):** o navegador mede latência média, jitter e
+  taxa de falhas de cada destino com requisições HTTPS cronometradas. Não é ICMP
+  — o navegador não tem acesso a socket raw, então *ping*/*traceroute* são
+  impossíveis ali —, mas é uma boa aproximação da experiência real da conexão do
+  usuário. Não exige nada no servidor.
+- **Servidor (opcional):** o endpoint `api/diagnostico.php` roda `mtr`
+  (traceroute/ICMP real) no próprio servidor e devolve saltos, latência, jitter e
+  **perda de pacotes reais** da rota *do servidor* até o destino.
+
+### Destinos
+
+Configuráveis por tenant no `assets/js/tenants.js`, campo `connectivityTargets`
+(array de `{ label, host, ip? }`). Sem esse campo, a página fica sem destinos.
+Para o par 8.8.8.8, o cliente sonda o nome `dns.google` (o navegador não faz TLS
+contra o IP cru); o servidor mede o IP direto.
+
+### Ligando a camada do servidor (mtr)
+
+1. **Instale o mtr** com permissão de socket ICMP e confirme que o usuário do
+   PHP-FPM consegue rodá-lo:
+   ```bash
+   apt-get install -y mtr-tiny
+   sudo -u www-data mtr -n -4 -c 3 --json 8.8.8.8   # deve sair JSON com "hubs"
+   ```
+   (o pacote já concede `cap_net_raw` ao `mtr-packet`.)
+2. **Espelhe a allowlist** em `api/diagnostico-targets.php` — um array PHP com os
+   mesmos hosts do `connectivityTargets`, **na mesma ordem**. O cliente envia só o
+   índice do destino; o host vem daqui, **nunca do request** — é o que impede
+   injeção de comando/SSRF.
+3. **Sirva o endpoint** no nginx (bloco dedicado, como o da persistência):
+   ```nginx
+   location = /api/diagnostico.php {
+       client_max_body_size 4k;
+       include fastcgi_params;
+       fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+       fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+       fastcgi_read_timeout 35s;
+   }
+   ```
+
+Sem o endpoint (ou sem o `mtr`), a seção do servidor exibe "indisponível" e a
+página continua funcionando só com a camada do cliente. O resultado de cada
+destino é cacheado por 60 s no servidor para limitar carga/abuso.
+
+### Netflix pela OCA local (opcional)
+
+Para o destino Netflix, `www.netflix.com` é o *site* (hospedado longe, ~170ms);
+o que o assinante percebe é o **Open Connect** — o CDN local de streaming (~10ms).
+O endpoint `api/netflix-oca.php` descobre uma OCA local via API do fast.com (proxy
+no servidor, pois a API não libera CORS para a página) e o cliente mede a OCA
+direto. Sirva-o no nginx como os demais:
+
+```nginx
+location = /api/netflix-oca.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    fastcgi_read_timeout 15s;
+}
+```
+
+Requer PHP com cURL e saída HTTPS para `api.fast.com`. Sem o endpoint, o alvo
+Netflix cai automaticamente na medição do site (`www.netflix.com`).
+
+## 11. Atualizações
 
 ```bash
 cd /var/www/speedtest
@@ -517,7 +606,7 @@ git merge upstream/main                 # resolver conflitos se houver
 > `git reset --hard origin/main`, garante o arquivo `downloading` e recarrega
 > o nginx a cada push.
 
-## 11. Solução de problemas
+## 12. Solução de problemas
 
 | Sintoma | Causa provável / correção |
 |---|---|
@@ -530,7 +619,7 @@ git merge upstream/main                 # resolver conflitos se houver
 | Teste atrás de **proxy reverso/CDN** | Aumente o limite de corpo do POST (≥ 120 MB), desligue cache e compressão para o host do teste. CDN na frente mede a CDN, não o seu servidor. |
 | **Gravação (§8) não acontece** | Confira `error_log` do PHP-FPM; permissões do `/etc/vlk-speedtest/db.ini` (`root:www-data 640`); grants do usuário do banco. A falha é silenciosa para o usuário, por design. |
 
-## 12. Licença e créditos
+## 13. Licença e créditos
 
 - Código: **MIT** — © 2013–2023 OpenSpeedTest™ (projeto original) e © 2026
   Vialink (modificações do fork). Detalhes em [LICENSE](../LICENSE) e

@@ -138,3 +138,54 @@ code {
   margin-top: 40px; color: var(--texto-suave); font-size: 13px;
 }
 .rodape img { height: 15px; }
+
+/* ---- Análise de conectividade (conectividade.html) ---- */
+.botao-acao {
+  background: var(--azul);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 11px 26px;
+  cursor: pointer;
+}
+.botao-acao:hover { filter: brightness(1.08); }
+.botao-acao:disabled { opacity: .6; cursor: default; }
+
+.tabela-wrap { overflow-x: auto; margin-bottom: 8px; }
+table.tabela-conect {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 480px;
+  background: var(--card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+table.tabela-conect th, table.tabela-conect td {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+}
+table.tabela-conect th {
+  color: var(--azul);
+  font-weight: 500;
+  background: rgba(255, 255, 255, .02);
+}
+table.tabela-conect tr:last-child td { border-bottom: 0; }
+table.tabela-conect td.destino { white-space: normal; }
+table.tabela-conect td.destino .host {
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+table.tabela-conect td.estado { color: var(--texto-suave); font-style: italic; }
+
+/* Faixas de qualidade */
+table.tabela-conect td.bom   { color: #35c759; font-weight: 500; }
+table.tabela-conect td.medio { color: #e6b800; font-weight: 500; }
+table.tabela-conect td.ruim  { color: #ff453a; font-weight: 500; }
+
+.aviso { margin-top: -2px; margin-bottom: 12px; font-size: 13.5px; }

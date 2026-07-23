@@ -68,7 +68,7 @@ window.VLK_I18N.register({
     'share.title': 'Rapport de débit {name}',
     'share.file': 'rapport-debit-{tenant}.pdf',
     'pdf.tagline': 'Test de Débit',
-    'pdf.title': 'Rapport du Test de Débit',
+    'pdf.title': 'Rapport du Test de Débit et Réseau',
     'pdf.ip': 'Adresse IP',
     'pdf.ipv4': 'Adresse IPv4',
     'pdf.ipv6': 'Adresse IPv6',
@@ -83,7 +83,7 @@ window.VLK_I18N.register({
 
     // ---- Page de rapport (relatorio.html) ----
     'report.docTitle': 'Rapport de Débit — {name}',
-    'report.title': 'Rapport du Test de Débit',
+    'report.title': 'Rapport du Test de Débit et Réseau',
     'report.browser': 'Navigateur',
     'report.note': 'Test réalisé dans le navigateur contre le serveur de {name}, au sein de notre réseau. Le résultat reflète la connexion entre votre appareil et {name} au moment du test — le Wi-Fi, le câblage et l’utilisation simultanée de la connexion influencent les chiffres. Consultez le <a href="/manual.html">manuel</a> pour interpréter les valeurs.',
     'report.print': 'Imprimer / enregistrer en PDF',
