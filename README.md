@@ -5,8 +5,12 @@ of [OpenSpeedTest™](https://github.com/openspeedtest/Speed-Test). 100% static
 files (HTML, CSS, JavaScript and SVG): no build step, no Node.js, no mandatory
 backend — any web server will do.
 
-> 🇧🇷 **Português:** [README.pt-BR.md](README.pt-BR.md) ·
-> [Manual de instalação](docs/INSTALL.pt-BR.md) · [Changelog](CHANGELOG.md)
+<p align="center">
+  <a href="https://medidor.vialink.com.br"><strong>▶ Try the live demo</strong></a>
+  &nbsp;·&nbsp; <a href="README.pt-BR.md">🇧🇷 Português</a>
+  &nbsp;·&nbsp; <a href="docs/INSTALL.en-US.md">Install guide</a>
+  &nbsp;·&nbsp; <a href="CHANGELOG.en-US.md">Changelog</a>
+</p>
 
 <p align="center">
   <img src="docs/img/screenshot-desktop.png" alt="Speed test — desktop, dark theme" width="68%">

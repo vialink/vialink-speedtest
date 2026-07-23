@@ -5,7 +5,12 @@ um fork do [OpenSpeedTest™](https://github.com/openspeedtest/Speed-Test).
 100% arquivos estáticos (HTML, CSS, JavaScript e SVG): sem build, sem
 Node.js, sem backend obrigatório — qualquer servidor web serve.
 
-> 🇺🇸 **English:** [README.md](README.md)
+<p align="center">
+  <a href="https://medidor.vialink.com.br"><strong>▶ Teste ao vivo</strong></a>
+  &nbsp;·&nbsp; <a href="README.md">🇺🇸 English</a>
+  &nbsp;·&nbsp; <a href="docs/INSTALL.pt-BR.md">Manual de instalação</a>
+  &nbsp;·&nbsp; <a href="CHANGELOG.md">Changelog</a>
+</p>
 
 <p align="center">
   <img src="docs/img/screenshot-desktop.png" alt="Velocímetro — desktop, tema escuro" width="68%">
