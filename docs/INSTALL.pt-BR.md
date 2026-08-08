@@ -523,9 +523,12 @@ perda de pacotes** até uma lista de destinos, em duas camadas independentes:
   — o navegador não tem acesso a socket raw, então *ping*/*traceroute* são
   impossíveis ali —, mas é uma boa aproximação da experiência real da conexão do
   usuário. Não exige nada no servidor.
-- **Servidor (opcional):** o endpoint `api/diagnostico.php` roda `mtr`
-  (traceroute/ICMP real) no próprio servidor e devolve saltos, latência, jitter e
-  **perda de pacotes reais** da rota *do servidor* até o destino.
+- **Servidor (opcional):** `mtr` (traceroute/ICMP real) rodando no próprio
+  servidor devolve saltos, latência, jitter e **perda de pacotes reais** da rota
+  *do servidor* até o destino. Essa medição é **a mesma para todos os clientes**
+  (é uma propriedade da sua rota, não da conexão de quem testa), então quem a
+  executa é um **cron** — `scripts/atualizar-diagnostico.php`, a cada 5 min — e o
+  endpoint `api/diagnostico.php` apenas lê o cache. Ver o porquê no passo 4.
 
 ### Destinos
 
@@ -557,10 +560,32 @@ contra o IP cru); o servidor mede o IP direto.
        fastcgi_read_timeout 35s;
    }
    ```
+4. **Agende o cron que alimenta o cache** — sem ele a seção do servidor fica
+   permanentemente "indisponível", porque o endpoint não executa `mtr`:
+   ```bash
+   install -d -o www-data -g www-data -m 755 /var/cache/vlk-speedtest
+   sudo -u www-data php /var/www/speedtest/scripts/atualizar-diagnostico.php  # primeira carga
+   cat > /etc/cron.d/vlk-speedtest-diagnostico <<'EOF'
+   */5 * * * * www-data flock -n /var/cache/vlk-speedtest/.lock /usr/bin/php /var/www/speedtest/scripts/atualizar-diagnostico.php --quiet
+   EOF
+   ```
 
-Sem o endpoint (ou sem o `mtr`), a seção do servidor exibe "indisponível" e a
-página continua funcionando só com a camada do cliente. O resultado de cada
-destino é cacheado por 60 s no servidor para limitar carga/abuso.
+**Por que o cron, e não medir na requisição.** O `mtr` leva de 10 a 25 s. Se cada
+visitante disparasse os seus, cada requisição prenderia um worker do PHP-FPM por
+todo esse tempo — com poucos testes simultâneos e cache frio o pool satura
+(`pm.max_children`) e o site inteiro para de responder. Como o resultado é
+idêntico para todos, produzi-lo fora do caminho da requisição elimina o problema:
+o endpoint vira leitura de arquivo, a carga de `mtr` fica constante e previsível,
+e a camada do servidor aparece **instantaneamente** para o usuário.
+
+O endpoint recusa cache com mais de 30 minutos (6 ciclos do cron) — se o cron
+parar, a seção passa a exibir "indisponível" em vez de apresentar uma medição
+velha como se fosse o estado atual da rota. A interface também informa a idade da
+medição ("Medição do servidor: há N min"), já que ela é compartilhada e não foi
+coletada no clique do usuário.
+
+Sem o endpoint (ou sem o `mtr`/cron), a seção do servidor exibe "indisponível" e a
+página continua funcionando só com a camada do cliente.
 
 ### Netflix pela OCA local (opcional)
 

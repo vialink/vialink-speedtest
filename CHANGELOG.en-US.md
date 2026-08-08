@@ -26,6 +26,17 @@ A record of everything this fork changed compared to the original
 - The **Network tab** (`conectividade.html`) still exists as a standalone page.
 - The menu **"Network"** item (desktop) was repositioned with more room before
   the Share button.
+- **Network analysis pre-warmed after the Fast test**: when the quick test ends,
+  the link sits idle while the user reads the result — the only window in which
+  latency can be measured without contaminating anything (during the bandwidth
+  test the link is saturated, so measuring there would yield bufferbloat numbers
+  *and* steal bandwidth from the measurement itself). In that window the analysis
+  runs **in the background, with nothing on screen**, and a **"Network analysis"**
+  button offers the finished result: it opens the section **instantly**, without
+  re-running the speed test. If the user clicks before the measurement finishes,
+  the section opens with "pending…" rows and fills in on arrival. The result is
+  kept in `sessionStorage` for 3 minutes, so a Complete run requested right after
+  also shows up ready. Respects `navigator.connection.saveData`.
 - **"Report" and "Share" buttons in the Complete response**: at the top of the
   connectivity section, two buttons (a filled and an outlined pill) give direct
   access to the report and to sharing the PDF — the same action as the top-menu
@@ -49,12 +60,21 @@ A record of everything this fork changed compared to the original
     no-cors). Latency is the **median of the fastest samples** (drops the slowest
     20%) plus the **minimum** (best case). The browser cannot do ICMP/traceroute
     — it is an approximation (upper bound) of the user's real connection experience.
-  - **Server** (`api/diagnostico.php`): runs `mtr` (real traceroute/ICMP) and
-    returns hops, latency, jitter and **real packet loss** for the route from the
-    server to the destination. The client sends only the destination index; the
-    host comes from a server-side allowlist (`api/diagnostico-targets.php`),
-    never from the request — a guard against command injection/SSRF. Result
-    cached for 60 s.
+  - **Server**: `mtr` (real traceroute/ICMP) returns hops, latency, jitter and
+    **real packet loss** for the route from the server to the destination. The
+    client sends only the destination index; the host comes from a server-side
+    allowlist (`api/diagnostico-targets.php`), never from the request — a guard
+    against command injection/SSRF. This measurement is **the same for every
+    client** (it is a property of the route, not of the tester's connection), so
+    `mtr` is run by a **cron job every 5 minutes**
+    (`scripts/atualizar-diagnostico.php`, all 9 destinations in parallel, atomic
+    writes) and the `api/diagnostico.php` endpoint **only reads the cache**.
+    Previously every request ran its own `mtr`, holding a PHP-FPM worker for up
+    to 25 s — with a cold cache and concurrent tests the pool saturated. Now the
+    server layer appears instantly and the `mtr` load is constant. The endpoint
+    refuses cache older than 30 min (if the cron stops, the section says
+    "unavailable" instead of showing a stale measurement as the current state),
+    and the UI reports the measurement's age.
 - Degrades gracefully: without the endpoint (or without `mtr`), the server
   section shows "unavailable" and the page keeps working with the client layer.
 - **Per-destination measurement** (the client measures what actually matters for

@@ -187,6 +187,15 @@ please get in touch with support@openspeedtest.com.
     <a href="/conectividade.html" target="_blank" data-i18n="app.menu.network">Rede</a>
   </nav>
 
+  <!-- Convite do teste "Fast": ao fim da medição de velocidade, a análise de rede
+       roda em segundo plano (o link está ocioso — é a única janela em que dá para
+       medir latência sem contaminar nada). Este botão revela o resultado, já
+       pronto, sem refazer o teste de velocidade. -->
+  <div id="vlk-net-cta" aria-hidden="true">
+    <button id="vlk-net-cta-btn" type="button" class="vlk-net-btn" data-i18n="connect.ctaOpen">Análise de rede</button>
+    <span id="vlk-net-cta-fb" class="vlk-net-fb" aria-live="polite"></span>
+  </div>
+
   <!-- Seção de rede embutida: preenchida pelo teste "Complete" (tenant.js dispara
        VLK_CONECT.run ao fim do teste de velocidade). Oculta no teste "Fast". -->
   <section id="vlk-net-inline" aria-hidden="true">
@@ -220,6 +229,7 @@ please get in touch with support@openspeedtest.com.
           <tbody id="vlk-net-srv"></tbody>
         </table>
       </div>
+      <p id="vlk-net-idade" class="aviso" style="display:none"></p>
       <p id="vlk-net-aviso" class="aviso" style="display:none" data-i18n="connect.srvUnavailable">O diagnóstico de traceroute do servidor não está disponível nesta instalação.</p>
       <p id="vlk-net-nota" class="aviso" style="display:none" data-i18n="connect.filteredNote">≈ o destino não responde a ICMP — a latência é medida até o último salto que respondeu, e a perda até o destino não é mensurável por ICMP (não indica problema).</p>
       <!-- Atalhos no FIM do relatório do teste "Complete": abrir o relatório e

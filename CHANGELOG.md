@@ -33,6 +33,17 @@ Registro de tudo que este fork mudou em relação ao
   resposta de rede, uma barra de navegação fixa no topo aparece assim que o
   usuário rola (some no topo para não duplicar o menu do próprio velocímetro),
   mantendo o acesso ao Relatório a qualquer momento.
+- **Análise de rede pré-aquecida após o teste Fast**: quando o teste rápido
+  termina, o link fica ocioso enquanto o usuário lê o resultado — a única janela
+  em que dá para medir latência sem contaminar nada (durante o teste de banda o
+  link está saturado, e medir ali daria números de bufferbloat além de roubar
+  banda da própria medição). Nessa janela a análise roda **em segundo plano, sem
+  aparecer na tela**, e um botão **"Análise de rede"** oferece o resultado já
+  pronto: abre a seção **instantaneamente**, sem refazer o teste de velocidade.
+  Se o usuário clicar antes de a medição terminar, a seção abre com as linhas
+  "aguardando…" e se preenche ao chegar. O resultado fica em `sessionStorage`
+  por 3 minutos, então um Complete pedido logo depois também aparece pronto.
+  Respeita `navigator.connection.saveData` (não mede em modo de economia).
 - **Botões "Relatório" e "Compartilhar" na resposta do Complete**: no topo da
   seção de conectividade, dois botões (pílula preenchida e contornada) dão acesso
   direto ao relatório e ao compartilhamento do PDF — a mesma ação da pílula do
@@ -49,11 +60,20 @@ Registro de tudo que este fork mudou em relação ao
     `fetch` no-cors). A latência é a **mediana das amostras mais rápidas** (descarta
     20% de picos) + o **mínimo** (melhor caso). O navegador não faz ICMP/traceroute
     — é uma aproximação (limite superior) da experiência real da conexão do usuário.
-  - **Servidor** (`api/diagnostico.php`): roda `mtr` (traceroute/ICMP real) e
-    devolve saltos, latência, jitter e **perda de pacotes reais** da rota do
-    servidor até o destino. O cliente envia só o índice do destino; o host vem da
-    allowlist server-side (`api/diagnostico-targets.php`), nunca do request —
-    trava contra injeção de comando/SSRF. Resultado cacheado 60 s.
+  - **Servidor**: `mtr` (traceroute/ICMP real) devolve saltos, latência, jitter e
+    **perda de pacotes reais** da rota do servidor até o destino. O cliente envia
+    só o índice do destino; o host vem da allowlist server-side
+    (`api/diagnostico-targets.php`), nunca do request — trava contra injeção de
+    comando/SSRF. Essa medição é **igual para todos os clientes** (é propriedade
+    da rota, não da conexão de quem testa), então quem executa o `mtr` é um
+    **cron de 5 em 5 minutos** (`scripts/atualizar-diagnostico.php`, os 9
+    destinos em paralelo, gravação atômica) e o endpoint `api/diagnostico.php`
+    **só lê o cache**. Antes cada requisição rodava o seu `mtr`, prendendo um
+    worker do PHP-FPM por até 25 s — com cache frio e testes simultâneos o pool
+    saturava. Agora a camada do servidor aparece na hora e a carga de `mtr` é
+    constante. O endpoint recusa cache com mais de 30 min (se o cron parar, a
+    seção diz "indisponível" em vez de mostrar medição velha como se fosse
+    atual) e a interface informa a idade da medição.
 - Degrada com elegância: sem o endpoint (ou sem `mtr`), a seção do servidor
   mostra "indisponível" e a página segue funcionando só com a camada do cliente.
 - **Medição por tipo de destino** (o cliente mede o que de fato importa em cada um):

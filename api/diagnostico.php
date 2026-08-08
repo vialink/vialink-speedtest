@@ -7,21 +7,28 @@
  * latência, jitter (desvio-padrão) e PERDA DE PACOTES. É o complemento ao que o
  * navegador mede da conexão do cliente (aquele não faz ICMP nem traceroute).
  *
+ * ESTE ENDPOINT NÃO EXECUTA mtr — ele só lê o cache alimentado pelo cron
+ * (scripts/atualizar-diagnostico.php, de 5 em 5 min). O motivo é que a medição
+ * é "nossa rede -> destino": idêntica para todos os clientes e independente de
+ * quem pediu. Produzi-la na requisição prendia um worker do PHP-FPM por até
+ * 25 s e, com vários testes simultâneos e cache frio, saturava o pool
+ * (pm.max_children=20). Ver o cabeçalho de api/diagnostico-lib.php.
+ *
  * SEGURANÇA (inegociável):
  *   - O cliente envia SÓ o índice do destino; o host vem da allowlist do
  *     servidor (diagnostico-targets.php), nunca do request → sem injeção/SSRF.
- *   - O host ainda passa por escapeshellarg; mtr roda sob `timeout` e com -n.
- *   - Resultado é cacheado por CACHE_TTL para limitar carga/abuso.
- *
- * Requisitos no servidor: binário `mtr` com permissão de socket ICMP
- *   (setcap cap_net_raw+ep /usr/sbin/mtr-packet — feito no provisionamento).
+ *   - Como não há execução aqui, o endpoint não tem custo além de ler um arquivo.
  */
+
+require __DIR__ . '/diagnostico-lib.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-const MTR_CYCLES = 5;    // pacotes por salto
-const MTR_TIMEOUT = 25;  // segundos (guarda do processo)
-const CACHE_TTL = 60;    // segundos que o resultado fica em cache
+// Idade máxima aceitável do cache: 6 ciclos do cron. Acima disso a medição é
+// velha demais para ser apresentada como estado atual da rota — respondemos
+// "sem dados" (a UI mostra o aviso) em vez de mostrar verde antigo durante um
+// problema em curso. `stale` fica na resposta para diagnóstico.
+const CACHE_MAX_AGE = 1800;
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
@@ -46,69 +53,33 @@ if ($idx < 0 || $idx >= count($targets)) {
 }
 $host = $targets[$idx];
 
-// ---- Cache (limita carga e abuso) ----
-$cacheFile = sys_get_temp_dir() . '/vlk-diag-' . $idx . '.json';
-if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < CACHE_TTL) {
-    $c = file_get_contents($cacheFile);
-    if ($c !== false && $c !== '') { echo $c; exit; }
-}
+$cacheFile = vlk_diag_cache_file($idx);
+$mtime = is_file($cacheFile) ? filemtime($cacheFile) : 0;
+$idade = $mtime ? (time() - $mtime) : null;
 
-// ---- Executa o mtr ----
-$cmd = 'timeout ' . MTR_TIMEOUT . ' mtr -n -4 -c ' . MTR_CYCLES
-     . ' --json ' . escapeshellarg($host) . ' 2>/dev/null';
-$saida = shell_exec($cmd);
-
-$mtr = $saida ? json_decode($saida, true) : null;
-$hubs = $mtr['report']['hubs'] ?? null;
-if (!is_array($hubs) || !count($hubs)) {
-    // mtr ausente, sem permissão ICMP, ou destino totalmente inalcançável
-    $resp = json_encode(['ok' => true, 'host' => $host, 'hops' => null, 'dest' => null]);
-    @file_put_contents($cacheFile, $resp);
-    echo $resp;
+if (!$mtime || $idade > CACHE_MAX_AGE) {
+    // Cache ausente (cron nunca rodou / recém-instalado) ou velho demais
+    // (cron parado). Não medimos aqui — apenas informamos.
+    echo json_encode([
+        'ok'    => true,
+        'host'  => $host,
+        'hops'  => null,
+        'dest'  => null,
+        'age'   => $idade,
+        'stale' => true,
+    ]);
     exit;
 }
 
-// As chaves do mtr vêm com sufixo (Avg, Best, Wrst, StDev, Loss%) — normalizamos.
-$num = static function (array $h, string $k) {
-    foreach ($h as $key => $v) {
-        if (strcasecmp($key, $k) === 0 || stripos($key, $k) === 0) {
-            return is_numeric($v) ? (float)$v : null;
-        }
-    }
-    return null;
-};
-
-// Escolhe o salto-destino varrendo de trás pra frente até o último salto que
-// REALMENTE respondeu (host != '???' e perda < 100%). Muitos destinos (Netflix,
-// Microsoft, etc.) filtram ICMP no fim: o último salto viria como '???'/100%,
-// o que NÃO é perda real — é ICMP bloqueado. Nesses casos reportamos o salto
-// mais profundo que respondeu e marcamos filtered=true (o destino em si não é
-// mensurável por ICMP).
-$dest = null;
-$ultimoIdx = count($hubs) - 1;
-for ($k = $ultimoIdx; $k >= 0; $k--) {
-    $h = $hubs[$k];
-    $loss = $num($h, 'Loss');
-    $hhost = $h['host'] ?? '???';
-    if ($hhost !== '???' && $loss !== null && $loss < 100) {
-        $dest = [
-            'avg'      => $num($h, 'Avg'),
-            'jitter'   => $num($h, 'StDev'),
-            'loss'     => $loss,
-            'best'     => $num($h, 'Best'),
-            'worst'    => $num($h, 'Wrst'),
-            'host'     => $hhost,
-            'filtered' => ($k !== $ultimoIdx),
-        ];
-        break;
-    }
+$conteudo = @file_get_contents($cacheFile);
+$resp = $conteudo ? json_decode($conteudo, true) : null;
+if (!is_array($resp)) {
+    echo json_encode(['ok' => true, 'host' => $host, 'hops' => null, 'dest' => null, 'age' => $idade, 'stale' => true]);
+    exit;
 }
 
-$resp = json_encode([
-    'ok'   => true,
-    'host' => $host,
-    'hops' => count($hubs),
-    'dest' => $dest,
-]);
-@file_put_contents($cacheFile, $resp);
-echo $resp;
+// A idade é do arquivo, não do conteúdo — o front usa para dizer ao usuário
+// "medição do servidor: há N min", já que o dado é compartilhado e não foi
+// coletado no clique dele.
+$resp['age'] = $idade;
+echo json_encode($resp);

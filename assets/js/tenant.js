@@ -674,9 +674,77 @@ function injectTenantBranding() {
     onScroll();
   }
 
-  function vlkRunNetworkInline() {
+  var NET_OPTS = {
+    clienteId: 'vlk-net-cli', servidorId: 'vlk-net-srv',
+    avisoId: 'vlk-net-aviso', notaId: 'vlk-net-nota', idadeId: 'vlk-net-idade'
+  };
+
+  // Validade do resultado pré-aquecido. Curta de propósito: passado isso, a
+  // conexão do usuário pode ter mudado e a medição deixa de representá-la.
+  var VLK_NET_TTL = 3 * 60 * 1000;
+  var vlkNetPromise = null; // pré-aquecimento em curso (reaproveitado pelo botão)
+
+  function vlkNetCacheGrava(res) {
+    try {
+      sessionStorage.setItem('vlkNetPrewarm', JSON.stringify({ res: res, ts: Date.now() }));
+    } catch (e) {}
+  }
+
+  function vlkNetCacheLe() {
+    try {
+      var o = JSON.parse(sessionStorage.getItem('vlkNetPrewarm'));
+      if (!o || !o.res || (Date.now() - o.ts) > VLK_NET_TTL) return null;
+      return o.res;
+    } catch (e) { return null; }
+  }
+
+  // Adota um resultado: publica para o relatório/PDF e grava no banco.
+  function vlkNetAdota(res) {
+    if (!res || (!res.cliente.length && !res.servidor.length)) return;
+    window.vlkNetResults = res;
+    try {
+      localStorage.setItem('vlkNetResults', JSON.stringify({
+        cliente: res.cliente, servidor: res.servidor,
+        houveFiltrado: res.houveFiltrado, ts: Date.now()
+      }));
+    } catch (e) {}
+    vlkSalvarConectividade(res); // grava a conectividade no banco (testes_rede)
+  }
+
+  // Pré-aquecimento: mede a rede em segundo plano, sem tocar na tela.
+  //
+  // Só faz sentido DEPOIS do "All done": durante o teste de banda o link está
+  // saturado, e qualquer medição de latência/jitter sairia inútil (bufferbloat)
+  // além de roubar banda da própria medição de velocidade. Já no fim do teste o
+  // link fica ocioso enquanto o usuário lê o resultado — ~25 s livres, que é
+  // exatamente o tempo da análise.
+  function vlkPrewarmRede() {
+    if (vlkNetPromise) return vlkNetPromise;
+    if (!window.VLK_CONECT) return null;
+    // Economia de dados ligada: não medimos o que o usuário não pediu
+    var con = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (con && con.saveData) return null;
+
+    var cache = vlkNetCacheLe();
+    if (cache) {
+      vlkNetAdota(cache);
+      vlkNetPromise = Promise.resolve(cache);
+      return vlkNetPromise;
+    }
+    vlkNetPromise = window.VLK_CONECT.run({ silent: true }).then(function (res) {
+      if (res && (res.cliente.length || res.servidor.length)) {
+        vlkNetCacheGrava(res);
+        vlkNetAdota(res);
+      }
+      return res;
+    });
+    return vlkNetPromise;
+  }
+
+  // Revela a seção de rede embutida (e rola até ela)
+  function vlkAbreSecaoRede() {
     var sec = document.getElementById('vlk-net-inline');
-    if (!sec || !window.VLK_CONECT) return;
+    if (!sec || !window.VLK_CONECT) return null;
     document.body.classList.add('vlk-complete-open');
     vlkSetupStickyScroll();
     sec.classList.add('aberto');
@@ -684,21 +752,55 @@ function injectTenantBranding() {
     setTimeout(function () {
       try { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
     }, 60);
-    window.VLK_CONECT.run({
-      clienteId: 'vlk-net-cli', servidorId: 'vlk-net-srv',
-      avisoId: 'vlk-net-aviso', notaId: 'vlk-net-nota'
-    }).then(function (res) {
-      if (res && (res.cliente.length || res.servidor.length)) {
-        window.vlkNetResults = res;
-        try {
-          localStorage.setItem('vlkNetResults', JSON.stringify({
-            cliente: res.cliente, servidor: res.servidor,
-            houveFiltrado: res.houveFiltrado, ts: Date.now()
-          }));
-        } catch (e) {}
-        vlkSalvarConectividade(res); // grava a conectividade no banco (testes_rede)
-      }
+    return sec;
+  }
+
+  // Teste "Complete": ao fim da velocidade, abre a seção e mostra a análise.
+  // Se o pré-aquecimento desta sessão ainda estiver válido (ex.: o usuário fez
+  // um teste rápido, recarregou e pediu o Complete), o resultado aparece na
+  // hora, sem remedir.
+  function vlkRunNetworkInline() {
+    if (!vlkAbreSecaoRede()) return;
+    var cache = vlkNetCacheLe();
+    if (cache) {
+      window.VLK_CONECT.render(NET_OPTS, cache);
+      vlkNetAdota(cache);
+      return;
+    }
+    window.VLK_CONECT.run(NET_OPTS).then(function (res) {
+      vlkNetCacheGrava(res);
+      vlkNetAdota(res);
     });
+  }
+
+  // Teste "Fast": abre a seção com o resultado que já foi medido em segundo
+  // plano. Se a medição ainda não terminou, mostra as linhas pendentes e pinta
+  // quando ela chegar — em nenhum caso o teste de velocidade é refeito.
+  function vlkAbreRedePreAquecida(p) {
+    if (!vlkAbreSecaoRede()) return;
+    if (window.vlkNetResults) {
+      window.VLK_CONECT.render(NET_OPTS, window.vlkNetResults);
+      return;
+    }
+    window.VLK_CONECT.placeholder(NET_OPTS);
+    if (p) p.then(function (res) { if (res) window.VLK_CONECT.render(NET_OPTS, res); });
+    else vlkRunNetworkInline(); // pré-aquecimento indisponível: mede ao vivo
+  }
+
+  // Convite "Análise de rede" no fim do teste rápido
+  function vlkMostraCtaRede() {
+    var cta = document.getElementById('vlk-net-cta');
+    var btn = document.getElementById('vlk-net-cta-btn');
+    var fb  = document.getElementById('vlk-net-cta-fb');
+    if (!cta || !btn) return;
+    var p = vlkNetPromise;
+    document.body.classList.add('vlk-cta-ready');
+    cta.setAttribute('aria-hidden', 'false');
+    if (fb && p && !window.vlkNetResults) {
+      fb.textContent = vlkT('connect.ctaPreparing');
+      p.then(function () { fb.textContent = ''; });
+    }
+    btn.addEventListener('click', function () { vlkAbreRedePreAquecida(p); }, { once: true });
   }
 
   // Observa oDoLiveStatus: quando "All done", troca a barra de progresso pelo
@@ -735,8 +837,16 @@ function injectTenantBranding() {
         relatorioEls.forEach(function (el) { if (el.removeAttribute) el.removeAttribute('opacity'); });
         vlkLoadJsPdf();
         vlkLoadGear();
-        // Teste "Complete": encadeia a análise de rede logo após a velocidade
-        if (window.vlkTestMode === 'complete') vlkRunNetworkInline();
+        // Teste "Complete": encadeia a análise de rede logo após a velocidade.
+        // Teste "Fast": mede a rede em segundo plano (o link está ocioso agora)
+        // e oferece o resultado num botão — se o usuário quiser, ele aparece
+        // pronto, sem refazer o teste de velocidade.
+        if (window.vlkTestMode === 'complete') {
+          vlkRunNetworkInline();
+        } else {
+          vlkPrewarmRede();
+          setTimeout(vlkMostraCtaRede, 1200);
+        }
       }
     });
     statusObs.observe(statusEl, { childList: true, characterData: true, subtree: true });

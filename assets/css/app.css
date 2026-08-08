@@ -517,7 +517,8 @@ body.vlk-complete-open { background: #0f0f0f; }
   display: flex; align-items: center; flex-wrap: wrap;
   gap: 12px; margin: 28px 0 6px;
 }
-#vlk-net-inline .vlk-net-btn {
+/* Compartilhado pelos atalhos do fim da seção e pelo convite do teste rápido */
+.vlk-net-btn {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 20px; border-radius: 999px;
   border: 1px solid var(--vlk-accent, #0095BE);
@@ -526,10 +527,29 @@ body.vlk-complete-open { background: #0f0f0f; }
   font-size: 14px; font-weight: 500; line-height: 1;
   text-decoration: none; cursor: pointer;
 }
-#vlk-net-inline .vlk-net-btn.ghost { background: transparent; color: var(--vlk-accent, #0095BE); }
-#vlk-net-inline .vlk-net-btn:hover { filter: brightness(1.12); }
-#vlk-net-inline .vlk-net-btn.ghost:hover { background: rgba(255, 255, 255, .06); filter: none; }
-#vlk-net-inline .vlk-net-fb { color: #9a9a9c; font-size: 13px; }
+.vlk-net-btn.ghost { background: transparent; color: var(--vlk-accent, #0095BE); }
+.vlk-net-btn:hover { filter: brightness(1.12); }
+.vlk-net-btn.ghost:hover { background: rgba(255, 255, 255, .06); filter: none; }
+.vlk-net-fb { color: #9a9a9c; font-size: 13px; }
+
+/* Convite "Análise de rede" — aparece ao fim do teste rápido, enquanto a
+   medição de rede roda (ou já rodou) em segundo plano. Fica fixo no rodapé da
+   janela para não disputar espaço com o velocímetro, que é dimensionado em
+   viewport. Some assim que a seção de rede abre. */
+#vlk-net-cta {
+  display: none;
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 14px; z-index: 60;
+  align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 999px;
+  background: rgba(20, 20, 22, .82);
+  backdrop-filter: blur(4px);
+}
+body.vlk-cta-ready #vlk-net-cta { display: flex; }
+body.vlk-complete-open #vlk-net-cta { display: none; }
+#vlk-net-cta .vlk-net-fb { padding-right: 6px; }
+/* Sem texto de status a pílula não deve ficar com sobra à direita */
+#vlk-net-cta .vlk-net-fb:empty { display: none; }
 #vlk-net-inline h2 {
   font-size: 20px;
   font-weight: 500;

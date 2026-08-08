@@ -188,10 +188,22 @@
   }
 
   // ---- Renderização + execução ----
-  // Este módulo expõe window.VLK_CONECT.run(opts) — usado tanto pela página
-  // standalone (conectividade.html) quanto pela seção embutida no teste
-  // "Complete" (index.html). Cada página tem UM conjunto de tabelas, então os
-  // ids de linha 'cli-N'/'srv-N' nunca colidem.
+  // Este módulo expõe:
+  //
+  //   VLK_CONECT.run(opts)          mede e, salvo modo silencioso, pinta ao vivo
+  //   VLK_CONECT.render(opts, res)  pinta a partir de um resultado já medido
+  //   VLK_CONECT.placeholder(opts)  pinta as linhas "aguardando…"
+  //
+  // É usado pela página standalone (conectividade.html) e pela seção embutida no
+  // teste "Complete" (index.html). Cada página tem UM conjunto de tabelas, então
+  // os ids de linha 'cli-N'/'srv-N' nunca colidem.
+  //
+  // O modo silencioso (opts.silent) existe para o PRÉ-AQUECIMENTO: quando o
+  // teste rápido termina, o link fica ocioso e o usuário está lendo o resultado
+  // — é a única janela em que dá para medir latência sem contaminar nada (medir
+  // DURANTE o teste de banda daria números de link saturado e ainda roubaria
+  // banda da medição). Medimos ali, sem tabelas na tela; se o usuário pedir a
+  // análise depois, render() pinta o resultado instantaneamente.
   var houveFiltrado = false;
 
   function celula(valor, classe) {
@@ -210,139 +222,200 @@
     return t.labelKey ? tr(t.labelKey, t.label) : t.label;
   }
 
-  function linhaClienteInicial(t, idx) {
-    var sub = subDestino(t);
-    return '<tr id="cli-' + idx + '">' +
-      '<td class="destino">' + rotulo(t) + '<br><span class="host">' + sub + '</span></td>' +
+  function celulaDestino(label, sub) {
+    return '<td class="destino">' + label + '<br><span class="host">' + sub + '</span></td>';
+  }
+
+  function linhaPendente(id, label, sub) {
+    return '<tr id="' + id + '">' + celulaDestino(label, sub) +
       '<td class="estado" colspan="4">' + tr('connect.pending', 'aguardando…') + '</td></tr>';
   }
 
-  function preencheCliente(idx, r) {
-    var tr_ = document.getElementById('cli-' + idx);
-    if (!tr_) return;
-    if (!r.amostras) {
-      tr_.innerHTML = tr_.querySelector('.destino').outerHTML +
-        '<td class="ruim" colspan="4">' + tr('connect.unreachable', 'sem resposta no navegador') + '</td>';
-      return;
+  // Células de resultado a partir do registro já coletado (o mesmo formato que
+  // vai para o relatório e para o banco). Ficam separadas da medição para que
+  // um resultado pré-aquecido possa ser pintado depois, sem remedir.
+  function celulasCliente(c) {
+    if (!c || !c.amostras) {
+      return '<td class="ruim" colspan="4">' + tr('connect.unreachable', 'sem resposta no navegador') + '</td>';
     }
     // Latência = mediana (típica); segunda linha mostra o mínimo (melhor caso).
-    var latCell = '<td class="' + classeLatencia(r.latency) + '">' + fmt(r.latency) + ' ms'
-      + '<br><span class="host">' + tr('connect.min', 'mín') + ' ' + fmt(r.min) + ' ms</span></td>';
-    tr_.innerHTML = tr_.querySelector('.destino').outerHTML +
-      latCell +
-      celula(fmt(r.jitter) + ' ms', classeJitter(r.jitter)) +
-      celula(fmt(r.loss, 0) + '%', classePerda(r.loss)) +
-      celula(r.amostras + '/' + SAMPLES, '');
+    return '<td class="' + classeLatencia(c.latency) + '">' + fmt(c.latency) + ' ms' +
+      '<br><span class="host">' + tr('connect.min', 'mín') + ' ' + fmt(c.min) + ' ms</span></td>' +
+      celula(fmt(c.jitter) + ' ms', classeJitter(c.jitter)) +
+      celula(fmt(c.loss, 0) + '%', classePerda(c.loss)) +
+      celula(c.amostras + '/' + SAMPLES, '');
   }
 
-  function linhaServidorInicial(t, idx) {
-    return '<tr id="srv-' + idx + '">' +
-      '<td class="destino">' + rotulo(t) + '<br><span class="host">' + t.host + '</span></td>' +
-      '<td class="estado" colspan="4">' + tr('connect.pending', 'aguardando…') + '</td></tr>';
-  }
-
-  function preencheServidor(idx, j) {
-    var tr_ = document.getElementById('srv-' + idx);
-    if (!tr_) return;
-    var destinoHtml = tr_.querySelector('.destino').outerHTML;
-    if (!j || !j.dest) {
-      tr_.innerHTML = destinoHtml + '<td class="estado" colspan="4">' + tr('connect.srvNa', 'indisponível') + '</td>';
-      return;
+  function celulasServidor(s) {
+    if (!s || s.na) {
+      return '<td class="estado" colspan="4">' + tr('connect.srvNa', 'indisponível') + '</td>';
     }
-    var d = j.dest;
     var latTxt, lossTxt, lossCls;
-    if (d.filtered) {
+    if (s.filtered) {
       // Destino filtra ICMP: a latência é até o último salto que respondeu e a
       // perda até o destino não é mensurável por ICMP.
-      latTxt = '≈ ' + fmt(d.avg) + ' ms';
+      latTxt = '≈ ' + fmt(s.avg) + ' ms';
       lossTxt = '—'; lossCls = '';
-      houveFiltrado = true;
     } else {
-      latTxt = fmt(d.avg) + ' ms';
-      lossTxt = fmt(d.loss, 0) + '%'; lossCls = classePerda(d.loss);
+      latTxt = fmt(s.avg) + ' ms';
+      lossTxt = fmt(s.loss, 0) + '%'; lossCls = classePerda(s.loss);
     }
-    tr_.innerHTML = destinoHtml +
-      celula((j.hops != null ? j.hops : '—'), '') +
-      celula(latTxt, classeLatencia(d.avg)) +
-      celula(fmt(d.jitter) + ' ms', classeJitter(d.jitter)) +
+    return celula((s.hops != null ? s.hops : '—'), '') +
+      celula(latTxt, classeLatencia(s.avg)) +
+      celula(fmt(s.jitter) + ' ms', classeJitter(s.jitter)) +
       celula(lossTxt, lossCls);
   }
 
-  // Executa a análise nas tabelas indicadas por opts e devolve os resultados
-  // coletados (para o relatório). opts:
-  //   { clienteId, servidorId, avisoId?, notaId?, onStart?, onFinish? }
+  // Resposta do endpoint -> registro persistível (relatório/banco)
+  function normServidor(t, j) {
+    var d = j && j.dest;
+    return {
+      label: rotulo(t), host: t.host,
+      hops: (j && j.hops != null) ? j.hops : null,
+      avg: d ? d.avg : null, jitter: d ? d.jitter : null,
+      loss: d ? d.loss : null, filtered: !!(d && d.filtered), na: !d
+    };
+  }
+
+  function preencheLinha(id, celulas) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = el.querySelector('.destino').outerHTML + celulas;
+  }
+
+  // A camada do servidor é COMPARTILHADA (a rota "nossa rede -> destino" é a
+  // mesma para todo cliente) e vem de um cache atualizado por cron. Dizer há
+  // quanto tempo foi medida é mais honesto do que deixar parecer que saiu do
+  // clique deste usuário.
+  function textoIdade(seg) {
+    if (seg < 90) return tr('connect.srvAgeNow', 'Medição do servidor: agora há pouco.');
+    return tr('connect.srvAge', 'Medição do servidor: há {n} min — a rota é a mesma para todos os clientes e é atualizada a cada 5 minutos.', { n: Math.round(seg / 60) });
+  }
+
+  function aplicaNotas(opts, res) {
+    var aviso = opts.avisoId ? document.getElementById(opts.avisoId) : null;
+    var nota  = opts.notaId  ? document.getElementById(opts.notaId)  : null;
+    var idade = opts.idadeId ? document.getElementById(opts.idadeId) : null;
+    if (aviso) aviso.style.display = res.temServidor ? 'none' : '';
+    if (nota)  nota.style.display  = res.houveFiltrado ? '' : 'none';
+    if (idade) {
+      var mostra = res.temServidor && res.idade != null;
+      idade.textContent = mostra ? textoIdade(res.idade) : '';
+      idade.style.display = mostra ? '' : 'none';
+    }
+  }
+
+  // Pinta as linhas "aguardando…" (usado ao abrir a seção antes de haver dados)
+  function placeholder(opts) {
+    var alvos = (window._tenantConfig || {}).connectivityTargets || [];
+    var cc = document.getElementById(opts.clienteId);
+    var cs = document.getElementById(opts.servidorId);
+    if (cc) {
+      cc.innerHTML = alvos.map(function (t, i) {
+        return linhaPendente('cli-' + i, rotulo(t), subDestino(t));
+      }).join('');
+    }
+    if (cs) {
+      cs.innerHTML = alvos.map(function (t, i) {
+        return linhaPendente('srv-' + i, rotulo(t), t.host);
+      }).join('');
+    }
+  }
+
+  // Pinta um resultado JÁ medido (pré-aquecimento ou cache de sessão)
+  function render(opts, res) {
+    if (!res) return;
+    var cc = document.getElementById(opts.clienteId);
+    var cs = document.getElementById(opts.servidorId);
+    if (cc) {
+      cc.innerHTML = (res.cliente || []).map(function (c) {
+        return '<tr>' + celulaDestino(c.label, c.sub) + celulasCliente(c) + '</tr>';
+      }).join('');
+    }
+    if (cs) {
+      cs.innerHTML = (res.servidor || []).map(function (s) {
+        return '<tr>' + celulaDestino(s.label, s.host) + celulasServidor(s) + '</tr>';
+      }).join('');
+    }
+    aplicaNotas(opts, res);
+  }
+
+  // Executa a análise e devolve os resultados coletados (para o relatório). opts:
+  //   { clienteId, servidorId, avisoId?, notaId?, idadeId?, silent?, onStart?, onFinish? }
+  // Com silent=true não toca no DOM — é o modo do pré-aquecimento.
   var rodando = false;
   async function run(opts) {
     opts = opts || {};
+    var mudo = !!opts.silent;
     var alvos = (window._tenantConfig || {}).connectivityTargets || [];
-    var corpoCliente  = document.getElementById(opts.clienteId);
-    var corpoServidor = document.getElementById(opts.servidorId);
-    var avisoServidor = opts.avisoId ? document.getElementById(opts.avisoId) : null;
-    var notaFiltrado  = opts.notaId ? document.getElementById(opts.notaId) : null;
-    if (rodando || !corpoCliente || !corpoServidor || !alvos.length) {
-      return { cliente: [], servidor: [], temServidor: false, houveFiltrado: false };
-    }
+    var corpoCliente  = mudo ? null : document.getElementById(opts.clienteId);
+    var corpoServidor = mudo ? null : document.getElementById(opts.servidorId);
+    var vazio = { cliente: [], servidor: [], temServidor: false, houveFiltrado: false, idade: null };
+    if (rodando || !alvos.length) return vazio;
+    if (!mudo && (!corpoCliente || !corpoServidor)) return vazio;
+
     rodando = true;
     houveFiltrado = false;
-    if (notaFiltrado) notaFiltrado.style.display = 'none';
-    if (avisoServidor) avisoServidor.style.display = 'none';
     if (opts.onStart) opts.onStart();
-
-    // Reinicia as tabelas
-    corpoCliente.innerHTML = '';
-    corpoServidor.innerHTML = '';
-    for (var i = 0; i < alvos.length; i++) {
-      corpoCliente.insertAdjacentHTML('beforeend', linhaClienteInicial(alvos[i], i));
-      corpoServidor.insertAdjacentHTML('beforeend', linhaServidorInicial(alvos[i], i));
+    if (!mudo) {
+      aplicaNotas(opts, vazio);           // esconde notas da rodada anterior
+      placeholder(opts);                  // reinicia as tabelas
     }
 
     var resCliente = new Array(alvos.length);
     var resServidor = new Array(alvos.length);
 
-    // Dispara TODOS os diagnósticos do servidor em paralelo (rodam no CT714,
-    // não competem com a medição do cliente). Preenche cada um ao chegar.
+    // Dispara TODOS os diagnósticos do servidor em paralelo (leem o cache do
+    // cron no CT714 — não competem com a medição do cliente). O `idade` é o
+    // mais velho dos retornos: todos vêm do mesmo ciclo do cron.
     var temServidor = false;
+    var idade = null;
     var promServidor = alvos.map(function (t, idx) {
       return diagnosticoServidor(idx).then(function (j) {
         if (j) temServidor = true;
-        preencheServidor(idx, j);
-        var d = j && j.dest;
-        resServidor[idx] = {
-          label: rotulo(t), host: t.host,
-          hops: (j && j.hops != null) ? j.hops : null,
-          avg: d ? d.avg : null, jitter: d ? d.jitter : null,
-          loss: d ? d.loss : null, filtered: !!(d && d.filtered), na: !d
-        };
+        if (j && typeof j.age === 'number' && (idade === null || j.age > idade)) idade = j.age;
+        var s = normServidor(t, j);
+        if (s.filtered) houveFiltrado = true;
+        resServidor[idx] = s;
+        if (!mudo) preencheLinha('srv-' + idx, celulasServidor(s));
       });
     });
 
     // Camada cliente: sequencial (destinos em paralelo disputariam a banda e
     // inflariam a latência). Atualiza a linha ao terminar cada destino.
     for (var a = 0; a < alvos.length; a++) {
-      var tr_ = document.getElementById('cli-' + a);
-      var estado = tr_ && tr_.querySelector('.estado');
+      var estado = null;
+      if (!mudo) {
+        var tr_ = document.getElementById('cli-' + a);
+        estado = tr_ && tr_.querySelector('.estado');
+      }
       /* eslint-disable no-loop-func */
       var r = await medeCliente(alvos[a], (function (cell) {
-        return function (n, tot) { if (cell) cell.textContent = tr('connect.measuring', 'medindo… {n}/{tot}', { n: n, tot: tot }); };
+        if (!cell) return null;
+        return function (n, tot) { cell.textContent = tr('connect.measuring', 'medindo… {n}/{tot}', { n: n, tot: tot }); };
       })(estado));
-      preencheCliente(a, r);
-      resCliente[a] = {
+      var c = {
         label: rotulo(alvos[a]), sub: subDestino(alvos[a]),
         latency: r.latency, min: r.min, jitter: r.jitter,
         loss: r.loss, amostras: r.amostras
       };
+      resCliente[a] = c;
+      if (!mudo) preencheLinha('cli-' + a, celulasCliente(c));
     }
 
     await Promise.all(promServidor);
-    if (!temServidor && avisoServidor) avisoServidor.style.display = '';
-    if (houveFiltrado && notaFiltrado) notaFiltrado.style.display = '';
+    var res = {
+      cliente: resCliente, servidor: resServidor,
+      temServidor: temServidor, houveFiltrado: houveFiltrado, idade: idade
+    };
+    if (!mudo) aplicaNotas(opts, res);
     if (opts.onFinish) opts.onFinish();
     rodando = false;
 
-    return { cliente: resCliente, servidor: resServidor, temServidor: temServidor, houveFiltrado: houveFiltrado };
+    return res;
   }
 
-  window.VLK_CONECT = { run: run };
+  window.VLK_CONECT = { run: run, render: render, placeholder: placeholder };
 
   // Página standalone (conectividade.html): liga o botão à execução.
   function init() {
@@ -353,7 +426,7 @@
     botao.addEventListener('click', function () {
       run({
         clienteId: 'tabela-cliente', servidorId: 'tabela-servidor',
-        avisoId: 'aviso-servidor', notaId: 'nota-filtrado',
+        avisoId: 'aviso-servidor', notaId: 'nota-filtrado', idadeId: 'nota-idade',
         onStart:  function () { botao.disabled = true;  botao.textContent = tr('connect.running', 'Analisando…'); },
         onFinish: function () { botao.disabled = false; botao.textContent = tr('connect.again', 'Analisar novamente'); }
       });

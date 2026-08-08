@@ -527,9 +527,12 @@ and packet loss** to a list of destinations, in two independent layers:
   the browser has no raw-socket access, so *ping*/*traceroute* are impossible
   there — but it is a good approximation of the user's real connection
   experience. It needs nothing on the server.
-- **Server (optional):** the `api/diagnostico.php` endpoint runs `mtr`
-  (real traceroute/ICMP) on the server itself and returns hops, latency, jitter
-  and **real packet loss** for the route *from the server* to the destination.
+- **Server (optional):** `mtr` (real traceroute/ICMP) running on the server
+  returns hops, latency, jitter and **real packet loss** for the route *from the
+  server* to the destination. That measurement is **the same for every client**
+  (it is a property of your route, not of the tester's connection), so it is
+  produced by a **cron job** — `scripts/atualizar-diagnostico.php`, every 5 min —
+  and the `api/diagnostico.php` endpoint only reads the cache. See step 4 for why.
 
 ### Destinations
 
@@ -562,9 +565,32 @@ can't do TLS against the raw IP); the server measures the IP directly.
    }
    ```
 
-Without the endpoint (or without `mtr`), the server section shows "unavailable"
-and the page keeps working with the client layer only. Each destination's result
-is cached for 60 s on the server to limit load/abuse.
+4. **Schedule the cron job that fills the cache** — without it the server section
+   stays permanently "unavailable", because the endpoint never runs `mtr`:
+   ```bash
+   install -d -o www-data -g www-data -m 755 /var/cache/vlk-speedtest
+   sudo -u www-data php /var/www/speedtest/scripts/atualizar-diagnostico.php  # first load
+   cat > /etc/cron.d/vlk-speedtest-diagnostico <<'EOF'
+   */5 * * * * www-data flock -n /var/cache/vlk-speedtest/.lock /usr/bin/php /var/www/speedtest/scripts/atualizar-diagnostico.php --quiet
+   EOF
+   ```
+
+**Why a cron job instead of measuring per request.** `mtr` takes 10–25 s. If every
+visitor triggered their own, each request would hold a PHP-FPM worker for that
+long — with a handful of concurrent tests and a cold cache the pool saturates
+(`pm.max_children`) and the whole site stops responding. Since the result is
+identical for everyone, producing it outside the request path removes the problem:
+the endpoint becomes a file read, the `mtr` load becomes constant and predictable,
+and the server layer shows up **instantly** for the user.
+
+The endpoint refuses cache older than 30 minutes (6 cron cycles) — if the cron
+stops, the section shows "unavailable" instead of presenting a stale measurement
+as the current state of the route. The UI also reports the measurement's age
+("Server measurement: N min ago"), since it is shared rather than collected on
+the user's click.
+
+Without the endpoint (or without `mtr`/cron), the server section shows
+"unavailable" and the page keeps working with the client layer only.
 
 ### Netflix via the local OCA (optional)
 
