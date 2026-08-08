@@ -30,6 +30,10 @@ backend — any web server will do.
   that also measures **network health**: latency, jitter and packet loss to
   popular destinations (Google, Netflix, WhatsApp, DNS resolvers…), from **two
   vantage points** — the browser *and* the server (real `traceroute`/ICMP).
+- **Connection quality** — what an average in Mbps hides: **bufferbloat**
+  (latency measured *while* the link is saturated, graded A+ to F), **initial
+  burst vs. sustained** speed, and **stability** (variation, minimum, drops).
+  Derived from the speed test itself, at no extra time cost.
 - **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.

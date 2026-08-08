@@ -961,6 +961,16 @@ window.onload = function() {
       var Engine = setInterval(function() {
         if (Status === "Loaded") {
           Status = "busy";
+          // Qualidade da conexão: a latência ociosa é medida agora, junto com o
+          // ping — é a única janela do teste em que o link ainda está livre, e
+          // sem ela não há com o que comparar a latência sob carga.
+          if (window.VLK_QOS) {
+            try {
+              VLK_QOS.reset(upAdjust * vlkFactor());
+              var srv0 = openSpeedTestServerList && openSpeedTestServerList[0];
+              if (srv0 && srv0[pingFile]) VLK_QOS.baselineStart(srv0[pingFile]);
+            } catch (e) {}
+          }
           sendPing(0);
         }
         if (Status === "Ping") {
@@ -969,6 +979,8 @@ window.onload = function() {
         }
         if (Status === "Estimating") {
           Status = "busy";
+          // A estimativa já puxa dados: acaba aqui a janela de link ocioso.
+          if (window.VLK_QOS) VLK_QOS.endPhase();
           runEstimation();
         }
         if (Status === "Download") {
@@ -989,8 +1001,10 @@ window.onload = function() {
             dReset = extraTime;
             Show.progress(1, dlDuration + 2.5);
             dlDuration += extraTime;
+            if (window.VLK_QOS) VLK_QOS.beginPhase("dl");
           }
           downloadTimeing = (window.performance.now() - downloadTime) / 1000;
+          if (window.VLK_QOS) VLK_QOS.tick("dl", dLoaded, downloadTimeing);
           reportCurrentSpeed("dl");
           Show.showStatus(vlkT('status.mbpsDown'));
           Show.mainGaugeProgress(currentSpeed);
@@ -1005,6 +1019,7 @@ window.onload = function() {
             } else {
               Show.GaugeProgresstoZero(currentSpeed, "Upload");
             }
+            if (window.VLK_QOS) VLK_QOS.endPhase();
             Show.downloadResult(downloadSpeed);
             dataUsedfordl = dLoaded;
             stop = 1;
@@ -1036,15 +1051,18 @@ window.onload = function() {
             uReset = extraUTime;
             Show.progress(false, ulDuration + 2.5);
             ulDuration += extraUTime;
+            if (window.VLK_QOS) VLK_QOS.beginPhase("ul");
           }
           Show.showStatus(vlkT('status.mbpsUp'));
           uploadTimeing = (window.performance.now() - uploadTime) / 1000;
+          if (window.VLK_QOS) VLK_QOS.tick("ul", uLoaded, uploadTimeing);
           reportCurrentSpeed("up");
           Show.mainGaugeProgress(currentSpeed);
           Show.LiveSpeed(currentSpeed);
           Show.Graph(currentSpeed, 1);
           uploadSpeed = Get.AvgSpeed(currentSpeed, ulFinal, ulDuration);
           if (uploadTimeing >= ulDuration && stop == 1) {
+            if (window.VLK_QOS) VLK_QOS.endPhase();
             dataUsedforul = uLoaded;
             Show.uploadResult(uploadSpeed);
             Show.GaugeProgresstoZero(currentSpeed, "SendR");
@@ -1081,7 +1099,21 @@ window.onload = function() {
             dd: (dataUsedfordl / 1048576).toFixed(3),
             ud: (dataUsedforul / 1048576).toFixed(3)
           };
+          // Qualidade da conexão (bufferbloat, burst/sustentado, estabilidade):
+          // derivada do teste que acabou de rodar, sem medição extra. Publicada
+          // antes de salvar, para entrar no mesmo registro.
+          if (window.VLK_QOS) {
+            try {
+              VLK_QOS.endPhase();
+              window.vlkQos = VLK_QOS.summary();
+            } catch (e) { window.vlkQos = null; }
+          }
           if (window.vlkSalvarResultado) window.vlkSalvarResultado();
+          // Só agora os resultados existem. O "All done" do status aparece
+          // segundos antes disto (o gauge ainda está voltando a zero), então
+          // quem depende dos números tem que esperar por este evento, e não
+          // pelo texto do status.
+          try { window.dispatchEvent(new CustomEvent("vlk:results")); } catch (e) {}
           if (saveData) {
             saveTestData = "https://" + myname.toLowerCase() + com + "/results/show.php?" + "&d=" + downloadSpeed.toFixed(3) + "&u=" + uploadSpeed.toFixed(3) + "&p=" + pingEstimate + "&j=" + jitterEstimate + "&dd=" + (dataUsedfordl / 1048576).toFixed(3) + "&ud=" + (dataUsedforul / 1048576).toFixed(3) + "&ua=" + userAgentString;
             saveTestData = encodeURI(saveTestData);

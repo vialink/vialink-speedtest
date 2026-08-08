@@ -440,6 +440,16 @@ afeta o usuário (melhor-esforço).
      netbox_device  VARCHAR(200) DEFAULT NULL,
      netbox_descr   VARCHAR(255) DEFAULT NULL,
      enriquecido_em DATETIME DEFAULT NULL,
+     -- Qualidade da conexão (§9.2): preenchidas pelo próprio teste
+     qos_idle_ms    DECIMAL(10,2) DEFAULT NULL,
+     qos_dl_ms      DECIMAL(10,2) DEFAULT NULL,
+     qos_ul_ms      DECIMAL(10,2) DEFAULT NULL,
+     qos_nota       VARCHAR(2) DEFAULT NULL,
+     qos_rpm        INT UNSIGNED DEFAULT NULL,
+     qos_dl_cv      DECIMAL(6,4) DEFAULT NULL,
+     qos_ul_cv      DECIMAL(6,4) DEFAULT NULL,
+     qos_dl_boost   DECIMAL(6,2) DEFAULT NULL,
+     qos_quedas     TINYINT UNSIGNED DEFAULT NULL,
      PRIMARY KEY (id),
      KEY idx_criado (criado_em),
      KEY idx_ip (ip),
@@ -512,6 +522,30 @@ console é inofensivo). Opções disponíveis:
 | Variável | Padrão | Significado |
 |---|---|---|
 | `vlkCorrectionFactor` | 1.0 | Fator de correção: os valores de download/upload **apresentados** são a medição multiplicada por ele (a escala do velocímetro acompanha). A persistência (§8) grava sempre o valor **bruto**, sem o fator. `1.0` = sem correção |
+
+### 9.2. Qualidade da conexão (bufferbloat, turbo e estabilidade)
+
+Aparece automaticamente ao fim de qualquer teste, sem configuração — as três
+medidas são derivadas do próprio teste de velocidade
+(`assets/js/qualidade.js`). Não há nada a instalar no servidor.
+
+O único ponto que depende da instalação é a **sonda de latência sob carga**.
+Em HTTP/1.1 o navegador abre no máximo 6 conexões por origem, e o teste já usa
+as 6: uma sonda na mesma origem ficaria na fila do navegador e mediria a espera
+dele, não a latência da rede. Por isso a sonda sai por **outro domínio da mesma
+instalação**, quando existe.
+
+Para que isso funcione, o `domains` do tenant (§6) precisa listar **mais de um
+nome apontando para o mesmo servidor** — todos servidos pelo mesmo vhost e
+cobertos pelo certificado. Se preferir controlar quais nomes podem ser usados
+como sonda, defina `latencyProbeHosts` no tenant (mesmo formato de `domains`);
+na falta dele, `domains` é usado.
+
+Com um único domínio a medição continua funcionando pela mesma origem, e a
+interface avisa que o valor pode sair pior do que a realidade. A troca de host
+só acontece quando o hostname acessado pertence à lista do tenant — assim uma
+instalação de terceiros que caia no tenant padrão nunca envia sondas para
+servidores alheios.
 
 ## 10. Análise de conectividade (opcional)
 

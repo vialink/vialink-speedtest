@@ -443,6 +443,16 @@ never affects the user (best-effort).
      netbox_device  VARCHAR(200) DEFAULT NULL,
      netbox_descr   VARCHAR(255) DEFAULT NULL,
      enriquecido_em DATETIME DEFAULT NULL,
+     -- Connection quality (§9.2): filled in by the test itself
+     qos_idle_ms    DECIMAL(10,2) DEFAULT NULL,
+     qos_dl_ms      DECIMAL(10,2) DEFAULT NULL,
+     qos_ul_ms      DECIMAL(10,2) DEFAULT NULL,
+     qos_nota       VARCHAR(2) DEFAULT NULL,
+     qos_rpm        INT UNSIGNED DEFAULT NULL,
+     qos_dl_cv      DECIMAL(6,4) DEFAULT NULL,
+     qos_ul_cv      DECIMAL(6,4) DEFAULT NULL,
+     qos_dl_boost   DECIMAL(6,2) DEFAULT NULL,
+     qos_quedas     TINYINT UNSIGNED DEFAULT NULL,
      PRIMARY KEY (id),
      KEY idx_criado (criado_em),
      KEY idx_ip (ip),
@@ -516,6 +526,30 @@ console is harmless). Available options:
 | Variable | Default | Meaning |
 |---|---|---|
 | `vlkCorrectionFactor` | 1.0 | Correction factor: **displayed** download/upload values are the measurement multiplied by it (the gauge scale follows). The persistence layer (§8) always records the **raw** value, without the factor. `1.0` = no correction |
+
+### 9.2. Connection quality (bufferbloat, burst and stability)
+
+Shown automatically at the end of any test, with no configuration — the three
+measurements are derived from the speed test itself
+(`assets/js/qualidade.js`). There is nothing to install on the server.
+
+The only part that depends on your installation is the **latency probe under
+load**. Over HTTP/1.1 a browser opens at most 6 connections per origin, and the
+test already uses all 6: a probe on the same origin would sit in the browser's
+own queue and measure that wait instead of network latency. So the probe goes
+out over **another domain of the same installation**, when one exists.
+
+For that to work, the tenant's `domains` (§6) must list **more than one name
+pointing at the same server** — all served by the same vhost and covered by the
+certificate. To control which names may be used as probes, set
+`latencyProbeHosts` on the tenant (same format as `domains`); without it,
+`domains` is used.
+
+With a single domain the measurement still works over the same origin, and the
+interface warns that the value may look worse than reality. The host swap only
+happens when the hostname being accessed belongs to the tenant's list — so a
+third-party installation falling back to the default tenant never sends probes
+to someone else's servers.
 
 ## 10. Connectivity analysis (optional)
 

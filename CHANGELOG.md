@@ -49,6 +49,38 @@ Registro de tudo que este fork mudou em relação ao
   direto ao relatório e ao compartilhamento do PDF — a mesma ação da pílula do
   menu superior —, sem obrigar o usuário a subir até o menu do velocímetro.
 
+## Qualidade da conexão (`assets/js/qualidade.js`)
+
+Três medidas derivadas do próprio teste de velocidade, **sem custo de tempo
+adicional** — aparecem nos dois modos (Fast e Complete), logo abaixo do
+velocímetro, e também no relatório e no PDF.
+
+- **Latência sob carga (bufferbloat).** O ping do teste é medido com o link
+  ocioso, que é a condição em que ninguém reclama. Agora a latência também é
+  medida **durante o download e durante o upload**, e o aumento sobre a ociosa
+  ganha nota **A+ a F** (mesma régua do Waveform/DSLReports, para permitir
+  comparação) mais uma leitura em **RPM** (idas e voltas por minuto sob carga,
+  no espírito do RFC 9097). É o número que explica "a internet é rápida mas a
+  chamada trava quando alguém baixa arquivo".
+- **Turbo inicial (burst vs. sustentado).** Compara os primeiros segundos com o
+  fim do teste e sinaliza planos com *speedboost*, cuja média esconde a
+  velocidade real de um download longo. Só reporta turbo quando o trecho
+  inicial está **inteiro** acima do sustentado — sem isso, uma conexão que
+  oscila seria rotulada de turbo, que é o diagnóstico oposto.
+- **Estabilidade.** Coeficiente de variação, mediana, mínimo e contagem de
+  **quedas** (blocos de mais de 1 s abaixo de metade da mediana) sobre a série
+  de throughput instantâneo. O trecho de rampa do TCP e o próprio turbo são
+  descartados do cálculo: cair de 300 para 100 Mbps porque o boost acabou é o
+  plano, não oscilação da rede.
+- A sonda de latência sai por **outro domínio da mesma instalação** quando o
+  tenant tem mais de um: em HTTP/1.1 o navegador limita 6 conexões por origem e
+  o teste já usa as 6 — sondar a mesma origem mediria a fila do próprio
+  navegador. Havendo um único domínio, a medição segue pela mesma origem e a
+  interface avisa que o número pode sair pessimista.
+- Os resultados ficam em `window.vlkQos`, publicados junto com o novo evento
+  **`vlk:results`** (disparado quando os números existem de fato — o texto
+  "All done" do status aparece segundos antes disso).
+
 ## Análise de conectividade (`conectividade.html`)
 
 - **Nova página "Rede"** (item no menu do app): mede **latência, jitter e perda

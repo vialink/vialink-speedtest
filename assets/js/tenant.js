@@ -140,8 +140,24 @@ function vlkSalvarResultado() {
   vlkResultadoSalvo = true;
   var r = window.vlkResults;
   var ipd = window._vlkIpData || {};
+  // Qualidade da conexão: achatada para o formato do banco (uma linha por
+  // teste). Ausente se a medição não se completou — a velocidade grava assim
+  // mesmo.
+  var q = window.vlkQos, qv = (q && q.velocidade) || {}, qos = null;
+  if (q && q.idle != null) {
+    qos = {
+      idle: q.idle, nota: q.nota, rpm: q.rpm,
+      dl: q.dl ? q.dl.latencia : null,
+      ul: q.ul ? q.ul.latencia : null,
+      dlCv: qv.dl ? qv.dl.cv : null,
+      ulCv: qv.ul ? qv.ul.cv : null,
+      dlBoost: qv.dl ? qv.dl.boost : null,
+      quedas: (qv.dl ? qv.dl.quedas : 0) + (qv.ul ? qv.ul.quedas : 0)
+    };
+  }
   vlkPostResiliente('/api/salvar-teste.php', JSON.stringify({
     uid: vlkTesteUid(),
+    qos: qos,
     // o banco recebe a medição bruta, sem o fator de correção da exibição
     d: r.dRaw || r.d, u: r.uRaw || r.u, p: r.p, j: r.j, dd: r.dd, ud: r.ud,
     tenant: (window._tenantConfig && window._tenantConfig.key) || '',
@@ -322,6 +338,8 @@ function injectTenantBranding() {
     }
     // Teste "Complete": sinaliza a rede (o relatório lê os dados do localStorage)
     if (window.vlkNetResults) q.push('net=1');
+    // Qualidade da conexão: mesmo mecanismo (dados volumosos demais para a URL)
+    if (window.vlkQos) q.push('qos=1');
     if (window._tenantParam) q.push(window._tenantParam);
     var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
     if (a.setAttributeNS) a.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
@@ -511,20 +529,95 @@ function injectTenantBranding() {
     doc.setTextColor(80, 85, 90);
     doc.text(notaTec, 21, notaY + 13);
 
+    // Helpers compartilhados pelas páginas extras (qualidade e conectividade)
+    var qcor = function (cls) {
+      return cls === 'bom' ? [31, 157, 77] : cls === 'medio' ? [184, 134, 11]
+           : cls === 'ruim' ? [211, 54, 43] : [60, 60, 60];
+    };
+    var clsLat  = function (v) { return v == null ? '' : v < 50 ? 'bom' : v < 120 ? 'medio' : 'ruim'; };
+    var clsJit  = function (v) { return v == null ? '' : v < 10 ? 'bom' : v < 30  ? 'medio' : 'ruim'; };
+    var clsLoss = function (v) { return v == null ? '' : v <= 0 ? 'bom' : v < 3  ? 'medio' : 'ruim'; };
+    var msf  = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; };
+    var pctf = function (v) { return (v == null || !isFinite(v)) ? '—' : Math.round(v) + '%'; };
+    var mbpsf = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' Mbps'; };
+    var cor = function (rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); };
+    var cabTabela = function (hdr, cols, y) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); cor(azul);
+      hdr.forEach(function (h, i) { doc.text(h, cols[i], y); });
+      doc.setDrawColor(220, 224, 228); doc.line(15, y + 1.5, 195, y + 1.5);
+      doc.setFont('helvetica', 'normal');
+      return y + 6.5;
+    };
+
+    // ---- Qualidade da conexão — página extra ----
+    var qos = window.vlkQos;
+    if (qos && qos.idle != null) {
+      var clsBloat = function (v) { return v == null ? '' : v < 30 ? 'bom' : v < 200 ? 'medio' : 'ruim'; };
+      var clsCv    = function (v) { return v == null ? '' : v < 0.10 ? 'bom' : v < 0.30 ? 'medio' : 'ruim'; };
+
+      doc.addPage();
+      desenhaCabecalho();
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      cor(escuro); doc.text(pT('qos.reportTitle'), 15, 40);
+
+      var qy = 50;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+      doc.text(pT('qos.reportBloat'), 15, qy); qy += 6;
+      qy = cabTabela([pT('qos.thState'), pT('connect.thLat'), pT('qos.thIncrease')], [15, 95, 140], qy);
+
+      cor([40, 40, 40]); doc.text(pT('qos.idle'), 15, qy);
+      cor([60, 60, 60]); doc.text(msf(qos.idle), 95, qy); doc.text('—', 140, qy);
+      doc.setDrawColor(240, 241, 243); doc.line(15, qy + 1.6, 195, qy + 1.6); qy += 6.5;
+
+      [['dl', 'qos.duringDl'], ['ul', 'qos.duringUl']].forEach(function (f) {
+        var x = qos[f[0]];
+        if (!x) return;
+        cor([40, 40, 40]); doc.text(pT(f[1]), 15, qy);
+        cor(qcor(clsBloat(x.aumento)));
+        doc.text(msf(x.latencia), 95, qy);
+        doc.text('+' + Math.round(x.aumento) + ' ms', 140, qy);
+        doc.setDrawColor(240, 241, 243); doc.line(15, qy + 1.6, 195, qy + 1.6); qy += 6.5;
+      });
+
+      var chaveB = (qos.nota === 'A+' || qos.nota === 'A') ? 'ok'
+                 : (qos.nota === 'B' || qos.nota === 'C') ? 'medio' : 'ruim';
+      qy += 2;
+      doc.setFontSize(8.5); cor([80, 85, 90]);
+      doc.text(doc.splitTextToSize(pT('qos.nota') + ': ' + qos.nota + ' — ' +
+        pT('qos.bloatExpl.' + chaveB), 180), 15, qy);
+      qy += 12;
+
+      var vv = qos.velocidade || {};
+      // pior dos dois sentidos, como na tela (ver qualidade.js)
+      var refQ = (vv.dl && vv.ul) ? ((vv.dl.cv || 0) >= (vv.ul.cv || 0) ? vv.dl : vv.ul) : (vv.dl || vv.ul);
+      if (refQ) {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+        doc.text(pT('qos.reportStab'), 15, qy); qy += 6;
+        qy = cabTabela([pT('qos.thPhase'), pT('qos.thMedian'), pT('qos.thMin'),
+                        pT('qos.variation'), pT('qos.dips')], [15, 75, 115, 155, 180], qy);
+        [['dl', 'qos.download'], ['ul', 'qos.upload']].forEach(function (f) {
+          var r = vv[f[0]];
+          if (!r) return;
+          cor([40, 40, 40]); doc.text(pT(f[1]), 15, qy);
+          cor([60, 60, 60]);
+          doc.text(mbpsf(r.mediana), 75, qy);
+          doc.text(mbpsf(r.minimo), 115, qy);
+          cor(qcor(clsCv(r.cv)));
+          doc.text(pctf(r.cv != null ? r.cv * 100 : null), 155, qy);
+          if (r.quedas) { cor(qcor('ruim')); doc.text(String(r.quedas), 180, qy); }
+          else { cor([60, 60, 60]); doc.text('—', 180, qy); }
+          doc.setDrawColor(240, 241, 243); doc.line(15, qy + 1.6, 195, qy + 1.6); qy += 6.5;
+        });
+        qy += 2;
+        doc.setFontSize(8.5); cor([80, 85, 90]);
+        doc.text(doc.splitTextToSize(pT('qos.stab.' + refQ.estabilidade) + ' — ' +
+          pT('qos.stabExpl.' + refQ.estabilidade), 180), 15, qy);
+      }
+    }
+
     // ---- Análise de conectividade (teste "Complete") — página extra ----
     var net = window.vlkNetResults;
     if (net && ((net.cliente || []).length || (net.servidor || []).length)) {
-      var qcor = function (cls) {
-        return cls === 'bom' ? [31, 157, 77] : cls === 'medio' ? [184, 134, 11]
-             : cls === 'ruim' ? [211, 54, 43] : [60, 60, 60];
-      };
-      var clsLat  = function (v) { return v == null ? '' : v < 50 ? 'bom' : v < 120 ? 'medio' : 'ruim'; };
-      var clsJit  = function (v) { return v == null ? '' : v < 10 ? 'bom' : v < 30  ? 'medio' : 'ruim'; };
-      var clsLoss = function (v) { return v == null ? '' : v <= 0 ? 'bom' : v < 3  ? 'medio' : 'ruim'; };
-      var msf  = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; };
-      var pctf = function (v) { return (v == null || !isFinite(v)) ? '—' : Math.round(v) + '%'; };
-      var cor = function (rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); };
-
       doc.addPage();
       desenhaCabecalho();
       doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
@@ -741,7 +834,21 @@ function injectTenantBranding() {
     return vlkNetPromise;
   }
 
-  // Revela a seção de rede embutida (e rola até ela)
+  // Rola até o início da resposta — a seção de qualidade, quando já estiver
+  // pronta, senão a de rede. Só é chamada depois que a qualidade renderizou:
+  // ela fica ACIMA da rede no documento, e rolar antes faria o conteúdo saltar
+  // debaixo do usuário quando ela entrasse (chega uns 2 s após o "All done").
+  var vlkRolou = false;
+  function vlkRolaAteResposta() {
+    if (vlkRolou) return;
+    var alvo = document.getElementById('vlk-qos');
+    if (!alvo || !alvo.classList.contains('aberto')) alvo = document.getElementById('vlk-net-inline');
+    if (!alvo || !alvo.classList.contains('aberto')) return;
+    vlkRolou = true;
+    try { alvo.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+  }
+
+  // Revela a seção de rede embutida (o scroll vem depois — ver acima)
   function vlkAbreSecaoRede() {
     var sec = document.getElementById('vlk-net-inline');
     if (!sec || !window.VLK_CONECT) return null;
@@ -749,11 +856,21 @@ function injectTenantBranding() {
     vlkSetupStickyScroll();
     sec.classList.add('aberto');
     sec.setAttribute('aria-hidden', 'false');
-    setTimeout(function () {
-      try { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-    }, 60);
+    // Rede à espera dos resultados: se por algum motivo o evento não vier,
+    // ainda assim rolamos, para o Complete não parecer que não fez nada.
+    setTimeout(vlkRolaAteResposta, 4000);
     return sec;
   }
+
+  // Qualidade da conexão: renderizada quando os resultados existem de fato.
+  window.addEventListener('vlk:results', function () {
+    if (window.VLK_QOS && window.vlkQos) {
+      try { VLK_QOS.render(window.vlkQos); } catch (e) {}
+      // Disponível para o relatório, que abre em outra aba
+      try { localStorage.setItem('vlkQos', JSON.stringify(window.vlkQos)); } catch (e) {}
+    }
+    if (window.vlkTestMode === 'complete') vlkRolaAteResposta();
+  });
 
   // Teste "Complete": ao fim da velocidade, abre a seção e mostra a análise.
   // Se o pré-aquecimento desta sessão ainda estiver válido (ex.: o usuário fez

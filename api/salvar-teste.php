@@ -74,6 +74,21 @@ $site = classificaSite($hostname);
 $uid = substr(preg_replace('/[^a-f0-9]/', '', strtolower((string)($dados['uid'] ?? ''))), 0, 32);
 if ($uid === '') $uid = null;
 
+// Qualidade da conexão (assets/js/qualidade.js) — opcional: um teste
+// interrompido, ou uma sonda que não respondeu, chega aqui sem estes campos, e
+// isso não impede a gravação do resultado de velocidade.
+$qos        = is_array($dados['qos'] ?? null) ? $dados['qos'] : [];
+$qosIdle    = num($qos['idle'] ?? null, 60000);
+$qosDl      = num($qos['dl'] ?? null, 60000);
+$qosUl      = num($qos['ul'] ?? null, 60000);
+$qosRpm     = num($qos['rpm'] ?? null, 100000);
+$qosDlCv    = num($qos['dlCv'] ?? null, 99);
+$qosUlCv    = num($qos['ulCv'] ?? null, 99);
+$qosBoost   = num($qos['dlBoost'] ?? null, 9999);
+$qosQuedas  = num($qos['quedas'] ?? null, 255);
+$qosNota    = in_array($qos['nota'] ?? '', ['A+', 'A', 'B', 'C', 'D', 'F'], true)
+              ? $qos['nota'] : null;
+
 $cfg = parse_ini_file('/etc/vlk-speedtest/db.ini', true);
 if (!$cfg || empty($cfg['db'])) {
     http_response_code(500);
@@ -89,12 +104,16 @@ try {
     $stmt = $pdo->prepare(
         'INSERT INTO testes
            (uid, tenant, hostname, site, ip, download_mbps, upload_mbps, ping_ms, jitter_ms,
-            dl_dados_mb, ul_dados_mb, user_agent, asn, cidade)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            dl_dados_mb, ul_dados_mb, user_agent, asn, cidade,
+            qos_idle_ms, qos_dl_ms, qos_ul_ms, qos_nota, qos_rpm,
+            qos_dl_cv, qos_ul_cv, qos_dl_boost, qos_quedas)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $uid, $tenant, $hostname, $site, $ip, $download, $upload, $ping, $jitter,
         $dlDados, $ulDados, $ua, $asn, $cidade,
+        $qosIdle, $qosDl, $qosUl, $qosNota, $qosRpm,
+        $qosDlCv, $qosUlCv, $qosBoost, $qosQuedas,
     ]);
     echo json_encode(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
 } catch (PDOException $e) {

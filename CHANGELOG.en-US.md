@@ -49,6 +49,38 @@ A record of everything this fork changed compared to the original
   (hidden at the top so it doesn't duplicate the speedometer's own menu), keeping
   the Report button reachable at any time.
 
+## Connection quality (`assets/js/qualidade.js`)
+
+Three measurements derived from the speed test itself, at **no extra time
+cost** — shown in both modes (Fast and Complete) right below the gauge, and
+also in the report and the PDF.
+
+- **Latency under load (bufferbloat).** The test's ping is measured on an idle
+  link, which is precisely the condition nobody complains about. Latency is now
+  also measured **during the download and during the upload**, and the increase
+  over idle gets a grade from **A+ to F** (same scale as Waveform/DSLReports,
+  so results are comparable) plus an **RPM** reading (round trips per minute
+  under load, in the spirit of RFC 9097). This is the number that explains "the
+  connection is fast but calls freeze when someone downloads a file".
+- **Initial burst vs. sustained.** Compares the first seconds with the end of
+  the test and flags *speedboost* plans, whose average hides the real speed of
+  a long download. A burst is only reported when the initial stretch is
+  **entirely** above the sustained speed — without that, a connection that
+  merely oscillates would be labelled as burst, the opposite diagnosis.
+- **Stability.** Coefficient of variation, median, minimum and a count of
+  **drops** (blocks longer than 1 s below half the median) over the instant
+  throughput series. TCP ramp-up and the burst itself are excluded from the
+  calculation: falling from 300 to 100 Mbps because the boost ended is the
+  plan, not network instability.
+- The latency probe goes out over **another domain of the same installation**
+  when the tenant has more than one: over HTTP/1.1 browsers cap connections at
+  6 per origin and the test already uses all 6 — probing the same origin would
+  measure the browser's own queue. With a single domain the probe stays on the
+  same origin and the interface says the number may look pessimistic.
+- Results live in `window.vlkQos`, published along with the new **`vlk:results`**
+  event (fired when the numbers actually exist — the "All done" status text
+  shows up seconds earlier).
+
 ## Connectivity analysis (`conectividade.html`)
 
 - **New "Network" page** (app menu item): measures **latency, jitter and packet

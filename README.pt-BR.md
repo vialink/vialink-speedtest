@@ -30,6 +30,10 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   **Completo** que também mede a **saúde da rede**: latência, jitter e perda de
   pacotes até destinos populares (Google, Netflix, WhatsApp, resolvedores DNS…),
   de **duas origens** — o navegador *e* o servidor (`traceroute`/ICMP real).
+- **Qualidade da conexão** — o que a média em Mbps esconde: **bufferbloat**
+  (latência medida *enquanto* o link está saturado, com nota de A+ a F),
+  **turbo inicial vs. velocidade sustentada** e **estabilidade** (variação,
+  mínimo, quedas). Derivada do próprio teste, sem custo de tempo.
 - **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
   PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.

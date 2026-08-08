@@ -497,9 +497,67 @@ body.vlk-complete-open.vlk-scrolled #vlk-sticky-nav { display: flex; }
 #vlk-sticky-nav a:hover { text-decoration: underline; }
 #vlk-sticky-nav a#vlk-sticky-relatorio { font-weight: 700; }
 
+/* --- Qualidade da conexão (index.html) --- */
+/* Aparece nos dois modos de teste, logo abaixo do velocímetro. Ao contrário da
+   seção de rede, não rola sozinha: quem quiser ver, rola. */
+#vlk-qos {
+  display: none;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 20px 8px;
+  background: #0f0f0f;
+  font-family: Roboto, Arial, sans-serif;
+  color: #e7e7e8;
+}
+#vlk-qos.aberto { display: block; }
+#vlk-qos .qos-inner { max-width: 860px; margin: 0 auto; }
+#vlk-qos h2 {
+  font-size: 20px; font-weight: 500;
+  color: var(--vlk-accent, #0095BE);
+  margin: 26px 0 4px;
+}
+#vlk-qos .suave { color: #9a9a9c; font-size: 13.5px; margin: 0 0 14px; }
+#vlk-qos .aviso { font-size: 12.5px; color: #9a9a9c; margin: 12px 0 0; }
+/* O convite "Análise de rede" é uma pílula fixa no rodapé da janela: sem esta
+   folga ela cobre o fim da seção quando o usuário rola até aqui. */
+body.vlk-cta-ready #vlk-qos { padding-bottom: 62px; }
+#vlk-qos .qos-cards {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+#vlk-qos .qos-card {
+  border: 1px solid #2a2a2c; border-radius: 8px;
+  padding: 14px 16px 12px; background: #151517;
+}
+#vlk-qos .qos-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+#vlk-qos .qos-cab h3 {
+  font-size: 15px; font-weight: 500; margin: 0;
+  color: var(--vlk-accent, #0095BE);
+}
+#vlk-qos .qos-nota {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 38px; padding: 3px 8px; border-radius: 6px;
+  font-family: Roboto-Medium, Roboto, Arial, sans-serif;
+  font-size: 15px; font-weight: 700; line-height: 1.3;
+  background: #232326; color: #e7e7e8;
+}
+#vlk-qos .qos-nota.bom   { background: rgba(53, 199, 89, .16);  color: #35c759; }
+#vlk-qos .qos-nota.medio { background: rgba(230, 184, 0, .16);  color: #e6b800; }
+#vlk-qos .qos-nota.ruim  { background: rgba(255, 69, 58, .16);  color: #ff453a; }
+#vlk-qos table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+#vlk-qos th, #vlk-qos td { padding: 4px 0; text-align: left; font-weight: 400; }
+#vlk-qos th { color: #9a9a9c; }
+#vlk-qos td { text-align: right; white-space: nowrap; }
+#vlk-qos td.bom   { color: #35c759; }
+#vlk-qos td.medio { color: #e6b800; }
+#vlk-qos td.ruim  { color: #ff453a; }
+#vlk-qos .qos-extra { color: #9a9a9c; font-size: 12px; }
+#vlk-qos .qos-rpm { color: #9a9a9c; font-size: 12.5px; margin: 8px 0 0; }
+#vlk-qos .qos-expl { color: #b9b9bb; font-size: 12.5px; line-height: 1.45; margin: 10px 0 0; }
+
 /* --- Seção de rede embutida no teste "Complete" (index.html) --- */
 /* Fundo escuro para a faixa abaixo do teste quando o Complete abre a seção */
-body.vlk-complete-open { background: #0f0f0f; }
+body.vlk-complete-open, body.vlk-qos-open { background: #0f0f0f; }
 #vlk-net-inline {
   display: none;
   box-sizing: border-box;
