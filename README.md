@@ -34,6 +34,10 @@ backend — any web server will do.
   (latency measured *while* the link is saturated, graded A+ to F), **initial
   burst vs. sustained** speed, and **stability** (variation, minimum, drops).
   Derived from the speed test itself, at no extra time cost.
+- **Single connection vs. 6** — what one TCP flow delivers against the six the
+  test uses. This is the answer to "the test says 300 Mbps but Steam downloads
+  at 20": per-flow policers, a TCP window too small for the link latency
+  (effective window shown, with a 64 KB warning) or an overloaded CGNAT.
 - **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.

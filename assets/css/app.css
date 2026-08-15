@@ -554,6 +554,9 @@ body.vlk-cta-ready #vlk-qos { padding-bottom: 62px; }
 #vlk-qos .qos-extra { color: #9a9a9c; font-size: 12px; }
 #vlk-qos .qos-rpm { color: #9a9a9c; font-size: 12.5px; margin: 8px 0 0; }
 #vlk-qos .qos-expl { color: #b9b9bb; font-size: 12.5px; line-height: 1.45; margin: 10px 0 0; }
+/* Card ainda medindo (conexão única): chega alguns segundos depois dos demais */
+#vlk-qos .qos-card.qos-aguardando { border-style: dashed; opacity: .72; }
+#vlk-qos .qos-card.qos-aguardando .qos-expl { margin-top: 0; }
 
 /* --- Seção de rede embutida no teste "Complete" (index.html) --- */
 /* Fundo escuro para a faixa abaixo do teste quando o Complete abre a seção */

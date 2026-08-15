@@ -34,6 +34,10 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   (latência medida *enquanto* o link está saturado, com nota de A+ a F),
   **turbo inicial vs. velocidade sustentada** e **estabilidade** (variação,
   mínimo, quedas). Derivada do próprio teste, sem custo de tempo.
+- **Conexão única × 6 conexões** — o que um fluxo TCP entrega contra as seis que
+  o teste usa. É a resposta para "o teste dá 300 Mbps mas o Steam baixa a 20":
+  limitador por fluxo, janela TCP pequena para a latência do enlace (a janela
+  efetiva é exibida, com alerta em 64 KB) ou CGNAT sobrecarregado.
 - **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
   PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.

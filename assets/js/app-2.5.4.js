@@ -967,6 +967,7 @@ window.onload = function() {
           if (window.VLK_QOS) {
             try {
               VLK_QOS.reset(upAdjust * vlkFactor());
+              if (window.VLK_SINGLE) VLK_SINGLE.reset();
               var srv0 = openSpeedTestServerList && openSpeedTestServerList[0];
               if (srv0 && srv0[pingFile]) VLK_QOS.baselineStart(srv0[pingFile]);
             } catch (e) {}
@@ -1394,6 +1395,12 @@ window.onload = function() {
           var finalLeastPingResult = Math.min.apply(Math, finalPing);
           var finalLeastPingResultIndex = finalPing.indexOf(finalLeastPingResult);
           fianlPingServer = pingServer[finalLeastPingResultIndex];
+          // Conexão única: a medição roda depois do teste, mas o servidor
+          // escolhido (e o multiplicador aplicado ao valor exibido) só são
+          // conhecidos aqui dentro — publicamos agora.
+          if (window.VLK_SINGLE) {
+            try { VLK_SINGLE.setServer(fianlPingServer.Download, upAdjust * vlkFactor()); } catch (e) {}
+          }
           statusPingFinal = finalLeastPingResult;
           statusJitterFinal = finalJitter[finalLeastPingResultIndex];
           statusPingTest = "Busy";

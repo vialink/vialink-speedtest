@@ -227,6 +227,18 @@
           <p class="obs" id="qos-estab-expl"></p>
         </div>
 
+        <div id="single-secao" style="display:none">
+          <h2 class="rede-titulo" data-i18n="single.reportTitle">Conexão única × múltiplas conexões</h2>
+          <table class="net-tabela">
+            <thead><tr>
+              <th data-i18n="single.thWhat">Medida</th>
+              <th data-i18n="single.thValue">Valor</th>
+            </tr></thead>
+            <tbody id="single-corpo"></tbody>
+          </table>
+          <p class="obs" id="single-expl"></p>
+        </div>
+
         <div id="rede-secao" style="display:none">
           <h2 class="rede-titulo" data-i18n="connect.title">Análise de conectividade</h2>
           <h3 class="rede-sub" data-i18n="connect.cliTitle">Da sua conexão até cada destino</h3>
@@ -325,6 +337,7 @@
       // sinaliza que este relatório deve exibi-los.
       if (q.has('net')) renderRede();
       if (q.has('qos')) renderQos();
+      if (q.has('single')) renderSingle();
 
       function trFb(key, fb) { var s = window.vlkT ? vlkT(key) : key; return (s && s !== key) ? s : fb; }
       function ms(v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; }
@@ -386,6 +399,37 @@
           }
         }
         document.getElementById('qos-secao').style.display = 'block';
+      }
+
+      // ---- Conexão única × múltiplas conexões ----
+      // Medida depois do teste (o link precisa estar livre), gravada no
+      // localStorage; single=1 na URL sinaliza que ela já existia quando o
+      // relatório foi aberto.
+      function renderSingle() {
+        var d;
+        try { d = JSON.parse(localStorage.getItem('vlkSingle') || 'null'); } catch (e) { d = null; }
+        if (!d || !(d.single > 0)) return;
+
+        var mbps = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' Mbps'; };
+        var linhas =
+          '<tr><td class="destino">' + trFb('single.oneLabel', 'Com 1 conexão') + '</td>' +
+            td(mbps(d.single), d.cls) + '</tr>' +
+          '<tr><td class="destino">' + trFb('single.sixLabel', 'Com 6 conexões (teste)') + '</td>' +
+            td(mbps(d.multi)) + '</tr>' +
+          '<tr><td class="destino">' + trFb('single.ratio', 'Proporção') + '</td>' +
+            td(Math.round(Math.min(1, d.ratio) * 100) + '%', d.cls) + '</tr>';
+        if (d.showWindow) {
+          var jan = d.windowBytes >= 1048576 ? fmt1(d.windowBytes / 1048576) + ' MB'
+                                             : Math.round(d.windowBytes / 1024) + ' KB';
+          linhas += '<tr><td class="destino">' + trFb('single.window', 'Janela TCP efetiva') + '</td>' +
+            td(jan, d.smallWindow ? 'ruim' : '') + '</tr>';
+        }
+        document.getElementById('single-corpo').innerHTML = linhas;
+
+        var expl = trFb('single.expl.' + d.grade, '');
+        if (d.smallWindow) expl += ' ' + trFb('single.smallWindow', '');
+        document.getElementById('single-expl').textContent = expl;
+        document.getElementById('single-secao').style.display = 'block';
       }
 
       function renderRede() {

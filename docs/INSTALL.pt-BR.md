@@ -422,6 +422,7 @@ afeta o usuário (melhor-esforço).
    CREATE TABLE testes (
      id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
      criado_em      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     uid            CHAR(32) DEFAULT NULL,
      tenant         VARCHAR(32)  NOT NULL DEFAULT 'vialink',
      hostname       VARCHAR(100) NOT NULL DEFAULT '',
      site           VARCHAR(32)  NOT NULL DEFAULT '',
@@ -450,7 +451,14 @@ afeta o usuário (melhor-esforço).
      qos_ul_cv      DECIMAL(6,4) DEFAULT NULL,
      qos_dl_boost   DECIMAL(6,2) DEFAULT NULL,
      qos_quedas     TINYINT UNSIGNED DEFAULT NULL,
+     -- Conexão única (§9.3): preenchidas alguns segundos após o teste
+     single_mbps       DECIMAL(10,3) DEFAULT NULL,
+     single_multi_mbps DECIMAL(10,3) DEFAULT NULL,
+     single_ratio      DECIMAL(5,3) DEFAULT NULL,
+     single_grade      VARCHAR(10) DEFAULT NULL,
+     single_window_kb  INT UNSIGNED DEFAULT NULL,
      PRIMARY KEY (id),
+     KEY idx_uid (uid),
      KEY idx_criado (criado_em),
      KEY idx_ip (ip),
      KEY idx_tenant_criado (tenant, criado_em),
@@ -458,6 +466,44 @@ afeta o usuário (melhor-esforço).
      KEY idx_site (site)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
    ```
+
+   A análise de conectividade (§10), quando gravada, usa uma segunda tabela,
+   ligada à primeira pelo `uid`:
+
+   ```sql
+   CREATE TABLE testes_rede (
+     id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+     teste_id     BIGINT UNSIGNED NOT NULL,
+     origem       ENUM('cliente','servidor') NOT NULL,
+     ordem        SMALLINT UNSIGNED NOT NULL,
+     label        VARCHAR(80) NOT NULL DEFAULT '',
+     alvo         VARCHAR(200) NOT NULL DEFAULT '',
+     latencia_ms  DECIMAL(10,2) DEFAULT NULL,
+     jitter_ms    DECIMAL(10,2) DEFAULT NULL,
+     perda_pct    DECIMAL(5,2) DEFAULT NULL,
+     saltos       TINYINT UNSIGNED DEFAULT NULL,
+     filtrado     TINYINT(1) NOT NULL DEFAULT 0,
+     indisponivel TINYINT(1) NOT NULL DEFAULT 0,
+     PRIMARY KEY (id),
+     UNIQUE KEY uk_teste_origem_ordem (teste_id, origem, ordem),
+     CONSTRAINT fk_testes_rede FOREIGN KEY (teste_id) REFERENCES testes (id)
+       ON DELETE CASCADE
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+   ```
+
+   **Já tem a tabela de uma versão anterior?** As colunas novas são aditivas:
+
+   ```sql
+   ALTER TABLE testes
+     ADD COLUMN single_mbps       DECIMAL(10,3) DEFAULT NULL,
+     ADD COLUMN single_multi_mbps DECIMAL(10,3) DEFAULT NULL,
+     ADD COLUMN single_ratio      DECIMAL(5,3)  DEFAULT NULL,
+     ADD COLUMN single_grade      VARCHAR(10)   DEFAULT NULL,
+     ADD COLUMN single_window_kb  INT UNSIGNED  DEFAULT NULL;
+   ```
+
+   Sem esse `ALTER`, nada quebra: o endpoint responde 202 e a medição continua
+   aparecendo na tela, no relatório e no PDF.
 
    (As colunas `cliente`/`netbox_*` são preenchidas por um job de
    enriquecimento específico da infraestrutura Vialink —
@@ -476,7 +522,9 @@ afeta o usuário (melhor-esforço).
    ```
 
 5. **Servidor web:** descomente o bloco `location = /api/salvar-teste.php` do
-   §4 (nginx) ou aplique o `FilesMatch` do §5 (Apache) e recarregue.
+   §4 (nginx) ou aplique o `FilesMatch` do §5 (Apache) e recarregue. Os outros
+   dois endpoints de gravação — `api/salvar-conectividade.php` (§10) e
+   `api/salvar-single.php` (§9.3) — pedem o mesmo tratamento.
 6. **Valide:** rode um teste no navegador e confira a linha nova:
 
    ```bash
@@ -546,6 +594,36 @@ interface avisa que o valor pode sair pior do que a realidade. A troca de host
 só acontece quando o hostname acessado pertence à lista do tenant — assim uma
 instalação de terceiros que caia no tenant padrão nunca envia sondas para
 servidores alheios.
+
+### 9.3. Conexão única × múltiplas conexões
+
+Também automática, sem configuração (`assets/js/single-connection.js`). Alguns
+segundos depois do teste — quando o link volta a ficar ocioso — o velocímetro
+baixa por **uma única conexão** durante ~6 s e compara com o que as 6 conexões
+do teste entregaram.
+
+Por que isso importa: o teste mede "quanto cabe no link" somando 6 conexões,
+mas baixar um arquivo, atualizar um jogo ou subir um backup é **um fluxo TCP**.
+Quando o fluxo único fica bem abaixo do total, é isso que o assinante sente — e
+as causas costumam ser **limitador por fluxo (policer)** no caminho, **janela
+TCP pequena** para a latência do enlace, ou **NAT/CGNAT sobrecarregado**. O card
+mostra a janela TCP efetiva (banda × RTT) quando há o que explicar; encostada em
+64 KB, ela denuncia *window scaling* desligado em algum ponto.
+
+Detalhes que valem para quem hospeda:
+
+- A medição consome ~6 s de download, com **teto de 200 MB** — em link de 1 Gbps
+  ela para antes do tempo para não desperdiçar tráfego.
+- Ela **antecede** a análise de rede (§10): as duas juntas se atrapalhariam (uma
+  satura o link, a outra mede latência). No teste Complete, a tabela de rede
+  aparece alguns segundos depois por causa disso.
+- **Servidor lento vira falso "policer".** Se o seu servidor não consegue
+  saturar o link do cliente com um único fluxo (CPU, disco, um backend que
+  gera os bytes em vez de servir arquivo estático), a proporção cai por causa
+  do servidor, não da rede. Sirva o `downloading` como arquivo estático.
+- Persistência opcional: colunas `single_*` (§8) gravadas por
+  `api/salvar-single.php`, que faz `UPDATE` na linha do teste pelo `uid` — a
+  velocidade grava antes, quando este número ainda não existe.
 
 ## 10. Análise de conectividade (opcional)
 

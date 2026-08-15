@@ -181,6 +181,20 @@ function vlkSalvarConectividade(res) {
   }));
 }
 
+// Grava a medição de conexão única. Vai num POST próprio (e não junto da
+// velocidade) porque ela só termina alguns segundos depois — quando o teste
+// grava, este número ainda não existe. O endpoint faz UPDATE pelo mesmo uid.
+var vlkSingleSalva = false;
+function vlkSalvarSingle(s) {
+  if (vlkSingleSalva || !s || !(s.single > 0)) return;
+  vlkSingleSalva = true;
+  vlkPostResiliente('/api/salvar-single.php', JSON.stringify({
+    uid: vlkTesteUid(),
+    single: s.single, multi: s.multi, ratio: s.ratio, grade: s.grade,
+    windowKb: s.windowBytes != null ? Math.round(s.windowBytes / 1024) : null
+  }));
+}
+
 // Aplica dados de IP nos elementos SVG (chamada quando o fetch ou o SVG estiver pronto)
 function applyIpToSvg() {
   var d = window._vlkIpData;
@@ -340,6 +354,8 @@ function injectTenantBranding() {
     if (window.vlkNetResults) q.push('net=1');
     // Qualidade da conexão: mesmo mecanismo (dados volumosos demais para a URL)
     if (window.vlkQos) q.push('qos=1');
+    // Conexão única: idem — só entra se a medição já tiver terminado
+    if (window.vlkSingle) q.push('single=1');
     if (window._tenantParam) q.push(window._tenantParam);
     var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
     if (a.setAttributeNS) a.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
@@ -612,7 +628,51 @@ function injectTenantBranding() {
         doc.setFontSize(8.5); cor([80, 85, 90]);
         doc.text(doc.splitTextToSize(pT('qos.stab.' + refQ.estabilidade) + ' — ' +
           pT('qos.stabExpl.' + refQ.estabilidade), 180), 15, qy);
+        qy += 16;
       }
+    }
+
+    // ---- Conexão única × múltiplas conexões ----
+    // Fica junto da qualidade (é o mesmo assunto: o que a média em Mbps não
+    // conta). Só ganha página própria quando a de qualidade não existe ou já
+    // está cheia.
+    var sc = window.vlkSingle;
+    if (sc && sc.single > 0) {
+      var sy;
+      if (qos && qos.idle != null && typeof qy === 'number' && qy < 235) {
+        sy = qy;
+      } else {
+        doc.addPage();
+        desenhaCabecalho();
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+        cor(escuro); doc.text(pT('qos.reportTitle'), 15, 40);
+        sy = 50;
+      }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+      doc.text(pT('single.reportTitle'), 15, sy); sy += 6;
+      sy = cabTabela([pT('single.thWhat'), pT('single.thValue')], [15, 120], sy);
+
+      var linhaSc = function (rotulo, valor, cls) {
+        cor([40, 40, 40]); doc.text(rotulo, 15, sy);
+        cor(qcor(cls || ''));
+        doc.text(valor, 120, sy);
+        doc.setDrawColor(240, 241, 243); doc.line(15, sy + 1.6, 195, sy + 1.6);
+        sy += 6.5;
+      };
+      linhaSc(pT('single.oneLabel'), mbpsf(sc.single), sc.cls);
+      linhaSc(pT('single.sixLabel'), mbpsf(sc.multi));
+      linhaSc(pT('single.ratio'), Math.round(Math.min(1, sc.ratio) * 100) + '%', sc.cls);
+      if (sc.showWindow) {
+        linhaSc(pT('single.window'),
+          sc.windowBytes >= 1048576 ? fmt1(sc.windowBytes / 1048576) + ' MB'
+                                    : Math.round(sc.windowBytes / 1024) + ' KB',
+          sc.smallWindow ? 'ruim' : '');
+      }
+      sy += 2;
+      var explSc = pT('single.expl.' + sc.grade);
+      if (sc.smallWindow) explSc += ' ' + pT('single.smallWindow');
+      doc.setFontSize(8.5); cor([80, 85, 90]);
+      doc.text(doc.splitTextToSize(explSc, 180), 15, sy);
     }
 
     // ---- Análise de conectividade (teste "Complete") — página extra ----
@@ -804,6 +864,32 @@ function injectTenantBranding() {
     vlkSalvarConectividade(res); // grava a conectividade no banco (testes_rede)
   }
 
+  // Conexão única: mede o que UM fluxo TCP entrega, para comparar com as 6
+  // conexões do teste. Precisa dos resultados (é deles que sai a referência) e
+  // satura o link enquanto roda — por isso vem ANTES da análise de rede, que
+  // mede latência e ficaria contaminada se as duas rodassem juntas. Tudo o que
+  // depende da rede espera esta promise; ela nunca rejeita nem fica pendente
+  // (há um teto de espera pelos resultados).
+  var vlkSinglePromise = null;
+  function vlkSingleDone() {
+    if (vlkSinglePromise) return vlkSinglePromise;
+    if (!window.VLK_SINGLE) return Promise.resolve(null);
+    vlkSinglePromise = new Promise(function (resolve) {
+      if (window.vlkResults) { resolve(); return; }
+      var t = setTimeout(resolve, 8000);
+      window.addEventListener('vlk:results', function () {
+        clearTimeout(t);
+        resolve();
+      }, { once: true });
+    }).then(function () {
+      return window.VLK_SINGLE.run();
+    }).then(function (s) {
+      if (s) vlkSalvarSingle(s);
+      return s;
+    })["catch"](function () { return null; });
+    return vlkSinglePromise;
+  }
+
   // Pré-aquecimento: mede a rede em segundo plano, sem tocar na tela.
   //
   // Só faz sentido DEPOIS do "All done": durante o teste de banda o link está
@@ -824,7 +910,9 @@ function injectTenantBranding() {
       vlkNetPromise = Promise.resolve(cache);
       return vlkNetPromise;
     }
-    vlkNetPromise = window.VLK_CONECT.run({ silent: true }).then(function (res) {
+    vlkNetPromise = vlkSingleDone().then(function () {
+      return window.VLK_CONECT.run({ silent: true });
+    }).then(function (res) {
       if (res && (res.cliente.length || res.servidor.length)) {
         vlkNetCacheGrava(res);
         vlkNetAdota(res);
@@ -869,6 +957,9 @@ function injectTenantBranding() {
       // Disponível para o relatório, que abre em outra aba
       try { localStorage.setItem('vlkQos', JSON.stringify(window.vlkQos)); } catch (e) {}
     }
+    // Conexão única: começa agora, com o link livre e os resultados prontos.
+    // Quem depende da rede já está encadeado nesta mesma promise.
+    vlkSingleDone();
     if (window.vlkTestMode === 'complete') vlkRolaAteResposta();
   });
 
@@ -884,7 +975,14 @@ function injectTenantBranding() {
       vlkNetAdota(cache);
       return;
     }
-    window.VLK_CONECT.run(NET_OPTS).then(function (res) {
+    // A medição de conexão única satura o link; as latências desta análise só
+    // fazem sentido depois que ela termina. Enquanto isso, as tabelas mostram
+    // as linhas pendentes em vez de ficarem vazias.
+    window.VLK_CONECT.placeholder(NET_OPTS);
+    vlkSingleDone().then(function () {
+      return window.VLK_CONECT.run(NET_OPTS);
+    }).then(function (res) {
+      if (!res) return;
       vlkNetCacheGrava(res);
       vlkNetAdota(res);
     });

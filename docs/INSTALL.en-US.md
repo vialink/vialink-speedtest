@@ -425,6 +425,7 @@ never affects the user (best-effort).
    CREATE TABLE testes (
      id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
      criado_em      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     uid            CHAR(32) DEFAULT NULL,
      tenant         VARCHAR(32)  NOT NULL DEFAULT 'vialink',
      hostname       VARCHAR(100) NOT NULL DEFAULT '',
      site           VARCHAR(32)  NOT NULL DEFAULT '',
@@ -453,7 +454,14 @@ never affects the user (best-effort).
      qos_ul_cv      DECIMAL(6,4) DEFAULT NULL,
      qos_dl_boost   DECIMAL(6,2) DEFAULT NULL,
      qos_quedas     TINYINT UNSIGNED DEFAULT NULL,
+     -- Single connection (§9.3): filled a few seconds after the test
+     single_mbps       DECIMAL(10,3) DEFAULT NULL,
+     single_multi_mbps DECIMAL(10,3) DEFAULT NULL,
+     single_ratio      DECIMAL(5,3) DEFAULT NULL,
+     single_grade      VARCHAR(10) DEFAULT NULL,
+     single_window_kb  INT UNSIGNED DEFAULT NULL,
      PRIMARY KEY (id),
+     KEY idx_uid (uid),
      KEY idx_criado (criado_em),
      KEY idx_ip (ip),
      KEY idx_tenant_criado (tenant, criado_em),
@@ -461,6 +469,45 @@ never affects the user (best-effort).
      KEY idx_site (site)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
    ```
+
+   The connectivity analysis (§10), when stored, uses a second table, linked to
+   the first one through `uid`:
+
+   ```sql
+   CREATE TABLE testes_rede (
+     id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+     teste_id     BIGINT UNSIGNED NOT NULL,
+     origem       ENUM('cliente','servidor') NOT NULL,
+     ordem        SMALLINT UNSIGNED NOT NULL,
+     label        VARCHAR(80) NOT NULL DEFAULT '',
+     alvo         VARCHAR(200) NOT NULL DEFAULT '',
+     latencia_ms  DECIMAL(10,2) DEFAULT NULL,
+     jitter_ms    DECIMAL(10,2) DEFAULT NULL,
+     perda_pct    DECIMAL(5,2) DEFAULT NULL,
+     saltos       TINYINT UNSIGNED DEFAULT NULL,
+     filtrado     TINYINT(1) NOT NULL DEFAULT 0,
+     indisponivel TINYINT(1) NOT NULL DEFAULT 0,
+     PRIMARY KEY (id),
+     UNIQUE KEY uk_teste_origem_ordem (teste_id, origem, ordem),
+     CONSTRAINT fk_testes_rede FOREIGN KEY (teste_id) REFERENCES testes (id)
+       ON DELETE CASCADE
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+   ```
+
+   **Already have the table from an earlier version?** The new columns are
+   additive:
+
+   ```sql
+   ALTER TABLE testes
+     ADD COLUMN single_mbps       DECIMAL(10,3) DEFAULT NULL,
+     ADD COLUMN single_multi_mbps DECIMAL(10,3) DEFAULT NULL,
+     ADD COLUMN single_ratio      DECIMAL(5,3)  DEFAULT NULL,
+     ADD COLUMN single_grade      VARCHAR(10)   DEFAULT NULL,
+     ADD COLUMN single_window_kb  INT UNSIGNED  DEFAULT NULL;
+   ```
+
+   Without that `ALTER` nothing breaks: the endpoint answers 202 and the
+   measurement still shows up on screen, in the report and in the PDF.
 
    (Column and table names are in Portuguese — the API expects them as-is.
    The `cliente`/`netbox_*` columns are filled by an enrichment job specific
@@ -479,7 +526,9 @@ never affects the user (best-effort).
    ```
 
 5. **Web server:** uncomment the `location = /api/salvar-teste.php` block
-   from §4 (nginx) or apply the `FilesMatch` from §5 (Apache) and reload.
+   from §4 (nginx) or apply the `FilesMatch` from §5 (Apache) and reload. The
+   other two storage endpoints — `api/salvar-conectividade.php` (§10) and
+   `api/salvar-single.php` (§9.3) — need the same treatment.
 6. **Validate:** run a test in the browser and check the new row:
 
    ```bash
@@ -550,6 +599,37 @@ interface warns that the value may look worse than reality. The host swap only
 happens when the hostname being accessed belongs to the tenant's list — so a
 third-party installation falling back to the default tenant never sends probes
 to someone else's servers.
+
+### 9.3. Single connection vs. multiple connections
+
+Also automatic, no configuration (`assets/js/single-connection.js`). A few
+seconds after the test — when the link goes idle again — the speed test
+downloads over **a single connection** for ~6 s and compares it with what the 6
+test connections delivered.
+
+Why it matters: the test measures "how much fits in the link" by adding up 6
+connections, but downloading a file, updating a game or uploading a backup is
+**one TCP flow**. When the single flow lands far below the total, that is what
+the subscriber feels — and the usual causes are a **per-flow policer** on the
+path, a **TCP window too small** for the link latency, or an **overloaded
+NAT/CGNAT**. The card shows the effective TCP window (bandwidth × RTT) when
+there is something to explain; sitting at 64 KB, it points at window scaling
+being disabled somewhere.
+
+Details that matter to whoever hosts it:
+
+- The measurement costs ~6 s of download, capped at **200 MB** — on a 1 Gbps
+  link it stops early rather than wasting traffic.
+- It runs **before** the network analysis (§10): the two together would spoil
+  each other (one saturates the link, the other measures latency). In the
+  Complete test, that is why the network table shows up a few seconds later.
+- **A slow server looks like a policer.** If your server cannot saturate the
+  client's link with a single flow (CPU, disk, a backend generating bytes
+  instead of serving a static file), the ratio drops because of the server, not
+  the network. Serve `downloading` as a static file.
+- Optional storage: the `single_*` columns (§8), written by
+  `api/salvar-single.php`, which `UPDATE`s the test row by `uid` — the speed
+  result is stored earlier, when this number does not exist yet.
 
 ## 10. Connectivity analysis (optional)
 

@@ -203,6 +203,23 @@ window.VLK_I18N.register({
     'qos.reportBloat': 'Latency under load (bufferbloat)',
     'qos.reportStab': 'Speed stability',
 
+    // ---- Single connection vs. multiple connections ----
+    'single.title': 'Single connection',
+    'single.measuring': 'Measuring what a single connection delivers…',
+    'single.oneLabel': 'With 1 connection',
+    'single.sixLabel': 'With 6 connections (test)',
+    'single.window': 'Effective TCP window',
+    'single.atRtt': 'at {v} ms latency',
+    'single.expl.full': 'A single connection delivers nearly the whole link. Downloading a file, updating a game or uploading a backup gets the full plan.',
+    'single.expl.partial': 'A single connection delivers a good share of the link, but not all of it. Single-file downloads tend to land somewhat below the test figure — the rest only shows up with several downloads at once.',
+    'single.expl.limited': 'A single connection falls well short of the total. This is what explains "the test says a lot but the real download says little": the full number only appears when several flows are added together. Usual causes: a per-flow policer on the path, a TCP window too small for the link latency, or an overloaded NAT/CGNAT.',
+    'single.expl.severe': 'A single connection delivers a fraction of the total. In practice the customer only reaches the contracted speed with many simultaneous downloads — a single file stays stuck far below. Worth investigating a per-flow policer, the TCP window and the NAT/CGNAT path.',
+    'single.smallWindow': 'The effective window is close to 64 KB, the TCP limit without window scaling — a sign that some device on the path is capping the window.',
+    'single.reportTitle': 'Single connection vs. multiple connections',
+    'single.thWhat': 'Measure',
+    'single.thValue': 'Value',
+    'single.ratio': 'Ratio',
+
     // ---- Connectivity page (conectividade.html) ----
     'connect.docTitle': 'Connectivity — {name} Speed Test',
     'connect.title': 'Connectivity analysis',

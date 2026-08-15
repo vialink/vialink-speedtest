@@ -202,6 +202,23 @@ window.VLK_I18N.register({
     'qos.reportBloat': 'Latência sob carga (bufferbloat)',
     'qos.reportStab': 'Estabilidade da velocidade',
 
+    // ---- Conexão única × múltiplas conexões ----
+    'single.title': 'Conexão única',
+    'single.measuring': 'Medindo o que uma única conexão entrega…',
+    'single.oneLabel': 'Com 1 conexão',
+    'single.sixLabel': 'Com 6 conexões (teste)',
+    'single.window': 'Janela TCP efetiva',
+    'single.atRtt': 'com {v} ms de latência',
+    'single.expl.full': 'Uma conexão sozinha entrega praticamente toda a banda do link. Baixar um arquivo, atualizar um jogo ou subir um backup aproveita o plano inteiro.',
+    'single.expl.partial': 'Uma conexão sozinha entrega boa parte da banda, mas não toda. Downloads de arquivo único costumam ficar um pouco abaixo do número do teste — o resto só aparece com vários downloads ao mesmo tempo.',
+    'single.expl.limited': 'Uma conexão sozinha fica bem abaixo do total. É isto que explica "o teste dá muito, mas o download real dá pouco": o número cheio só aparece somando vários fluxos. Causas típicas: limitador por fluxo no caminho, janela TCP pequena para a latência do enlace, ou NAT/CGNAT sobrecarregado.',
+    'single.expl.severe': 'Uma conexão sozinha entrega uma fração do total. Na prática o cliente só alcança a velocidade contratada com muitos downloads simultâneos — um arquivo único fica preso bem abaixo. Vale investigar limitador por fluxo (policer), janela TCP e o caminho de NAT/CGNAT.',
+    'single.smallWindow': 'A janela efetiva está próxima de 64 KB, o limite do TCP sem a opção de escala — sinal de que algum equipamento no caminho está cortando a janela.',
+    'single.reportTitle': 'Conexão única × múltiplas conexões',
+    'single.thWhat': 'Medida',
+    'single.thValue': 'Valor',
+    'single.ratio': 'Proporção',
+
     // ---- Página de conectividade (conectividade.html) ----
     'connect.docTitle': 'Conectividade — Velocímetro {name}',
     'connect.title': 'Análise de conectividade',

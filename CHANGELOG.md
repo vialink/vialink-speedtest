@@ -81,6 +81,39 @@ velocímetro, e também no relatório e no PDF.
   **`vlk:results`** (disparado quando os números existem de fato — o texto
   "All done" do status aparece segundos antes disso).
 
+## Conexão única × múltiplas conexões (`assets/js/single-connection.js`)
+
+O teste abre **6 conexões** em paralelo e soma o que todas trazem — é a medida
+certa de "quanto cabe no link", e é assim que todo speed test funciona. Só que
+quase nada do que o assinante faz usa 6 conexões: baixar um arquivo, atualizar
+um jogo, subir um backup e restaurar um dump são **um fluxo TCP**. Quando um
+fluxo sozinho entrega muito menos que os seis juntos, a experiência real fica
+abaixo do número anunciado — e o cliente tem razão ao reclamar mesmo com o teste
+"dando certo".
+
+- Um quarto card na seção de qualidade mostra **o que 1 conexão entrega**, o que
+  as 6 do teste entregaram e a **proporção** entre os dois, com veredito em
+  quatro faixas (entrega tudo / parcial / limitada / severa) e as causas
+  prováveis: **policer por fluxo**, **janela TCP pequena** para a latência do
+  enlace, ou **NAT/CGNAT sobrecarregado**.
+- **Janela TCP efetiva** (banda × RTT) exibida quando há o que explicar. Se ela
+  encosta em **64 KB**, a interface aponta janela sem *window scaling* — um
+  diagnóstico que nenhuma banda contratada resolve. A faixa de alarme é estreita
+  em torno dos 64 KB de propósito: janela apenas *pequena* é o resultado normal
+  de pouca banda com latência baixa, e acusar ali seria apontar a causa errada.
+- A medição roda **depois** do teste, na janela em que o link fica ocioso
+  enquanto o usuário lê o resultado — a mesma ideia do pré-aquecimento da
+  análise de rede, que agora espera por ela (as duas juntas se contaminariam:
+  uma satura o link, a outra mede latência). São ~6 s de download, com teto de
+  volume para não desperdiçar tráfego em links rápidos, e o card reserva seu
+  lugar com um cartão "medindo…" para o layout não saltar.
+- A comparação é **sustentado contra sustentado**: a referência é a velocidade
+  do fim do teste (a mesma que o card de turbo usa), não a média exibida — assim
+  o turbo inicial do plano não é creditado como "diferença de fluxo único".
+- Entra também no **relatório** e no **PDF**, e pode ser gravada no banco
+  (colunas `single_*` e endpoint `api/salvar-single.php`, ambos opcionais).
+- Resultado em `window.vlkSingle` e no evento **`vlk:single`**.
+
 ## Análise de conectividade (`conectividade.html`)
 
 - **Nova página "Rede"** (item no menu do app): mede **latência, jitter e perda

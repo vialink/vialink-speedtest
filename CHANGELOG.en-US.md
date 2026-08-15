@@ -81,6 +81,40 @@ also in the report and the PDF.
   event (fired when the numbers actually exist — the "All done" status text
   shows up seconds earlier).
 
+## Single connection vs. multiple connections (`assets/js/single-connection.js`)
+
+The test opens **6 parallel connections** and adds up what they all bring — the
+right measure for "how much fits in the link", and how every speed test works.
+Yet almost nothing a subscriber actually does uses 6 connections: downloading a
+file, updating a game, uploading a backup or restoring a dump are all **one TCP
+flow**. When a single flow delivers far less than the six together, the real
+experience lands below the advertised number — and the customer is right to
+complain even though the test "looks fine".
+
+- A fourth card in the quality section shows **what 1 connection delivers**, what
+  the 6 test connections delivered and the **ratio** between them, with a verdict
+  in four bands (full / partial / limited / severe) and the likely causes:
+  **per-flow policer**, **TCP window too small** for the link latency, or an
+  **overloaded NAT/CGNAT**.
+- **Effective TCP window** (bandwidth × RTT), shown when there is something to
+  explain. If it sits at **64 KB**, the interface calls out a window without
+  *window scaling* — a diagnosis no amount of contracted bandwidth fixes. The
+  alarm band is deliberately narrow around 64 KB: a merely *small* window is the
+  normal result of low bandwidth at low latency, and flagging it there would
+  point at the wrong cause.
+- The measurement runs **after** the test, in the window where the link sits idle
+  while the user reads the result — the same idea as the network-analysis
+  pre-warm, which now waits for it (running both together would contaminate each
+  other: one saturates the link, the other measures latency). It takes ~6 s of
+  download, with a volume cap so fast links do not waste traffic, and the card
+  holds its place with a "measuring…" placeholder so the layout does not jump.
+- The comparison is **sustained against sustained**: the reference is the speed
+  at the end of the test (the same one the turbo card uses), not the displayed
+  average — so the plan's initial turbo is not credited as a "single-flow gap".
+- It also reaches the **report** and the **PDF**, and can be stored in the
+  database (`single_*` columns and `api/salvar-single.php`, both optional).
+- Result in `window.vlkSingle` and in the **`vlk:single`** event.
+
 ## Connectivity analysis (`conectividade.html`)
 
 - **New "Network" page** (app menu item): measures **latency, jitter and packet
