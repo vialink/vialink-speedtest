@@ -115,6 +115,40 @@ complain even though the test "looks fine".
   database (`single_*` columns and `api/salvar-single.php`, both optional).
 - Result in `window.vlkSingle` and in the **`vlk:single`** event.
 
+## Usage profiles (`assets/js/perfis.js`)
+
+One grade per type of use — **video calls, 4K streaming, online gaming, remote
+work and VoIP calling** — derived from measurements the test already took. No
+new stage, no extra time: it is a re-reading of speed, latency, jitter, latency
+under load, stability and what a single flow delivers. Shown in both modes (Fast
+and Complete), above connection quality, and also in the report and the PDF.
+
+- **Each profile is graded by its worst criterion, not by the average.** A
+  500 Mbps link with 300 ms of latency under load is terrible for video calls;
+  averaging "great bandwidth" with "bad latency" would return "good" — wrong in
+  exactly the case the subscriber complains about. The criterion that pulled the
+  grade down is shown as the **limiting factor**: that is what to fix.
+- **Each profile looks at the direction that matters to it.** Streaming weighs
+  *download* stability (an oscillating upload does not bother a viewer), remote
+  work weighs *upload* and what a **single flow** delivers, gaming weighs
+  latency, jitter and latency under load, video calls weigh upload and
+  bufferbloat.
+- **Estimated voice MOS** with the **E-model (ITU-T G.107)**, computed twice:
+  with the link idle and **with the link busy** — the gap between the two is
+  what explains the call that only breaks up while someone is downloading. The
+  assumptions (G.711 with PLC, one-way delay ≈ RTT/2, jitter buffer ≈ 2× jitter
+  + 20 ms) are stated in the code. Since the E-model is lenient toward pure
+  delay, loss and jitter are also criteria of their own, with a stricter ruler.
+- **What was not measured does not count:** without the quality measurement the
+  profiles are flagged as partial (valid for the idle network).
+- **Nothing is stored in the database** — profiles are derived from columns that
+  already exist, and the report recomputes them with the same module so screen
+  and report cannot diverge.
+- Thresholds come from the services' own public recommendations (Zoom, Meet,
+  Netflix) and from rulers already used here; where sources disagree, the
+  stricter value wins. All of them live in the `PERFIS` table, with a comment on
+  the reasoning.
+
 ## Connectivity analysis (`conectividade.html`)
 
 - **New "Network" page** (app menu item): measures **latency, jitter and packet

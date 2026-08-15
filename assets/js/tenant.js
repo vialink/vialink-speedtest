@@ -354,6 +354,8 @@ function injectTenantBranding() {
     if (window.vlkNetResults) q.push('net=1');
     // Qualidade da conexão: mesmo mecanismo (dados volumosos demais para a URL)
     if (window.vlkQos) q.push('qos=1');
+    // Perfis de uso: o relatório os recalcula a partir das mesmas medições
+    if (window.vlkPerfis) q.push('perfis=1');
     // Conexão única: idem — só entra se a medição já tiver terminado
     if (window.vlkSingle) q.push('single=1');
     if (window._tenantParam) q.push(window._tenantParam);
@@ -566,17 +568,45 @@ function injectTenantBranding() {
     };
 
     // ---- Qualidade da conexão — página extra ----
+    // Abre com os perfis de uso (a leitura em linguagem de gente) e segue com as
+    // medições que os geraram. A página existe se houver qualquer um dos dois.
     var qos = window.vlkQos;
-    if (qos && qos.idle != null) {
-      var clsBloat = function (v) { return v == null ? '' : v < 30 ? 'bom' : v < 200 ? 'medio' : 'ruim'; };
-      var clsCv    = function (v) { return v == null ? '' : v < 0.10 ? 'bom' : v < 0.30 ? 'medio' : 'ruim'; };
-
+    var perfis = window.vlkPerfis;
+    var qy = 0;   // 0 = página de qualidade não existe (nada a mostrar)
+    var clsBloat = function (v) { return v == null ? '' : v < 30 ? 'bom' : v < 200 ? 'medio' : 'ruim'; };
+    var clsCv    = function (v) { return v == null ? '' : v < 0.10 ? 'bom' : v < 0.30 ? 'medio' : 'ruim'; };
+    if ((perfis && perfis.perfis && perfis.perfis.length) || (qos && qos.idle != null)) {
       doc.addPage();
       desenhaCabecalho();
       doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
       cor(escuro); doc.text(pT('qos.reportTitle'), 15, 40);
+      qy = 50;
+    }
 
-      var qy = 50;
+    if (perfis && perfis.perfis && perfis.perfis.length) {
+      var pl = window.VLK_PERFIS ? window.VLK_PERFIS.label : function (k) { return k; };
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+      doc.text(pT('prof.reportTitle'), 15, qy); qy += 6;
+      qy = cabTabela([pT('prof.thProfile'), pT('prof.thGrade'), pT('prof.thWhy')], [15, 80, 115], qy);
+      perfis.perfis.forEach(function (p) {
+        cor([40, 40, 40]); doc.text(pl('prof.name.' + p.key), 15, qy);
+        cor(qcor(p.cls)); doc.text(pl('prof.grade.' + p.nota), 80, qy);
+        cor([60, 60, 60]);
+        doc.text(p.limitante ? pl('prof.factor.' + p.limitante) : pl('prof.noLimit'), 115, qy);
+        doc.setDrawColor(240, 241, 243); doc.line(15, qy + 1.6, 195, qy + 1.6); qy += 6.5;
+      });
+      qy += 2;
+      doc.setFontSize(8.5); cor([80, 85, 90]);
+      var notaP = perfis.mosIdle != null ? pl('prof.mosNote') : '';
+      if (perfis.parcial) notaP = (notaP ? notaP + ' ' : '') + pl('prof.partial');
+      if (notaP) {
+        var linhasP = doc.splitTextToSize(notaP, 180);
+        doc.text(linhasP, 15, qy);
+        qy += linhasP.length * 3.8 + 6;
+      }
+    }
+
+    if (qos && qos.idle != null) {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
       doc.text(pT('qos.reportBloat'), 15, qy); qy += 6;
       qy = cabTabela([pT('qos.thState'), pT('connect.thLat'), pT('qos.thIncrease')], [15, 95, 140], qy);
@@ -639,7 +669,7 @@ function injectTenantBranding() {
     var sc = window.vlkSingle;
     if (sc && sc.single > 0) {
       var sy;
-      if (qos && qos.idle != null && typeof qy === 'number' && qy < 235) {
+      if (qy > 0 && qy < 235) {
         sy = qy;
       } else {
         doc.addPage();
@@ -929,7 +959,8 @@ function injectTenantBranding() {
   var vlkRolou = false;
   function vlkRolaAteResposta() {
     if (vlkRolou) return;
-    var alvo = document.getElementById('vlk-qos');
+    var alvo = document.getElementById('vlk-perfis');
+    if (!alvo || !alvo.classList.contains('aberto')) alvo = document.getElementById('vlk-qos');
     if (!alvo || !alvo.classList.contains('aberto')) alvo = document.getElementById('vlk-net-inline');
     if (!alvo || !alvo.classList.contains('aberto')) return;
     vlkRolou = true;
@@ -950,6 +981,15 @@ function injectTenantBranding() {
     return sec;
   }
 
+  // Perfis de uso: leitura das medições em linguagem do dia a dia. Recalcula do
+  // zero a cada chamada — é barato (aritmética sobre números já medidos) e
+  // garante que a conexão única, que chega alguns segundos depois, entre na
+  // conta assim que existir.
+  function vlkRenderPerfis() {
+    if (!window.VLK_PERFIS) return;
+    try { VLK_PERFIS.render(); } catch (e) {}
+  }
+
   // Qualidade da conexão: renderizada quando os resultados existem de fato.
   window.addEventListener('vlk:results', function () {
     if (window.VLK_QOS && window.vlkQos) {
@@ -957,11 +997,17 @@ function injectTenantBranding() {
       // Disponível para o relatório, que abre em outra aba
       try { localStorage.setItem('vlkQos', JSON.stringify(window.vlkQos)); } catch (e) {}
     }
+    vlkRenderPerfis();
     // Conexão única: começa agora, com o link livre e os resultados prontos.
     // Quem depende da rede já está encadeado nesta mesma promise.
     vlkSingleDone();
     if (window.vlkTestMode === 'complete') vlkRolaAteResposta();
   });
+
+  // A conexão única chega depois de todo o resto e muda dois perfis (streaming
+  // e home office dependem do que UM fluxo entrega). Reescrever os cards no
+  // lugar não desloca nada: a quantidade e a ordem deles não mudam.
+  window.addEventListener('vlk:single', vlkRenderPerfis);
 
   // Teste "Complete": ao fim da velocidade, abre a seção e mostra a análise.
   // Se o pré-aquecimento desta sessão ainda estiver válido (ex.: o usuário fez

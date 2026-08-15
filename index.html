@@ -196,10 +196,24 @@ please get in touch with support@openspeedtest.com.
     <span id="vlk-net-cta-fb" class="vlk-net-fb" aria-live="polite"></span>
   </div>
 
+  <!-- Perfis de uso: as medições traduzidas para o dia a dia (videochamada,
+       streaming, jogos, home office, telefonia). Vem ANTES da qualidade de
+       propósito — é a leitura que qualquer pessoa entende; quem quiser os
+       números que a geraram continua rolando. -->
+  <section id="vlk-perfis" class="vlk-cards-sec" aria-hidden="true">
+    <div class="qos-inner">
+      <h2 data-i18n="prof.title">O que dá para fazer com esta conexão</h2>
+      <p class="suave" data-i18n="prof.intro">As mesmas medições deste teste, traduzidas para o uso do dia a dia. A nota de cada perfil segue o pior fator — é ele que a pessoa sente.</p>
+      <div class="qos-cards" id="vlk-perfis-cards"></div>
+      <p id="vlk-perfis-mos" class="aviso" style="display:none" data-i18n="prof.mosNote">MOS: qualidade de voz estimada pelo modelo E-model (ITU-T G.107) a partir da latência, do jitter e da perda medidos aqui. Vai de 1 (inaudível) a 4,4 (telefonia fixa).</p>
+      <p id="vlk-perfis-parcial" class="aviso" style="display:none" data-i18n="prof.partial">A latência sob carga não foi medida neste teste: as notas consideram apenas o cenário com a rede livre.</p>
+    </div>
+  </section>
+
   <!-- Qualidade da conexão: derivada do próprio teste de velocidade (latência
        sob carga, turbo inicial e estabilidade). Aparece nos DOIS modos — não
        custa tempo nem medição extra, e é o que a média em Mbps não conta. -->
-  <section id="vlk-qos" aria-hidden="true">
+  <section id="vlk-qos" class="vlk-cards-sec" aria-hidden="true">
     <div class="qos-inner">
       <h2 data-i18n="qos.title">Qualidade da conexão</h2>
       <p class="suave" data-i18n="qos.intro">Medido durante o próprio teste. É o que a velocidade média não mostra.</p>
@@ -258,6 +272,7 @@ please get in touch with support@openspeedtest.com.
   <script src="assets/js/tenant.js"></script>
   <script src="assets/js/qualidade.js"></script>
   <script src="assets/js/single-connection.js"></script>
+  <script src="assets/js/perfis.js"></script>
   <script src="assets/js/app-2.5.4.js"></script>
   <script src="assets/js/conectividade.js"></script>
   <script src="assets/js/darkmode.js"></script>

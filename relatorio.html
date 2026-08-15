@@ -18,6 +18,7 @@
   <script src="/assets/js/i18n/ja-JP.js"></script>
   <script src="/assets/js/i18n/ru-RU.js"></script>
   <script src="/assets/js/i18n/de-DE.js"></script>
+  <script src="/assets/js/perfis.js"></script>
   <style>
     /* Relatório é um documento: fundo claro, pronto para imprimir/PDF */
     body { background: #f4f5f7; color: #222; }
@@ -201,6 +202,19 @@
           <p data-i18n-html="tech.p3">Para chegar o mais perto possível da banda real, teste em um computador <strong>sem outros programas ou atualizações rodando</strong>, conectado <strong>por cabo direto ao roteador</strong> e <strong>sem concorrência dos demais dispositivos da rede</strong>.</p>
         </div>
 
+        <div id="perfis-secao" style="display:none">
+          <h2 class="rede-titulo" data-i18n="prof.reportTitle">Perfis de uso</h2>
+          <table class="net-tabela">
+            <thead><tr>
+              <th data-i18n="prof.thProfile">Uso</th>
+              <th data-i18n="prof.thGrade">Nota</th>
+              <th data-i18n="prof.thWhy">O que determinou</th>
+            </tr></thead>
+            <tbody id="perfis-corpo"></tbody>
+          </table>
+          <p class="obs" id="perfis-nota"></p>
+        </div>
+
         <div id="qos-secao" style="display:none">
           <h2 class="rede-titulo" data-i18n="qos.reportTitle">Qualidade da conexão</h2>
           <h3 class="rede-sub" data-i18n="qos.reportBloat">Latência sob carga (bufferbloat)</h3>
@@ -338,6 +352,7 @@
       if (q.has('net')) renderRede();
       if (q.has('qos')) renderQos();
       if (q.has('single')) renderSingle();
+      if (q.has('perfis')) renderPerfis();
 
       function trFb(key, fb) { var s = window.vlkT ? vlkT(key) : key; return (s && s !== key) ? s : fb; }
       function ms(v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; }
@@ -430,6 +445,38 @@
         if (d.smallWindow) expl += ' ' + trFb('single.smallWindow', '');
         document.getElementById('single-expl').textContent = expl;
         document.getElementById('single-secao').style.display = 'block';
+      }
+
+      // ---- Perfis de uso ----
+      // Não são gravados: são derivados. O relatório reconstitui as mesmas
+      // entradas que a página do teste tinha (resultados pela URL, qualidade e
+      // conexão única pelo localStorage) e recalcula com o mesmo módulo — uma
+      // fonte de verdade só, sem risco de a tela e o relatório divergirem.
+      function renderPerfis() {
+        if (!window.VLK_PERFIS) return;
+        var ler = function (k) {
+          try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; }
+        };
+        window.vlkResults = {
+          d: q.get('d'), u: q.get('u'), p: q.get('p'), j: q.get('j')
+        };
+        window.vlkQos = ler('vlkQos');
+        window.vlkSingle = ler('vlkSingle');
+
+        var res = VLK_PERFIS.compute();
+        if (!res) return;
+        var lbl = VLK_PERFIS.label;
+
+        document.getElementById('perfis-corpo').innerHTML = res.perfis.map(function (p) {
+          return '<tr><td class="destino">' + lbl('prof.name.' + p.key) + '</td>' +
+            td(lbl('prof.grade.' + p.nota), p.cls) +
+            '<td>' + (p.limitante ? lbl('prof.factor.' + p.limitante) : lbl('prof.noLimit')) + '</td></tr>';
+        }).join('');
+
+        var nota = res.mosIdle != null ? lbl('prof.mosNote') : '';
+        if (res.parcial) nota = (nota ? nota + ' ' : '') + lbl('prof.partial');
+        document.getElementById('perfis-nota').textContent = nota;
+        document.getElementById('perfis-secao').style.display = 'block';
       }
 
       function renderRede() {

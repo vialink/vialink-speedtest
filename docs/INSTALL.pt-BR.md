@@ -612,7 +612,7 @@ mostra a janela TCP efetiva (banda × RTT) quando há o que explicar; encostada 
 
 Detalhes que valem para quem hospeda:
 
-- A medição consome ~6 s de download, com **teto de 200 MB** — em link de 1 Gbps
+- A medição consome ~6 s de download, com **teto de 150 MB** — em link de 1 Gbps
   ela para antes do tempo para não desperdiçar tráfego.
 - Ela **antecede** a análise de rede (§10): as duas juntas se atrapalhariam (uma
   satura o link, a outra mede latência). No teste Complete, a tabela de rede
@@ -624,6 +624,47 @@ Detalhes que valem para quem hospeda:
 - Persistência opcional: colunas `single_*` (§8) gravadas por
   `api/salvar-single.php`, que faz `UPDATE` na linha do teste pelo `uid` — a
   velocidade grava antes, quando este número ainda não existe.
+
+### 9.4. Perfis de uso (o que dá para fazer com esta conexão)
+
+Automática, sem configuração (`assets/js/perfis.js`). Não mede nada de novo:
+relê o que as seções anteriores já produziram e traduz em uma nota por tipo de
+uso — **videochamada, streaming 4K, jogos online, home office e telefonia
+VoIP** —, exibida acima da qualidade da conexão, no relatório e no PDF.
+
+Duas regras definem o resultado:
+
+- **A nota de cada perfil é o pior critério, não a média.** Um link de 500 Mbps
+  com 300 ms de latência sob carga é péssimo para videochamada; uma média entre
+  "banda ótima" e "latência ruim" devolveria "bom" e erraria exatamente no caso
+  em que o assinante reclama. O critério que puxou a nota para baixo aparece
+  como fator limitante — é nele que se mexe para melhorar.
+- **O que não foi medido não entra na conta.** Sem a medição de qualidade
+  (§9.2), os perfis saem marcados como parciais: valem para o cenário de rede
+  livre, sem o "com o link ocupado".
+
+Cada perfil olha o que lhe interessa: streaming pesa a estabilidade do
+**download** (o upload oscilando não atrapalha quem assiste), home office pesa
+o **upload** e o que **um fluxo só** entrega (§9.3), jogos pesam latência,
+jitter e latência sob carga.
+
+O perfil de VoIP mostra o **MOS estimado** pelo **E-model (ITU-T G.107)** a
+partir da latência, do jitter e da perda medidos aqui — com o link livre e com o
+link ocupado. Premissas declaradas no código: codec G.711 com PLC, atraso em um
+sentido ≈ RTT/2, jitter buffer ≈ 2× jitter + 20 ms. É uma estimativa: serve para
+ordenar cenários, não para cravar a nota que um ouvinte daria. Por isso a nota
+do perfil não sai só do MOS — perda e jitter entram também como critérios
+próprios, com régua mais dura.
+
+Os limiares seguem as recomendações públicas dos próprios serviços (Zoom, Meet,
+Netflix) e as réguas já usadas aqui para bufferbloat e estabilidade; onde as
+fontes divergem, fica o valor mais exigente. Para calibrar para o seu mercado,
+os cortes estão todos na tabela `PERFIS` do módulo, um por linha, com o
+comentário do porquê.
+
+**Nada disso é gravado no banco:** os perfis são derivados das colunas que já
+existem (§8) e podem ser recalculados a qualquer momento — inclusive pelo
+próprio relatório, que usa o mesmo módulo para não divergir da tela.
 
 ## 10. Análise de conectividade (opcional)
 

@@ -38,6 +38,11 @@ backend — any web server will do.
   test uses. This is the answer to "the test says 300 Mbps but Steam downloads
   at 20": per-flow policers, a TCP window too small for the link latency
   (effective window shown, with a 64 KB warning) or an overloaded CGNAT.
+- **Usage profiles** — the same numbers as one grade per type of use: video
+  calls, 4K streaming, gaming, remote work and VoIP (with an **estimated MOS**,
+  ITU-T G.107, computed both with the link idle and with the link busy). Each
+  profile is graded by its **worst** criterion, never the average, and names the
+  limiting factor — so "500 Mbps" never covers up 300 ms of latency under load.
 - **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.

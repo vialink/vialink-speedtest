@@ -114,6 +114,40 @@ abaixo do número anunciado — e o cliente tem razão ao reclamar mesmo com o t
   (colunas `single_*` e endpoint `api/salvar-single.php`, ambos opcionais).
 - Resultado em `window.vlkSingle` e no evento **`vlk:single`**.
 
+## Perfis de uso (`assets/js/perfis.js`)
+
+Uma nota por tipo de uso — **videochamada, streaming 4K, jogos online, home
+office e telefonia VoIP** — derivada das medições que o teste já fez. Sem etapa
+nova, sem custo de tempo: é releitura da velocidade, da latência, do jitter, da
+latência sob carga, da estabilidade e do que um fluxo único entrega. Aparece nos
+dois modos (Fast e Complete), acima da qualidade da conexão, e também no
+relatório e no PDF.
+
+- **A nota de cada perfil é o pior critério, não a média deles.** Um link de
+  500 Mbps com 300 ms de latência sob carga é péssimo para videochamada; a média
+  entre "banda ótima" e "latência ruim" devolveria "bom" — erraria justamente no
+  caso em que o assinante reclama. O critério que puxou a nota para baixo é
+  exibido como **fator limitante**: é nele que se mexe para melhorar.
+- **Cada perfil olha o sentido que lhe interessa.** Streaming pesa a
+  estabilidade do *download* (upload oscilando não atrapalha quem assiste), home
+  office pesa o *upload* e o que **um fluxo só** entrega, jogos pesam latência,
+  jitter e latência sob carga, videochamada pesa upload e bufferbloat.
+- **MOS estimado para voz** pelo **E-model (ITU-T G.107)**, calculado duas
+  vezes: com o link livre e **com o link ocupado** — a diferença entre os dois é
+  o que explica a ligação que só pica quando alguém está baixando algo. As
+  premissas (G.711 com PLC, atraso em um sentido ≈ RTT/2, jitter buffer ≈ 2×
+  jitter + 20 ms) estão declaradas no código. Como o E-model é tolerante ao
+  atraso puro, perda e jitter entram também como critérios próprios, com régua
+  mais dura.
+- **O que não foi medido não entra na conta:** sem a medição de qualidade, os
+  perfis saem marcados como parciais (valem para a rede livre).
+- **Nada é gravado no banco** — os perfis são derivados de colunas que já
+  existem, e o relatório os recalcula com o mesmo módulo, para tela e relatório
+  não divergirem.
+- Limiares vindos das recomendações públicas dos próprios serviços (Zoom, Meet,
+  Netflix) e das réguas já usadas aqui; onde as fontes divergem, fica o valor
+  mais exigente. Todos reunidos na tabela `PERFIS`, com o comentário do porquê.
+
 ## Análise de conectividade (`conectividade.html`)
 
 - **Nova página "Rede"** (item no menu do app): mede **latência, jitter e perda

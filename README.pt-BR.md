@@ -38,6 +38,11 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   o teste usa. É a resposta para "o teste dá 300 Mbps mas o Steam baixa a 20":
   limitador por fluxo, janela TCP pequena para a latência do enlace (a janela
   efetiva é exibida, com alerta em 64 KB) ou CGNAT sobrecarregado.
+- **Perfis de uso** — os mesmos números como uma nota por tipo de uso:
+  videochamada, streaming 4K, jogos, home office e VoIP (com **MOS estimado**,
+  ITU-T G.107, calculado com o link livre e com o link ocupado). Cada perfil é
+  avaliado pelo **pior** critério, nunca pela média, e diz qual é o fator
+  limitante — assim "500 Mbps" nunca encobre 300 ms de latência sob carga.
 - **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
   PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.

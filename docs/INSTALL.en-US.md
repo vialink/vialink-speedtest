@@ -618,7 +618,7 @@ being disabled somewhere.
 
 Details that matter to whoever hosts it:
 
-- The measurement costs ~6 s of download, capped at **200 MB** — on a 1 Gbps
+- The measurement costs ~6 s of download, capped at **150 MB** — on a 1 Gbps
   link it stops early rather than wasting traffic.
 - It runs **before** the network analysis (§10): the two together would spoil
   each other (one saturates the link, the other measures latency). In the
@@ -630,6 +630,48 @@ Details that matter to whoever hosts it:
 - Optional storage: the `single_*` columns (§8), written by
   `api/salvar-single.php`, which `UPDATE`s the test row by `uid` — the speed
   result is stored earlier, when this number does not exist yet.
+
+### 9.4. Usage profiles (what you can do with this connection)
+
+Automatic, no configuration (`assets/js/perfis.js`). It measures nothing new:
+it re-reads what the previous sections already produced and turns it into one
+grade per type of use — **video calls, 4K streaming, online gaming, remote work
+and VoIP calling** — shown above connection quality, in the report and in the
+PDF.
+
+Two rules define the result:
+
+- **Each profile is graded by its worst criterion, not by the average.** A
+  500 Mbps link with 300 ms of latency under load is terrible for video calls;
+  averaging "great bandwidth" with "bad latency" would return "good" and get it
+  wrong in exactly the case the subscriber complains about. The criterion that
+  pulled the grade down is shown as the limiting factor — that is what to fix.
+- **What was not measured does not count.** Without the quality measurement
+  (§9.2) the profiles are flagged as partial: they hold for the idle-network
+  scenario, without the "with the link busy" side.
+
+Each profile looks at what matters to it: streaming weighs **download**
+stability (an oscillating upload does not bother a viewer), remote work weighs
+**upload** and what a **single flow** delivers (§9.3), gaming weighs latency,
+jitter and latency under load.
+
+The VoIP profile shows the **MOS estimated** with the **E-model (ITU-T G.107)**
+from the latency, jitter and loss measured here — with the link idle and with
+the link busy. Assumptions are stated in the code: G.711 codec with PLC, one-way
+delay ≈ RTT/2, jitter buffer ≈ 2× jitter + 20 ms. It is an estimate: good for
+ranking scenarios, not for pinning down the score a listener would give. That is
+why the profile grade does not come from MOS alone — loss and jitter are also
+criteria of their own, with a stricter ruler.
+
+Thresholds follow the services' own public recommendations (Zoom, Meet,
+Netflix) and the rulers already used here for bufferbloat and stability; where
+sources disagree, the stricter value wins. To calibrate for your market, every
+cut-off lives in the module's `PERFIS` table, one per line, with a comment on
+the reasoning.
+
+**None of it is stored in the database:** profiles are derived from columns that
+already exist (§8) and can be recomputed at any time — including by the report
+page itself, which uses the same module so screen and report cannot diverge.
 
 ## 10. Connectivity analysis (optional)
 
