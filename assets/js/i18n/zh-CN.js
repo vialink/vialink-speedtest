@@ -76,6 +76,7 @@ window.VLK_I18N.register({
     'pdf.ipv4': 'IPv4 地址',
     'pdf.ipv6': 'IPv6 地址',
     'pdf.provider': '运营商 / 城市',
+    'pdf.assignedTo': '归属方',
     'pdf.server': '测试服务器',
     'pdf.data': '测试期间传输的数据：下载 {dd} MB，上传 {ud} MB。',
     'pdf.note': '本测试在浏览器中对 {name} 服务器进行，位于我们的网络内部。结果反映测试时设备与 {name} 之间的连接情况 — Wi-Fi、布线和连接的同时使用都会影响数值。',

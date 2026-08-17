@@ -227,6 +227,25 @@ please get in touch with support@openspeedtest.com.
   <section id="vlk-net-inline" aria-hidden="true">
     <div class="net-inner">
       <h2 data-i18n="connect.title">Análise de conectividade</h2>
+
+      <!-- Diagnóstico da conexão: tipo de NAT/CGNAT, MTU do caminho e tempo de
+           resolução DNS. Vem antes das tabelas de destino porque responde
+           "tem algo errado no caminho?" — as tabelas dizem "com quem". -->
+      <div id="vlk-diag" style="display:none">
+        <h3 data-i18n="diag.title">Diagnóstico da conexão</h3>
+        <p class="suave" data-i18n="diag.intro">Três verificações que explicam problemas que a velocidade não mostra.</p>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr>
+              <th data-i18n="diag.thCheck">Verificação</th>
+              <th data-i18n="diag.thResult">Resultado</th>
+              <th data-i18n="diag.thWhat">O que isso significa</th>
+            </tr></thead>
+            <tbody id="vlk-diag-corpo"></tbody>
+          </table>
+        </div>
+      </div>
+
       <h3 data-i18n="connect.cliTitle">Da sua conexão até cada destino</h3>
       <p class="suave" data-i18n="connect.cliIntro">Medido do seu navegador. Reflete a experiência real da sua conexão.</p>
       <div class="tabela-wrap">
@@ -269,12 +288,14 @@ please get in touch with support@openspeedtest.com.
     </div>
   </section>
 
+  <script src="assets/js/whois-ip.js"></script>
   <script src="assets/js/tenant.js"></script>
   <script src="assets/js/qualidade.js"></script>
   <script src="assets/js/single-connection.js"></script>
   <script src="assets/js/perfis.js"></script>
   <script src="assets/js/app-2.5.4.js"></script>
   <script src="assets/js/conectividade.js"></script>
+  <script src="assets/js/diagnostico-rede.js"></script>
   <script src="assets/js/darkmode.js"></script>
 
 </body>

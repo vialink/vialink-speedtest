@@ -43,11 +43,18 @@ backend — any web server will do.
   ITU-T G.107, computed both with the link idle and with the link busy). Each
   profile is graded by its **worst** criterion, never the average, and names the
   limiting factor — so "500 Mbps" never covers up 300 ms of latency under load.
+- **Connection diagnostics** — NAT type with **CGNAT and symmetric NAT**
+  detection (why incoming connections fail and why games can't connect
+  directly), **path MTU** read from the TCP connection itself (1492 means PPPoE;
+  lower means a tunnel), and DNS resolution time. The answers to complaints that
+  a speed number cannot explain.
 - **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.
-- **IP/provider card**, **dynamic** gauge scale, dark theme by default,
-  dedicated mobile layout.
+- **IP/provider card** — address, ASN, region and **who the block is assigned
+  to** (public RDAP registry), which is often more specific than the ASN: a
+  sub-allocated block shows the company that actually holds it.
+- **Dynamic** gauge scale, dark theme by default, dedicated mobile layout.
 - **Fixes over upstream** — a live graph that never rendered, upload payload
   ~160× faster to prepare, threads tuned to HTTP/1.1 — all documented in the
   [CHANGELOG](CHANGELOG.en-US.md).

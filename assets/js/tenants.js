@@ -30,6 +30,20 @@
     { label: 'Internacional (EUA)', labelKey: 'connect.dest.intl', host: 'whitehouse.gov' }
   ];
 
+  // Servidores STUN usados pelo diagnóstico de NAT/CGNAT (assets/js/diagnostico-rede.js).
+  // Cada tenant pode sobrescrever com `stunServers: [...]` — apontando para um STUN
+  // próprio, por exemplo — ou desligar a checagem com `stunServers: []`. Um binding
+  // request STUN não carrega dado do usuário (pergunta "de que IP/porta você me vê?"),
+  // mas é tráfego para terceiros: quem preferir manter tudo em casa desliga aqui.
+  // Sem a chave, valem os públicos definidos no próprio módulo.
+
+  // Servidor RDAP usado para descobrir a quem o IP está designado, mostrado no
+  // card abaixo do ASN (assets/js/whois-ip.js). O padrão é o bootstrap
+  // `https://rdap.org/ip/`, que redireciona para o RIR responsável. Cada tenant
+  // pode apontar para outro servidor com `rdapEndpoint: 'https://.../ip/'` (a
+  // string é concatenada com o IP) ou desligar a consulta com
+  // `rdapEndpoint: ''` — é a única chamada a terceiros dessa linha do card.
+
   var TENANTS = {
     vialink: {
       name: 'Vialink',

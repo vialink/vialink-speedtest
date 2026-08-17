@@ -13,10 +13,26 @@
 
   // Busca IP/rede de forma assíncrona e armazena globalmente.
   // injectTenantBranding() usa esses dados quando o SVG estiver pronto.
+  // A quem o bloco deste IP está designado (RDAP — ver whois-ip.js). Vai atrás
+  // do card já preenchido: é linha extra, chega quando chegar, e se não vier o
+  // card fica exatamente como era.
+  var whoisPedido = false;
+  var pedeWhois = function (ip) {
+    if (whoisPedido || !window.VLK_WHOIS) return;
+    whoisPedido = true;
+    VLK_WHOIS.lookup(ip).then(function (w) {
+      if (!w || !w.nome || !window._vlkIpData) return;
+      window._vlkIpData.whois = w.nome;
+      window._vlkIpData.whoisBloco = w.bloco;
+      applyIpToSvg();
+    });
+  };
+
   var detectStacks = function (data) {
     if (!data.ip || data.ip === '—') return;
     window._vlkIpData = data;
     applyIpToSvg();
+    pedeWhois(data.ip);
 
     var isV6 = data.ip.indexOf(':') !== -1;
     // Se temos um v6, buscamos o v4. Se temos um v4, buscamos o v6.
@@ -195,6 +211,38 @@ function vlkSalvarSingle(s) {
   }));
 }
 
+// Troca o texto de um <text> SVG preservando o <title> (tooltip) filho —
+// `textContent = x` apagaria o title junto.
+function vlkSetSvgText(el, txt) {
+  var n = el.firstChild;
+  if (n && n.nodeType === 3) n.nodeValue = txt;
+  else el.insertBefore(el.ownerDocument.createTextNode(txt), el.firstChild);
+}
+
+// Encaixa o nome do whois na largura do card: reduz a fonte até o mínimo e,
+// só então, trunca. Nome de empresa é longo ("Núcleo de Inf. e Coord. do Ponto
+// BR - NIC.BR") e transbordar por cima do card é pior que uma linha menor.
+function vlkAjustaWhois(el, texto, budget) {
+  var FS_MAX = 8.5, FS_MIN = 6.5;
+  vlkSetSvgText(el, texto);
+  var largura = function (fs) {
+    el.style.fontSize = fs.toFixed(2) + 'px';
+    var w = 0;
+    try { w = el.getComputedTextLength(); } catch (e) { w = 0; }
+    // Subárvore oculta (intro/UI alternam) não mede: cai na estimativa.
+    return w || texto.length * fs * 0.52;
+  };
+  var w = largura(FS_MAX);
+  if (w <= budget) return;
+
+  var fs = Math.max(FS_MIN, FS_MAX * (budget / w));
+  w = largura(fs);
+  if (w > budget) {
+    var max = Math.max(8, Math.floor(texto.length * (budget / w)) - 1);
+    vlkSetSvgText(el, texto.slice(0, max).replace(/[\s,.\-–]+$/, '') + '…');
+  }
+}
+
 // Aplica dados de IP nos elementos SVG (chamada quando o fetch ou o SVG estiver pronto)
 function applyIpToSvg() {
   var d = window._vlkIpData;
@@ -203,6 +251,9 @@ function applyIpToSvg() {
   var ip = d.ip;
   var ipv4 = d.ipv4;
   var org = [d.asn, d.region].filter(Boolean).join(' · ');
+  // Linha do whois: só no layout de IP único. No dual-stack o card já usa as
+  // quatro linhas para os dois endereços (e o ASN também sai de cena).
+  var whois = (!ipv4 && d.whois) ? d.whois : '';
 
   // IPv6 (ou qualquer IP com mais de 16 chars) não cabe ao lado do ASN·cidade:
   var longo = ip.indexOf(':') !== -1 || ip.length > 16;
@@ -233,7 +284,8 @@ function applyIpToSvg() {
     addr: ['ip-addr-ui', 'ip-addr-intro', 'ip-addr-mob'],
     v4lbl: ['ip-v4-lbl-ui', 'ip-v4-lbl-intro', 'ip-v4-lbl-mob'],
     v4addr: ['ip-v4-addr-ui', 'ip-v4-addr-intro', 'ip-v4-addr-mob'],
-    org: ['ip-org-ui', 'ip-org-intro', 'ip-org-mob']
+    org: ['ip-org-ui', 'ip-org-intro', 'ip-org-mob'],
+    whois: ['ip-whois-ui', 'ip-whois-intro', 'ip-whois-mob']
   };
 
   ids.addr.forEach(function (id) {
@@ -303,17 +355,33 @@ function applyIpToSvg() {
       el.style.fontSize = '';
       if (bgEl) {
         bgEl.setAttribute('display', 'inline');
-        bgEl.setAttribute('height', isMob ? '46.18' : '37');
+        // Card mais alto quando há a linha do whois. Mobile: 396+49=445, ainda
+        // acima do rodapé "Powered by" (y=449.5).
+        bgEl.setAttribute('height', whois ? '49' : (isMob ? '46.18' : '37'));
       }
     }
   });
 
-  // Desloca os resultados se dual stack carregar para evitar sobreposição no Desktop
+  // Linha do whois — abaixo do ASN, alinhada à direita
+  ids.whois.forEach(function (id) {
+    var el = document.getElementById(id) || svgDoc.getElementById(id);
+    if (!el) return;
+    if (!whois) { el.setAttribute('display', 'none'); return; }
+
+    var isMob = id.indexOf('mob') !== -1;
+    el.setAttribute('display', 'inline');
+    el.setAttribute('x', isMob ? '284' : '224.6');
+    el.setAttribute('y', isMob ? '441' : '40');
+    vlkAjustaWhois(el, whois, isMob ? 272 : 214);
+  });
+
+  // Desloca os resultados para acompanhar a altura do card de IP
   ['vlk-res-col-ui', 'vlk-res-col-intro'].forEach(function (id) {
     var g = document.getElementById(id) || svgDoc.getElementById(id);
     if (g) {
-      // 46 é o padrão no SVG; 78 é o novo valor para dual-stack
-      g.setAttribute('transform', ipv4 ? 'translate(0, 78)' : 'translate(0, 46)');
+      // 46 é o padrão no SVG; 58 com a linha do whois; 78 no dual-stack
+      var dy = ipv4 ? 78 : (whois ? 58 : 46);
+      g.setAttribute('transform', 'translate(0, ' + dy + ')');
     }
   });
 }
@@ -332,6 +400,9 @@ function injectTenantBranding() {
     if (!ip || !ip.ip || ip.ip === '—') return null;
     var d = { ip: ip.ip, org: [ip.asn, ip.region].filter(Boolean).join(' · ') };
     if (ip.ipv4) d.ipv4 = ip.ipv4;
+    // Titular do bloco (RDAP). Aqui vai mesmo no dual-stack — a restrição do
+    // card é de espaço, e no relatório/PDF não há essa disputa.
+    if (ip.whois) d.whois = ip.whois;
     return d;
   };
 
@@ -349,6 +420,7 @@ function injectTenantBranding() {
       q.push('ip=' + encodeURIComponent(dados.ip));
       if (dados.org) q.push('org=' + encodeURIComponent(dados.org));
       if (dados.ipv4) q.push('ipv4=' + encodeURIComponent(dados.ipv4));
+      if (dados.whois) q.push('whois=' + encodeURIComponent(dados.whois));
     }
     // Teste "Complete": sinaliza a rede (o relatório lê os dados do localStorage)
     if (window.vlkNetResults) q.push('net=1');
@@ -356,6 +428,8 @@ function injectTenantBranding() {
     if (window.vlkQos) q.push('qos=1');
     // Perfis de uso: o relatório os recalcula a partir das mesmas medições
     if (window.vlkPerfis) q.push('perfis=1');
+    // Diagnóstico da conexão (NAT/MTU/DNS): vem do localStorage, como a rede
+    if (window.vlkDiag) q.push('diag=1');
     // Conexão única: idem — só entra se a medição já tiver terminado
     if (window.vlkSingle) q.push('single=1');
     if (window._tenantParam) q.push(window._tenantParam);
@@ -477,7 +551,13 @@ function injectTenantBranding() {
       linhas.push([pT('pdf.ipv4'), dados.ipv4]);
     }
     linhas.push([pT('pdf.provider'), dados && dados.org ? dados.org : '—']);
+    if (dados && dados.whois) linhas.push([pT('pdf.assignedTo'), dados.whois]);
     linhas.push([pT('pdf.server'), location.hostname]);
+
+    // Cada linha opcional empurra o resto da página 9 mm para baixo. Antes só
+    // o IPv4 era opcional e o deslocamento vinha escrito à mão em dois pontos;
+    // com duas opcionais isso vira erro na certa — o número sai da contagem.
+    var extras = (linhas.length - 3) * 9;
 
     var y = 58;
     doc.setFontSize(10.5);
@@ -494,7 +574,7 @@ function injectTenantBranding() {
     });
 
     // Métricas (4 caixas)
-    y = 92 + (dados && dados.ipv4 ? 9 : 0);
+    y = 92 + extras;
     var met = [
       [pT('app.download'), fmt1(r.d), 'Mbps'],
       [pT('app.upload'), fmt1(r.u), 'Mbps'],
@@ -523,7 +603,7 @@ function injectTenantBranding() {
     // Observações
     doc.setFontSize(9);
     doc.setTextColor(cinza[0], cinza[1], cinza[2]);
-    var obsY = 132 + (dados && dados.ipv4 ? 9 : 0);
+    var obsY = 132 + extras;
     var obs = pT('pdf.data', { dd: fmt1(r.dd), ud: fmt1(r.ud) });
     doc.text(obs, 15, obsY);
     var nota = doc.splitTextToSize(pT('pdf.note', { name: tName }), 180);
@@ -707,13 +787,58 @@ function injectTenantBranding() {
 
     // ---- Análise de conectividade (teste "Complete") — página extra ----
     var net = window.vlkNetResults;
-    if (net && ((net.cliente || []).length || (net.servidor || []).length)) {
+    var diag = window.vlkDiag;
+    var temNet = net && ((net.cliente || []).length || (net.servidor || []).length);
+    if (temNet || diag) {
       doc.addPage();
       desenhaCabecalho();
       doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
       cor(escuro); doc.text(pT('connect.title'), 15, 40);
 
       var yy = 50;
+
+      // Diagnóstico da conexão (NAT/CGNAT, MTU, DNS): abre a página de rede —
+      // responde "há algo errado no caminho?" antes de dizer "com quem".
+      if (diag) {
+        var dl_ = window.VLK_DIAG ? window.VLK_DIAG.label : function (k) { return k; };
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
+        doc.text(pT('diag.reportTitle'), 15, yy); yy += 6;
+        yy = cabTabela([pT('diag.thCheck'), pT('diag.thResult')], [15, 95], yy);
+
+        var linhaDiag = function (rotulo, valor, cls, expl) {
+          cor([40, 40, 40]); doc.text(rotulo, 15, yy);
+          cor(qcor(cls || ''));
+          doc.text(valor, 95, yy);
+          doc.setDrawColor(240, 241, 243); doc.line(15, yy + 1.6, 195, yy + 1.6);
+          yy += 5;
+          if (expl) {
+            doc.setFontSize(8); cor([110, 115, 120]);
+            var ls = doc.splitTextToSize(expl, 175);
+            doc.text(ls, 20, yy);
+            yy += ls.length * 3.4 + 2.5;
+            doc.setFontSize(9);
+          }
+        };
+
+        if (diag.nat && diag.nat.tipo) {
+          linhaDiag(dl_('diag.nat'), dl_('diag.nat.' + diag.nat.tipo),
+            (diag.nat.tipo === 'cgnat' || diag.nat.tipo === 'symmetric') ? 'medio'
+              : diag.nat.tipo === 'unknown' ? '' : 'bom',
+            dl_('diag.nat.expl.' + diag.nat.tipo));
+        }
+        if (diag.mtu && diag.mtu.classe) {
+          linhaDiag(dl_('diag.mtu'),
+            dl_('diag.mtu.' + diag.mtu.classe.chave, { v: diag.mtu.mtu }),
+            diag.mtu.classe.cls, dl_('diag.mtu.expl.' + diag.mtu.classe.chave));
+        }
+        if (diag.dns && diag.dns.cls) {
+          linhaDiag(dl_('diag.dns'), dl_('diag.dns.value', { v: Math.round(diag.dns.ms) }),
+            diag.dns.cls, dl_('diag.dns.expl.' + diag.dns.cls));
+        }
+        yy += 4;
+      }
+
+      if (!temNet) { net = { cliente: [], servidor: [] }; }
       // Tabela cliente
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); cor(azul);
       doc.text(pT('connect.cliTitle'), 15, yy); yy += 6;
@@ -949,6 +1074,7 @@ function injectTenantBranding() {
       }
       return res;
     });
+    vlkDiagAposRede(vlkNetPromise, true);
     return vlkNetPromise;
   }
 
@@ -974,11 +1100,44 @@ function injectTenantBranding() {
     document.body.classList.add('vlk-complete-open');
     vlkSetupStickyScroll();
     sec.classList.add('aberto');
+    // Diagnóstico (NAT/MTU/DNS): reserva o espaço já, para a tabela de destinos
+    // não saltar quando ele chegar.
+    if (window.VLK_DIAG) { try { VLK_DIAG.placeholder(); } catch (e) {} }
     sec.setAttribute('aria-hidden', 'false');
     // Rede à espera dos resultados: se por algum motivo o evento não vier,
     // ainda assim rolamos, para o Complete não parecer que não fez nada.
     setTimeout(vlkRolaAteResposta, 4000);
     return sec;
+  }
+
+  // Diagnóstico da conexão (NAT/CGNAT, MTU do caminho, tempo de DNS). Roda uma
+  // única vez, DEPOIS da análise de conectividade: é dela que sai a referência
+  // de "quanto um resolver público leva para responder". `silencioso` só evita
+  // pintar a tela quando a análise foi pré-aquecida em segundo plano — os dados
+  // ficam prontos e o render acontece quando o usuário abre a seção.
+  var vlkDiagFeito = false;
+
+  // Dispara o diagnóstico APÓS a análise de conectividade, mas com teto de
+  // espera. A análise só é desejável, não obrigatória: dela sai a referência de
+  // "quanto um resolver público leva para responder", que é um detalhe do card
+  // de DNS. Encadear sem teto foi um erro pego na validação — bastou a camada
+  // do servidor não responder para o diagnóstico ficar em "verificando…" para
+  // sempre, sendo que ele não depende dela para nada essencial.
+  function vlkDiagAposRede(p, silencioso) {
+    var espera = p && p.then
+      ? Promise.race([
+          p["catch"](function () { return null; }),
+          new Promise(function (r) { setTimeout(r, 8000); })
+        ])
+      : Promise.resolve();
+    espera.then(function () { vlkRodaDiagnostico(silencioso); });
+  }
+
+  function vlkRodaDiagnostico(silencioso) {
+    if (!window.VLK_DIAG) return;
+    if (vlkDiagFeito) { if (!silencioso) { try { VLK_DIAG.render(); } catch (e) {} } return; }
+    vlkDiagFeito = true;
+    try { VLK_DIAG.run({ silent: !!silencioso }); } catch (e) {}
   }
 
   // Perfis de uso: leitura das medições em linguagem do dia a dia. Recalcula do
@@ -1004,6 +1163,15 @@ function injectTenantBranding() {
     if (window.vlkTestMode === 'complete') vlkRolaAteResposta();
   });
 
+  // O diagnóstico pré-aquecido (teste Fast) pode terminar depois de o usuário
+  // abrir a seção — nesse caso as linhas ficariam em "verificando…" para sempre.
+  window.addEventListener('vlk:diag', function () {
+    var sec = document.getElementById('vlk-net-inline');
+    if (sec && sec.classList.contains('aberto') && window.VLK_DIAG) {
+      try { VLK_DIAG.render(); } catch (e) {}
+    }
+  });
+
   // A conexão única chega depois de todo o resto e muda dois perfis (streaming
   // e home office dependem do que UM fluxo entrega). Reescrever os cards no
   // lugar não desloca nada: a quantidade e a ordem deles não mudam.
@@ -1019,19 +1187,23 @@ function injectTenantBranding() {
     if (cache) {
       window.VLK_CONECT.render(NET_OPTS, cache);
       vlkNetAdota(cache);
+      // Também aqui: sem esta chamada, o diagnóstico ficaria em "verificando…"
+      // para sempre sempre que a análise viesse do cache da sessão.
+      vlkRodaDiagnostico(false);
       return;
     }
     // A medição de conexão única satura o link; as latências desta análise só
     // fazem sentido depois que ela termina. Enquanto isso, as tabelas mostram
     // as linhas pendentes em vez de ficarem vazias.
     window.VLK_CONECT.placeholder(NET_OPTS);
-    vlkSingleDone().then(function () {
+    var pRede = vlkSingleDone().then(function () {
       return window.VLK_CONECT.run(NET_OPTS);
     }).then(function (res) {
       if (!res) return;
       vlkNetCacheGrava(res);
       vlkNetAdota(res);
     });
+    vlkDiagAposRede(pRede, false);
   }
 
   // Teste "Fast": abre a seção com o resultado que já foi medido em segundo
@@ -1041,10 +1213,14 @@ function injectTenantBranding() {
     if (!vlkAbreSecaoRede()) return;
     if (window.vlkNetResults) {
       window.VLK_CONECT.render(NET_OPTS, window.vlkNetResults);
+      vlkRodaDiagnostico(false);
       return;
     }
     window.VLK_CONECT.placeholder(NET_OPTS);
-    if (p) p.then(function (res) { if (res) window.VLK_CONECT.render(NET_OPTS, res); });
+    if (p) {
+      p.then(function (res) { if (res) window.VLK_CONECT.render(NET_OPTS, res); });
+      vlkDiagAposRede(p, false);
+    }
     else vlkRunNetworkInline(); // pré-aquecimento indisponível: mede ao vivo
   }
 

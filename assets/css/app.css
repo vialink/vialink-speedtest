@@ -181,6 +181,16 @@ color: #14b0fe;
   font-family: Roboto-Medium, Roboto, Arial, sans-serif;
   font-weight: 500;
 }
+/* Linha do whois (a quem o IP está designado), logo abaixo do ASN.
+   Um degrau menor que o ASN de propósito: é informação de apoio, não deve
+   competir com o endereço nem com o provedor. O font-size é reajustado pelo
+   tenant.js quando o nome não cabe na largura do card. */
+.vlk-ip-whois {
+  font-size: 8.5px;
+  fill: #333;
+  font-family: Roboto-Medium, Roboto, Arial, sans-serif;
+  font-weight: 500;
+}
 .vlk-menu {
   font-size: 10px;
   fill: var(--vlk-accent, #0095BE);
@@ -654,3 +664,21 @@ body.vlk-complete-open #vlk-net-cta { display: none; }
 #vlk-net-inline td.medio { color: #e6b800; font-weight: 500; }
 #vlk-net-inline td.ruim  { color: #ff453a; font-weight: 500; }
 #vlk-net-inline .aviso { font-size: 13.5px; color: #9a9a9c; }
+
+/* Diagnóstico da conexão (NAT/CGNAT, MTU, DNS) — tabela dentro da seção de rede.
+   A 3ª coluna é texto corrido: sem o `white-space: normal` ela herda o `nowrap`
+   das tabelas de destino e estoura a largura da página. */
+#vlk-diag td.diag-expl {
+  white-space: normal;
+  color: #b9b9bb;
+  font-size: 12.5px;
+  line-height: 1.45;
+  min-width: 240px;
+}
+/* A observação (latência do servidor, motivo do NAT) vai embaixo do valor, não
+   ao lado: coladas, as duas informações se leem como uma frase só. */
+#vlk-diag .diag-extra {
+  display: block; margin-top: 2px;
+  color: #9a9a9c; font-size: 12px; white-space: normal;
+}
+#vlk-diag td { vertical-align: top; }

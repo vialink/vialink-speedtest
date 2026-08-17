@@ -149,6 +149,94 @@ and Complete), above connection quality, and also in the report and the PDF.
   stricter value wins. All of them live in the `PERFIS` table, with a comment on
   the reasoning.
 
+## Connection diagnostics (`assets/js/diagnostico-rede.js`)
+
+Three checks at the top of the connectivity analysis, answering complaints that
+speed alone never explains. They run alongside the network analysis (Complete,
+or the Fast test's pre-warm) and reach the report page and the PDF.
+
+- **NAT type / CGNAT.** Compares the address and port a STUN server sees (UDP)
+  with the IP that reaches the server (TCP). It recognises **CGNAT** (RFC 6598's
+  100.64/10 range, or UDP and TCP leaving through different addresses) and
+  **symmetric NAT** — the same local port mapped to different public ports per
+  destination, which is what prevents direct connections in gaming, VoIP and
+  video calls. It spells out why the camera can't be reached from outside and why
+  CAPTCHAs keep showing up. STUN servers are configurable per tenant
+  (`stunServers`), including turning the check off.
+- **Path MTU** (new `api/conexao.php` endpoint). The browser cannot measure it —
+  HTTP does not choose packet size and ICMP is out of reach — but the server's
+  kernel negotiated this connection's MSS and knows the answer. 1500 is standard,
+  1492 is PPPoE (normal on carrier links), lower than that means a tunnel/VPN on
+  the path, and it is the classic cause of pages that load halfway and downloads
+  that stall. The same endpoint returns the **RTT measured by the kernel** —
+  latency with no probe at all.
+- **DNS resolution time**, from the Resource Timing API, compared with the query
+  time to the public resolvers the analysis already measures. This is the delay
+  that lands before the first byte and makes browsing feel slow while speed is
+  perfectly fine. When the name was already cached, the result is *not measured*
+  — rather than reporting 0 ms, which would mislead.
+
+Method details that keep the diagnosis honest:
+
+- The UDP × TCP comparison only applies when the server is at a **public
+  address** and both are in the **same family** (IPv4/IPv6): without those
+  guards, every installation on a local network and every dual-stack client
+  would be flagged as CGNAT.
+- The diagnostics do **not depend** on the connectivity analysis: they wait for
+  it to gain the DNS reference, but with a time cap — if the analysis never
+  answers, the diagnostics are reported anyway.
+- We do not report **which** resolver the client uses: that would require seeing
+  the query arrive at the authoritative server, which is beyond the browser.
+- **In the report**, the diagnostics table is the only one with a free-text
+  column: with no exception to the numeric columns' `white-space: nowrap`, the
+  sentence would not wrap and the table ran past the sheet's width. On phones it
+  becomes **stacked blocks** (check, verdict and explanation one under the
+  other), and the connectivity tables — numeric, and only readable by comparing
+  rows — now scroll **inside the table** instead of making the whole page scroll
+  sideways.
+
+## Who the IP is assigned to (`assets/js/whois-ip.js`)
+
+- **A third line in the IP card**, right below the ASN and right-aligned: the
+  name of whoever holds that address's block, according to the **public
+  registry**.
+- **Not the same as the ASN**, and the difference is exactly the interesting
+  case: the ASN is the network owner, while the block may be **sub-allocated**
+  (REASSIGNED) to another company. An address inside `187.45.160.0/20` reads
+  *Vialink Soluções de Tecnologia Ltda*; one inside the `187.45.173.0/25`
+  sub-block, under the same ASN, reads *Mais Link Telecomunicação Ltda.* — that
+  granularity is what answers "whose IP is this".
+- **RDAP, not classic whois**: traditional whois is free-form text (one format
+  per RIR) served on port 43, out of reach for a browser. RDAP is standard
+  HTTP+JSON (RFC 7483) and RIR servers send `Access-Control-Allow-Origin: *`, so
+  the client can query it directly, with no proxy. Since each visitor queries
+  from their own source IP, rate limiting is not concentrated on a single
+  address either — which is what a proxy of ours would do.
+- **Picking the right role matters**: we use the `registrant`, never the `abuse`
+  or `technical` contact — in the sub-block above, abuse points at the **parent**
+  provider and technical at an individual; either would give the wrong answer.
+  Within the role, entities with `kind: org` come first (RIPE returns the
+  maintainer object as a second `registrant`).
+- **Never gets in the way**: the query is async and arrives after the card is
+  already filled in; if the RIR is slow, down or rate-limiting, the card stays
+  exactly as it was and nothing shows up in the console. Private, loopback and
+  CGNAT addresses are not queried. The result is kept in `sessionStorage` so the
+  lookup is not repeated on every test.
+- **Long names do not overflow**: the font shrinks to a floor and only then is
+  the text truncated — the full name stays in the tooltip. The card grows and
+  the results column follows; without the line, the layout goes back to what it
+  was.
+- **Also in the report and the PDF**, as an "Assigned to" row right below the
+  provider (in both, the row only exists when the lookup returned something).
+  There it shows up on dual-stack too: the card's restriction is about space,
+  and a document has no such competition.
+  - Along the way, the PDF's vertical offset stopped being hand-written in two
+    places (`+9 if there is an IPv4`) and is now derived from the **row count** —
+    with two optional rows, a hand-kept number is a bug waiting to happen.
+- **Per-tenant configuration**: `rdapEndpoint` points at a different RDAP server
+  and `rdapEndpoint: ''` turns the lookup off — it is the only third-party call
+  this line makes.
+
 ## Connectivity analysis (`conectividade.html`)
 
 - **New "Network" page** (app menu item): measures **latency, jitter and packet

@@ -148,6 +148,89 @@ relatório e no PDF.
   Netflix) e das réguas já usadas aqui; onde as fontes divergem, fica o valor
   mais exigente. Todos reunidos na tabela `PERFIS`, com o comentário do porquê.
 
+## Diagnóstico da conexão (`assets/js/diagnostico-rede.js`)
+
+Três verificações no topo da análise de conectividade, que respondem a queixas
+que a velocidade não explica. Rodam junto da análise de rede (Complete, ou o
+pré-aquecimento do Fast) e vão para o relatório e o PDF.
+
+- **Tipo de NAT / CGNAT.** Compara o endereço e a porta que um servidor STUN
+  enxerga (UDP) com o IP que chega ao servidor (TCP). Reconhece **CGNAT** (faixa
+  100.64/10 da RFC 6598, ou saídas UDP e TCP por endereços diferentes) e **NAT
+  simétrico** — a mesma porta local mapeada em portas públicas diferentes por
+  destino, que é o que impede conexão direta em jogos, VoIP e videochamada.
+  Explica, com todas as letras, por que não dá para acessar a câmera de fora e
+  por que aparece tanto CAPTCHA. Servidores STUN configuráveis por tenant
+  (`stunServers`), incluindo desligar a checagem.
+- **MTU do caminho** (novo endpoint `api/conexao.php`). O navegador não tem como
+  medir — HTTP não escolhe tamanho de pacote e ICMP está fora de alcance —, mas o
+  kernel do servidor negociou a MSS desta conexão e sabe a resposta. 1500 é o
+  padrão, 1492 é PPPoE (normal em operadora), abaixo disso denuncia túnel/VPN, e
+  é a causa clássica de site que abre pela metade e download que trava. O mesmo
+  endpoint devolve o **RTT medido pelo kernel** — latência sem sonda nenhuma.
+- **Tempo de resolução DNS**, pela Resource Timing API, comparado com o tempo de
+  uma query aos resolvers públicos que a análise já mede. É o atraso que aparece
+  antes do primeiro byte e faz a navegação parecer lenta com a velocidade em
+  ordem. Quando o nome já estava em cache, o resultado é *não medido* — em vez de
+  anunciar 0 ms, que enganaria.
+
+Detalhes de método que evitam diagnóstico errado:
+
+- A comparação UDP × TCP só vale com o servidor **em endereço público** e com
+  ambos na **mesma família** (IPv4/IPv6): sem essas guardas, toda instalação em
+  rede local e todo cliente dual-stack seriam acusados de CGNAT.
+- O diagnóstico **não depende** da análise de conectividade: espera por ela para
+  ganhar a referência de DNS, mas com teto de tempo — se a análise não responder,
+  o diagnóstico sai assim mesmo.
+- Não dizemos **qual** resolver o cliente usa: isso exigiria ver a query chegando
+  no servidor autoritativo, apoio que está fora do alcance do navegador.
+- **No relatório**, a tabela do diagnóstico é a única com uma coluna de texto
+  corrido: sem exceção ao `white-space: nowrap` das colunas numéricas, a frase
+  não quebrava e a tabela passava da largura da folha. No celular ela vira
+  **blocos empilhados** (verificação, veredito e explicação um sob o outro), e as
+  tabelas de conectividade — numéricas, que só se leem comparando linhas —
+  ganharam rolagem **dentro da tabela**, em vez de fazer a página rolar de lado.
+
+## A quem o IP está designado (`assets/js/whois-ip.js`)
+
+- **Terceira linha no card de IP**, logo abaixo do ASN e alinhada à direita: o
+  nome de quem detém o bloco daquele endereço, segundo o **registro público**.
+- **Não é a mesma coisa que o ASN**, e a diferença é justamente o caso
+  interessante: o ASN é o dono da rede, enquanto o bloco pode estar
+  **sub-alocado** (REASSIGNED) a outra empresa. Um endereço dentro do
+  `187.45.160.0/20` sai como *Vialink Soluções de Tecnologia Ltda*; um dentro do
+  sub-bloco `187.45.173.0/25`, com o mesmo ASN, sai como *Mais Link
+  Telecomunicação Ltda.* — é essa granularidade que responde "de quem é este IP".
+- **RDAP, não whois clássico**: o whois de sempre é texto livre (um formato por
+  RIR) e fala na porta 43, fora do alcance do navegador. O RDAP é HTTP+JSON
+  padronizado (RFC 7483) e os servidores dos RIRs mandam
+  `Access-Control-Allow-Origin: *` — dá para consultar direto do cliente, sem
+  proxy. Como cada visitante consulta com o próprio IP de origem, também não se
+  concentra rate limit num endereço só, que é o que um proxy nosso faria.
+- **A escolha do papel não é detalhe**: usamos o `registrant`, nunca o contato
+  de `abuse` ou o `technical` — no sub-bloco do exemplo o abuse é o provedor
+  **pai** e o technical é uma pessoa física; pegar qualquer um dos dois daria a
+  resposta errada. Dentro do papel, entidade com `kind: org` na frente (a RIPE
+  devolve o objeto de manutenção como um segundo `registrant`).
+- **Nunca atrapalha**: a consulta é assíncrona e chega depois do card já
+  preenchido; se o RIR estiver lento, fora do ar ou limitando, o card fica
+  exatamente como era e nada aparece no console. Endereços privados, de
+  loopback e de CGNAT não são consultados. Resultado guardado no
+  `sessionStorage` para não repetir a consulta a cada teste.
+- **Nome longo não transborda**: a fonte diminui até o mínimo e só então o texto
+  é truncado — o nome completo continua no tooltip. O card cresce e a coluna de
+  resultados acompanha; sem a linha, o layout volta ao anterior.
+- **Também no relatório e no PDF**, como linha "Designado a" logo abaixo do
+  provedor (nos dois, a linha só existe quando a consulta trouxe resposta). Ali
+  ela aparece inclusive no dual-stack: a restrição do card é de espaço, e no
+  documento não há essa disputa.
+  - De passagem, o deslocamento vertical do PDF deixou de ser escrito à mão em
+    dois pontos (`+9 se houver IPv4`) e passou a sair da **contagem de linhas** —
+    com duas linhas opcionais, o número na mão vira erro na certa.
+- **Configurável por tenant**: `rdapEndpoint` aponta para outro servidor RDAP e
+  `rdapEndpoint: ''` desliga a consulta — é a única chamada a terceiros que essa
+  linha faz.
+
 ## Análise de conectividade (`conectividade.html`)
 
 - **Nova página "Rede"** (item no menu do app): mede **latência, jitter e perda

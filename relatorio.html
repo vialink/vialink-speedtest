@@ -19,6 +19,7 @@
   <script src="/assets/js/i18n/ru-RU.js"></script>
   <script src="/assets/js/i18n/de-DE.js"></script>
   <script src="/assets/js/perfis.js"></script>
+  <script src="/assets/js/diagnostico-rede.js"></script>
   <style>
     /* Relatório é um documento: fundo claro, pronto para imprimir/PDF */
     body { background: #f4f5f7; color: #222; }
@@ -128,7 +129,7 @@
       .nota-tecnica { margin: 12px 0 0; padding: 10px 14px; }
       .nota-tecnica h3 { font-size: 12px; margin-bottom: 4px; }
       .nota-tecnica p { font-size: 11.5px; margin-bottom: 6px; }
-      #rede-secao, #qos-secao { margin-top: 14px; }
+      #rede-secao, #qos-secao, #perfis-secao, #diag-secao { margin-top: 14px; }
       .net-tabela { font-size: 11.5px; }
       .net-tabela th, .net-tabela td { padding: 4px 6px; }
       .rede-titulo { font-size: 15px; margin: 16px 0 4px; }
@@ -138,7 +139,7 @@
       .rede-titulo, .rede-sub { break-after: avoid; }
     }
     /* Análise de conectividade no relatório (teste Complete) — versão clara */
-    #rede-secao, #qos-secao { margin-top: 20px; }
+    #rede-secao, #qos-secao, #perfis-secao, #diag-secao { margin-top: 20px; }
     .rede-titulo { color: #143246; font-size: 18px; font-weight: 500; margin: 24px 0 4px; }
     .rede-sub { color: var(--azul); font-size: 14.5px; font-weight: 500; margin: 16px 0 6px; }
     .net-tabela { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
@@ -146,6 +147,38 @@
     .net-tabela th { color: var(--azul); font-weight: 500; }
     .net-tabela td.destino { white-space: normal; }
     .net-tabela td.destino small { color: #889; display: block; font-size: 11px; }
+    /* Coluna de texto corrido (o "o que isso significa" do diagnóstico, o "o que
+       determinou" dos perfis). O `nowrap` acima existe para as colunas
+       numéricas; herdado por uma frase inteira, ele estoura a largura da folha —
+       foi exatamente o que aconteceu com a tabela de diagnóstico. */
+    .net-tabela th.expl, .net-tabela td.expl { white-space: normal; line-height: 1.45; }
+    /* A tabela do diagnóstico não tem coluna numérica: rótulo, veredito
+       ("1488 bytes (túnel/VPN)") e explicação são todos texto. Manter o `nowrap`
+       no veredito fazia a tabela passar da folha no celular — e uma tabela que
+       estoura é pior que um veredito em duas linhas. */
+    .diag-tabela th, .diag-tabela td { white-space: normal; }
+    /* No celular, três colunas de texto deixam a explicação com cinco palavras
+       por linha. Aqui a tabela vira blocos empilhados: verificação, veredito e
+       explicação um sob o outro, cada um com a largura inteira. Não vale para a
+       impressão (a página é larga) nem para as tabelas de rede, que são
+       numéricas e continuam legíveis em colunas. */
+    @media (max-width: 560px) {
+      .diag-tabela, .diag-tabela tbody, .diag-tabela tr, .diag-tabela td { display: block; width: 100%; }
+      .diag-tabela thead { display: none; }
+      .diag-tabela tr { border-bottom: 1px solid #eceef1; padding: 9px 0; }
+      .diag-tabela td { border: 0; padding: 1px 0; }
+      .diag-tabela td.destino { color: #143246; font-weight: 500; }
+      .diag-tabela td.expl { color: #667; font-size: 12.5px; margin-top: 2px; }
+      /* As tabelas de conectividade têm colunas numéricas que só fazem sentido
+         comparadas entre as linhas (latência, jitter, perda, saltos) — empilhar
+         destruiria a comparação. Então a rolagem fica DENTRO da tabela: a do
+         servidor, com uma coluna a mais, passava da folha e fazia a página
+         inteira rolar de lado. */
+      #rede-secao .net-tabela { display: block; overflow-x: auto; }
+    }
+    /* Com a 1ª coluna e a explicação ocupando várias linhas, alinhar pelo topo:
+       o valor no meio da célula perde a relação com a linha a que pertence. */
+    .net-tabela td { vertical-align: top; }
     .net-tabela td.na { color: #889; font-style: italic; }
     .net-tabela td.bom   { color: #1f9d4d; font-weight: 500; }
     .net-tabela td.medio { color: #b8860b; font-weight: 500; }
@@ -178,6 +211,7 @@
       <tr><td data-i18n="pdf.ip">Endereço IP</td><td id="r-ip">—</td></tr>
       <tr id="row-ipv4" style="display:none"><td data-i18n="pdf.ipv4">Endereço IPv4</td><td id="r-ipv4">—</td></tr>
       <tr><td data-i18n="pdf.provider">Provedor / localidade</td><td id="r-org">—</td></tr>
+      <tr id="row-whois" style="display:none"><td data-i18n="pdf.assignedTo">Designado a</td><td id="r-whois">—</td></tr>
           <tr><td data-i18n="pdf.server">Servidor de teste</td><td id="r-servidor">—</td></tr>
           <tr><td data-i18n="report.browser">Navegador</td><td id="r-navegador">—</td></tr>
         </table>
@@ -208,7 +242,7 @@
             <thead><tr>
               <th data-i18n="prof.thProfile">Uso</th>
               <th data-i18n="prof.thGrade">Nota</th>
-              <th data-i18n="prof.thWhy">O que determinou</th>
+              <th class="expl" data-i18n="prof.thWhy">O que determinou</th>
             </tr></thead>
             <tbody id="perfis-corpo"></tbody>
           </table>
@@ -251,6 +285,18 @@
             <tbody id="single-corpo"></tbody>
           </table>
           <p class="obs" id="single-expl"></p>
+        </div>
+
+        <div id="diag-secao" style="display:none">
+          <h2 class="rede-titulo" data-i18n="diag.reportTitle">Diagnóstico da conexão</h2>
+          <table class="net-tabela diag-tabela">
+            <thead><tr>
+              <th data-i18n="diag.thCheck">Verificação</th>
+              <th data-i18n="diag.thResult">Resultado</th>
+              <th class="expl" data-i18n="diag.thWhat">O que isso significa</th>
+            </tr></thead>
+            <tbody id="diag-corpo"></tbody>
+          </table>
         </div>
 
         <div id="rede-secao" style="display:none">
@@ -340,6 +386,12 @@
         }
       }
       if (q.get('org')) document.getElementById('r-org').textContent = q.get('org');
+      // Titular do bloco (whois/RDAP): a linha só existe quando a consulta veio
+      if (q.get('whois')) {
+        var linhaWhois = document.getElementById('row-whois');
+        if (linhaWhois) linhaWhois.style.display = 'table-row';
+        document.getElementById('r-whois').textContent = q.get('whois');
+      }
       var dd = parseFloat(q.get('dd')), ud = parseFloat(q.get('ud'));
       if (isFinite(dd) && isFinite(ud)) {
         document.getElementById('r-dados').textContent =
@@ -353,6 +405,7 @@
       if (q.has('qos')) renderQos();
       if (q.has('single')) renderSingle();
       if (q.has('perfis')) renderPerfis();
+      if (q.has('diag')) renderDiag();
 
       function trFb(key, fb) { var s = window.vlkT ? vlkT(key) : key; return (s && s !== key) ? s : fb; }
       function ms(v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; }
@@ -470,13 +523,46 @@
         document.getElementById('perfis-corpo').innerHTML = res.perfis.map(function (p) {
           return '<tr><td class="destino">' + lbl('prof.name.' + p.key) + '</td>' +
             td(lbl('prof.grade.' + p.nota), p.cls) +
-            '<td>' + (p.limitante ? lbl('prof.factor.' + p.limitante) : lbl('prof.noLimit')) + '</td></tr>';
+            '<td class="expl">' + (p.limitante ? lbl('prof.factor.' + p.limitante) : lbl('prof.noLimit')) + '</td></tr>';
         }).join('');
 
         var nota = res.mosIdle != null ? lbl('prof.mosNote') : '';
         if (res.parcial) nota = (nota ? nota + ' ' : '') + lbl('prof.partial');
         document.getElementById('perfis-nota').textContent = nota;
         document.getElementById('perfis-secao').style.display = 'block';
+      }
+
+      // ---- Diagnóstico da conexão (NAT/CGNAT, MTU, DNS) ----
+      // Mesma via da rede: medido na página do teste, gravado no localStorage.
+      // A montagem das linhas é do próprio módulo — assim o texto do relatório
+      // não pode divergir do que o usuário viu na tela.
+      function renderDiag() {
+        var d;
+        try { d = JSON.parse(localStorage.getItem('vlkDiag') || 'null'); } catch (e) { d = null; }
+        if (!d || !window.VLK_DIAG) return;
+        var lbl = VLK_DIAG.label;
+        var linhas = '';
+
+        if (d.nat && d.nat.tipo) {
+          var clsN = (d.nat.tipo === 'cgnat' || d.nat.tipo === 'symmetric') ? 'medio'
+                   : d.nat.tipo === 'unknown' ? '' : 'bom';
+          linhas += '<tr><td class="destino">' + lbl('diag.nat') + '</td>' +
+            td(lbl('diag.nat.' + d.nat.tipo), clsN) +
+            '<td class="expl">' + lbl('diag.nat.expl.' + d.nat.tipo) + '</td></tr>';
+        }
+        if (d.mtu && d.mtu.classe) {
+          linhas += '<tr><td class="destino">' + lbl('diag.mtu') + '</td>' +
+            td(lbl('diag.mtu.' + d.mtu.classe.chave, { v: d.mtu.mtu }), d.mtu.classe.cls) +
+            '<td class="expl">' + lbl('diag.mtu.expl.' + d.mtu.classe.chave) + '</td></tr>';
+        }
+        if (d.dns && d.dns.cls) {
+          linhas += '<tr><td class="destino">' + lbl('diag.dns') + '</td>' +
+            td(lbl('diag.dns.value', { v: Math.round(d.dns.ms) }), d.dns.cls) +
+            '<td class="expl">' + lbl('diag.dns.expl.' + d.dns.cls) + '</td></tr>';
+        }
+        if (!linhas) return;
+        document.getElementById('diag-corpo').innerHTML = linhas;
+        document.getElementById('diag-secao').style.display = 'block';
       }
 
       function renderRede() {

@@ -43,11 +43,19 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
   ITU-T G.107, calculado com o link livre e com o link ocupado). Cada perfil é
   avaliado pelo **pior** critério, nunca pela média, e diz qual é o fator
   limitante — assim "500 Mbps" nunca encobre 300 ms de latência sob carga.
+- **Diagnóstico da conexão** — tipo de NAT com detecção de **CGNAT e NAT
+  simétrico** (por que não dá para acessar a câmera de fora e por que o jogo não
+  conecta direto), **MTU do caminho** lida da própria conexão TCP (1492 é PPPoE;
+  abaixo disso é túnel) e tempo de resolução DNS. As respostas para as queixas
+  que um número de velocidade não explica.
 - **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
   PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.
-- **Card de IP/provedor**, escala do velocímetro **dinâmica**, tema escuro
-  por padrão, layout mobile dedicado.
+- **Card de IP/provedor** — endereço, ASN, estado e **a quem o bloco está
+  designado** (registro público, via RDAP), informação em geral mais específica
+  que o ASN: bloco sub-alocado aparece com o nome de quem de fato o detém.
+- Escala do velocímetro **dinâmica**, tema escuro por padrão, layout mobile
+  dedicado.
 - **Correções sobre o upstream** — gráfico ao vivo que nunca renderizava,
   medição de upload ~160× mais rápida de preparar, threads ajustadas ao
   HTTP/1.1 — tudo documentado no [CHANGELOG](CHANGELOG.md).

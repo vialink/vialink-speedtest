@@ -23,9 +23,10 @@ server-side component is result recording (PHP + MariaDB, §8).
 8. [Result persistence (optional)](#8-result-persistence-optional)
 9. [Test tuning](#9-test-tuning)
 10. [Connectivity analysis (optional)](#10-connectivity-analysis-optional)
-11. [Updates](#11-updates)
-12. [Troubleshooting](#12-troubleshooting)
-13. [License and credits](#13-license-and-credits)
+11. [Connection diagnostics (NAT/CGNAT, MTU, DNS)](#11-connection-diagnostics-natcgnat-mtu-dns)
+12. [Updates](#12-updates)
+13. [Troubleshooting](#13-troubleshooting)
+14. [License and credits](#14-license-and-credits)
 
 ---
 
@@ -252,7 +253,7 @@ sudo certbot --apache -d speedtest.example.com
 
 > If `mod_deflate` is enabled globally, make sure `/downloading` and `/upload`
 > are not compressed (`SetEnv no-gzip 1` above takes care of it). If you use
-> HTTP/2 (`mod_http2`), see the performance note in §11.
+> HTTP/2 (`mod_http2`), see the performance note in §13.
 
 **(Optional, §8)** for the recording API with PHP-FPM:
 
@@ -320,6 +321,20 @@ IP/ASN/city — it needs internet access; without it the card just shows dashes
 own IP, so `ipapi.co`'s free-tier limits are rarely hit; to switch geo-IP
 providers, the endpoints are at the top of `assets/js/tenant.js` (fallback:
 `api.ipify.org`, IP only).
+
+Below the ASN the card also shows **who that IP's block is assigned to**, looked
+up over **RDAP** (whois in JSON) through the `https://rdap.org/ip/` bootstrap,
+which redirects to the responsible RIR. It is public registry data, and it is
+usually more specific than the ASN: a block sub-allocated to another company
+shows that company's name, not the AS holder's. The lookup is made from the
+visitor's browser (RIRs allow CORS), is asynchronous and silent — if it fails,
+the line simply does not appear. To point at a different RDAP server, or to skip
+the lookup entirely:
+
+```js
+rdapEndpoint: 'https://rdap.example.net/ip/',   // another server (the IP is appended)
+rdapEndpoint: '',                               // disables the lookup
+```
 
 ## 7. Creating a new language
 
@@ -770,7 +785,81 @@ Requires PHP with cURL and outbound HTTPS to `api.fast.com`. Without the endpoin
 the Netflix target automatically falls back to measuring the website
 (`www.netflix.com`).
 
-## 11. Updates
+## 11. Connection diagnostics (NAT/CGNAT, MTU, DNS)
+
+Three checks shown at the top of the connectivity analysis (§10), and also in
+the report page and the PDF. Two work with no configuration at all; the third
+needs an endpoint.
+
+### NAT and CGNAT
+
+`assets/js/diagnostico-rede.js` asks a **STUN** server for the address and port
+it sees (UDP) and compares it with the IP that reaches your server (TCP). Four
+answers come out of that: direct public IP, regular NAT, **symmetric NAT** (the
+public port changes per destination — what blocks direct connections in gaming
+and VoIP) and **CGNAT** (the 100.64/10 range, or UDP and TCP leaving through
+different addresses).
+
+STUN servers are configurable per tenant in `assets/js/tenants.js`:
+
+```js
+stunServers: ['stun:stun.example.com:3478'],   // your own
+stunServers: [],                               // disables the check
+```
+
+Without the key, two well-known public servers are used. A STUN binding request
+carries no user data — it asks "what IP/port do you see me from?" — but it is
+traffic to a third party: to keep everything in-house, point it at your own STUN
+(coturn does the job) or turn it off.
+
+### Path MTU — needs the endpoint
+
+`api/conexao.php` reads this TCP connection's **negotiated MSS** with `ss -tin`
+and returns the matching MTU (MSS + 40 on IPv4). The command is fixed: nothing
+from the client reaches the command line, and the connection is selected by
+comparing `REMOTE_ADDR:REMOTE_PORT` in PHP.
+
+Requirements: `iproute2` installed (for `ss`) and permission for the PHP user to
+run it — no special privilege needed, the process sees its own system's sockets.
+Add the `location` like the other API endpoints:
+
+```nginx
+location = /api/conexao.php {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+}
+```
+
+Without the endpoint the MTU row simply does not appear — the rest of the
+diagnostics keeps working.
+
+Reading the values: **1500** is the internet standard; **1492** is PPPoE (normal
+on carrier links, not a problem); **1300–1491** means a tunnel or VPN on the
+path; below 1300 it is usually a tunnel inside a tunnel, and fragmentation
+starts breaking sites. The endpoint also returns the **RTT measured by the
+kernel** — latency with no probe at all.
+
+### DNS resolution time
+
+Comes from the browser's Resource Timing API and is compared with the query time
+to the public resolvers the connectivity analysis already measures. For
+resources from **other domains of the same installation** to count, the server
+must send:
+
+```nginx
+add_header Timing-Allow-Origin "*" always;
+```
+
+Without it, only the page's own navigation counts, and that only yields a number
+on the first resolution (afterwards the name is cached). With a cached name the
+result is **not measured** — deliberately: showing 0 ms would mislead.
+
+⚠️ **What these diagnostics do not do:** tell you *which* resolver the client
+uses (8.8.8.8, the ISP's, yours). That requires seeing the query arrive at the
+authoritative DNS server — support from the DNS side, which the browser cannot
+provide.
+
+## 12. Updates
 
 ```bash
 cd /var/www/speedtest
@@ -794,7 +883,7 @@ git merge upstream/main                 # resolve conflicts if any
 > on the server itself does `git reset --hard origin/main`, ensures the
 > `downloading` file exists and reloads nginx on every push.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Symptom | Likely cause / fix |
 |---|---|
@@ -807,7 +896,7 @@ git merge upstream/main                 # resolve conflicts if any
 | Test behind a **reverse proxy/CDN** | Raise the POST body limit (≥ 120 MB), disable caching and compression for the test host. A CDN in front measures the CDN, not your server. |
 | **Recording (§8) not happening** | Check the PHP-FPM `error_log`; permissions of `/etc/vlk-speedtest/db.ini` (`root:www-data 640`); database user grants. The failure is silent for the user, by design. |
 
-## 13. License and credits
+## 14. License and credits
 
 - Code: **MIT** — © 2013–2023 OpenSpeedTest™ (original project) and © 2026
   Vialink (fork modifications). Details in [LICENSE](../LICENSE) and

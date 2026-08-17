@@ -73,6 +73,7 @@ window.VLK_I18N.register({
     'pdf.ipv4': 'IPv4-Adresse',
     'pdf.ipv6': 'IPv6-Adresse',
     'pdf.provider': 'Anbieter / Ort',
+    'pdf.assignedTo': 'Zugewiesen an',
     'pdf.server': 'Testserver',
     'pdf.data': 'Während des Tests übertragene Daten: {dd} MB Download und {ud} MB Upload.',
     'pdf.note': 'Test im Browser gegen den {name}-Server durchgeführt, innerhalb unseres Netzes. Das Ergebnis spiegelt die Verbindung zwischen dem Gerät und {name} zum Zeitpunkt des Tests wider — WLAN, Verkabelung und gleichzeitige Nutzung der Verbindung beeinflussen die Zahlen.',

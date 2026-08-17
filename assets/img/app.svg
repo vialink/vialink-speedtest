@@ -318,6 +318,7 @@
 							<text id="ip-v4-lbl-ui" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="10.6" y="15">—</text>
 							<text id="ip-v4-addr-ui" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
 							<text id="ip-org-ui" display="none" class="vlk-ip-org" x="224.6" y="28" text-anchor="end" opacity="0.65">—</text>
+							<text id="ip-whois-ui" display="none" class="vlk-ip-whois" x="224.6" y="40" text-anchor="end" opacity="0.55">—<title data-i18n="tip.assignedTo">A quem este endereço IP está designado, segundo o registro público (whois/RDAP).</title></text>
 						</g>
 						
 						<!-- Results block -->
@@ -417,6 +418,7 @@
 							<text id="ip-v4-lbl-intro" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="10.6" y="15">—</text>
 							<text id="ip-v4-addr-intro" display="none" class="vlk-ip-addr" x="10.6" y="28">—</text>
 							<text id="ip-org-intro" display="none" class="vlk-ip-org" x="224.6" y="28" text-anchor="end" opacity="0.65">—</text>
+							<text id="ip-whois-intro" display="none" class="vlk-ip-whois" x="224.6" y="40" text-anchor="end" opacity="0.55">—<title data-i18n="tip.assignedTo">A quem este endereço IP está designado, segundo o registro público (whois/RDAP).</title></text>
 						</g>
 						
 						<!-- Results block -->
@@ -594,6 +596,7 @@
 				<text id="ip-v4-lbl-mob" display="none" data-i18n="app.yourIpV4" class="vlk-ip-lbl" x="12" y="413">—</text>
 				<text id="ip-v4-addr-mob" display="none" class="vlk-ip-addr" x="12" y="428">—</text>
 				<text id="ip-org-mob" display="none" class="vlk-ip-org" x="284" y="428" text-anchor="end" opacity="0.65">—</text>
+				<text id="ip-whois-mob" display="none" class="vlk-ip-whois" x="284" y="441" text-anchor="end" opacity="0.55">—<title data-i18n="tip.assignedTo">A quem este endereço IP está designado, segundo o registro público (whois/RDAP).</title></text>
 				<g id="vlk-footer-mob">
 					<use xlink:href="#vlk-gear" x="189.5" y="449.5" width="9" height="10.5"></use>
 					<text class="vlk-footer" x="295" y="458" text-anchor="end">Powered by Vialink - 2026</text>

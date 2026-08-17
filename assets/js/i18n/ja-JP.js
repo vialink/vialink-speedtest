@@ -76,6 +76,7 @@ window.VLK_I18N.register({
     'pdf.ipv4': 'IPv4 アドレス',
     'pdf.ipv6': 'IPv6 アドレス',
     'pdf.provider': 'プロバイダー / 所在地',
+    'pdf.assignedTo': '割当先',
     'pdf.server': 'テストサーバー',
     'pdf.data': 'テスト中に転送されたデータ：下り {dd} MB、上り {ud} MB。',
     'pdf.note': 'このテストはブラウザー上で、当社ネットワーク内の {name} サーバーに対して実行されました。結果は測定時点の端末と {name} の間の接続状態を反映します — Wi-Fi、配線、回線の同時利用が数値に影響します。',
