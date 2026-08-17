@@ -92,12 +92,17 @@ window.VLK_I18N.register({
     'report.docTitle': 'Relatório de Velocidade — {name}',
     'report.title': 'Relatório de Teste de Velocidade e Rede',
     'report.browser': 'Navegador',
+    'report.link': 'Link deste teste',
+    'report.copyLink': 'Copiar link',
+    'report.copied': 'Link copiado',
     'report.note': 'Teste realizado no navegador contra o servidor da {name}, dentro da nossa rede. O resultado reflete a conexão entre o seu dispositivo e a {name} no momento do teste — Wi-Fi, cabeamento e uso simultâneo da conexão influenciam os números. Consulte o <a href="/manual.html">manual</a> para interpretar os valores.',
     'report.print': 'Imprimir / salvar PDF',
     'report.newTest': 'Fazer novo teste',
     'report.noresTitle': 'Nenhum resultado recebido.',
     'report.noresBody': 'Execute o teste de velocidade e depois clique em <strong>Relatório</strong> no menu.',
     'report.noresLink': '→ Ir para o teste',
+    'report.linkInvalid': 'Link não encontrado.',
+    'report.linkInvalidBody': 'O código deste link não corresponde a nenhum teste. Confira o endereço ou faça um teste novo.',
 
     // ---- Nota técnica (manual + relatório) ----
     'tech.title': 'Nota técnica — o que o teste realmente mede',

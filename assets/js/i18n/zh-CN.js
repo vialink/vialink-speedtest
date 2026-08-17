@@ -89,12 +89,17 @@ window.VLK_I18N.register({
     'report.docTitle': '网速报告 — {name}',
     'report.title': '网速与网络测试报告',
     'report.browser': '浏览器',
+    'report.link': '本次测试链接',
+    'report.copyLink': '复制链接',
+    'report.copied': '链接已复制',
     'report.note': '本测试在浏览器中对 {name} 服务器进行，位于我们的网络内部。结果反映测试时您的设备与 {name} 之间的连接情况 — Wi-Fi、布线和连接的同时使用都会影响数值。如何解读数值请参阅<a href="/manual.html">指南</a>。',
     'report.print': '打印 / 保存为 PDF',
     'report.newTest': '重新测试',
     'report.noresTitle': '未收到任何结果。',
     'report.noresBody': '请先运行网速测试，然后点击菜单中的<strong>报告</strong>。',
     'report.noresLink': '→ 前往测试',
+    'report.linkInvalid': '未找到该链接。',
+    'report.linkInvalidBody': '此链接的代码不对应任何测试。请检查地址或重新测试。',
 
     // ---- 技术说明（指南 + 报告）----
     'tech.title': '技术说明 — 本测试实际测量的内容',

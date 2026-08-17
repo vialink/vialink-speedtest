@@ -519,10 +519,31 @@ never affects the user (best-effort).
      ADD COLUMN single_ratio      DECIMAL(5,3)  DEFAULT NULL,
      ADD COLUMN single_grade      VARCHAR(10)   DEFAULT NULL,
      ADD COLUMN single_window_kb  INT UNSIGNED  DEFAULT NULL;
+
+   -- Shareable link (/r/CODE) + connection diagnostics
+   ALTER TABLE testes
+     ADD COLUMN codigo          CHAR(8)        DEFAULT NULL,
+     ADD COLUMN whois           VARCHAR(200)   DEFAULT NULL,
+     ADD COLUMN diag_nat        VARCHAR(16)    DEFAULT NULL,
+     ADD COLUMN diag_mtu        SMALLINT UNSIGNED DEFAULT NULL,
+     ADD COLUMN diag_mtu_classe VARCHAR(12)    DEFAULT NULL,
+     ADD COLUMN diag_rtt_ms     DECIMAL(10,2)  DEFAULT NULL,
+     ADD COLUMN diag_dns_ms     DECIMAL(10,2)  DEFAULT NULL,
+     ADD COLUMN diag_dns_cls    VARCHAR(8)     DEFAULT NULL,
+     ADD COLUMN snapshot        MEDIUMTEXT     DEFAULT NULL,
+     ADD UNIQUE KEY uk_codigo (codigo);
    ```
 
    Without that `ALTER` nothing breaks: the endpoint answers 202 and the
-   measurement still shows up on screen, in the report and in the PDF.
+   measurement still shows up on screen, in the report and in the PDF. Without
+   the link columns, tests simply get no code and the "Link to this test" row
+   never appears.
+
+   The two diagnostics writes serve different purposes: the **flat columns**
+   (`diag_*`) are there to query the set ("how many customers behind CGNAT?"),
+   while **`snapshot`** stores the same objects the browser would keep in
+   `localStorage`, so a report opened through a link renders with the very same
+   code as the live page.
 
    (Column and table names are in Portuguese — the API expects them as-is.
    The `cliente`/`netbox_*` columns are filled by an enrichment job specific
@@ -542,8 +563,9 @@ never affects the user (best-effort).
 
 5. **Web server:** uncomment the `location = /api/salvar-teste.php` block
    from §4 (nginx) or apply the `FilesMatch` from §5 (Apache) and reload. The
-   other two storage endpoints — `api/salvar-conectividade.php` (§10) and
-   `api/salvar-single.php` (§9.3) — need the same treatment.
+   other storage endpoints — `api/salvar-conectividade.php` (§10),
+   `api/salvar-single.php` (§9.3) and `api/salvar-diagnostico.php` (§8.1) —
+   need the same treatment.
 6. **Validate:** run a test in the browser and check the new row:
 
    ```bash
@@ -554,6 +576,54 @@ Note: the `site` column classifies the requested hostname as
 `vialink`/`maislink`/`por-ip` (by IP)/`outro` (other) — see `classificaSite`
 in the API; adapt the function to your own domains if you want this
 classification.
+
+### 8.1 Shareable test link (`/r/CODE`)
+
+With persistence enabled, every test gets a **short code** and a link that opens
+the full report **from any machine** — which is what lets a customer send the
+test to support instead of a screenshot. The report shows the link in a row of
+its own, with a copy button.
+
+Besides the `ALTER TABLE` above, this takes **three** nginx blocks:
+
+```nginx
+# Reading a test by its code (what the report queries)
+location = /api/r.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+}
+
+# Diagnostics + test snapshot (late UPDATE, by uid)
+location = /api/salvar-diagnostico.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+}
+
+# Short URL: /r/K7M2QX9P  ->  /relatorio.html?r=K7M2QX9P
+location ~ "^/r/([A-Za-z0-9]{6,12})$" {
+    return 302 /relatorio.html?r=$1;
+}
+```
+
+On Apache, the third block becomes a rewrite rule:
+
+```apache
+RewriteRule "^/r/([A-Za-z0-9]{6,12})$" "/relatorio.html?r=$1" [R=302,L]
+```
+
+⚠️ **Without the `location` for the two `.php` files, nginx serves them as
+text** — it leaks the source and the front end receives something that is not
+JSON.
+
+⚠️ **Anyone holding the link can see the test**, including the IP address, the
+provider and the browser used. That is deliberate (the link exists to be sent to
+support), and it is why the code is **random**, 8 characters from a 32-symbol
+alphabet — you cannot walk through other people's tests by changing one
+character, as you could with a sequential `id`. There is no listing: a test is
+only reachable if you know its code. If your case needs more than that, protect
+`/r/` and `/api/r.php` with authentication in the web server.
 
 ## 9. Test tuning
 

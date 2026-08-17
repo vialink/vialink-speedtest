@@ -89,12 +89,17 @@ window.VLK_I18N.register({
     'report.docTitle': '速度レポート — {name}',
     'report.title': 'スピード・ネットワークテスト レポート',
     'report.browser': 'ブラウザー',
+    'report.link': 'このテストのリンク',
+    'report.copyLink': 'リンクをコピー',
+    'report.copied': 'リンクをコピーしました',
     'report.note': 'このテストはブラウザー上で、当社ネットワーク内の {name} サーバーに対して実行されました。結果は測定時点のお使いの端末と {name} の間の接続状態を反映します — Wi-Fi、配線、回線の同時利用が数値に影響します。数値の読み方は<a href="/manual.html">ガイド</a>をご覧ください。',
     'report.print': '印刷 / PDF として保存',
     'report.newTest': '新しいテストを実行',
     'report.noresTitle': '結果を受け取っていません。',
     'report.noresBody': 'スピードテストを実行してから、メニューの<strong>レポート</strong>をクリックしてください。',
     'report.noresLink': '→ テストへ',
+    'report.linkInvalid': 'リンクが見つかりません。',
+    'report.linkInvalidBody': 'このリンクのコードに該当するテストがありません。アドレスを確認するか、新しくテストしてください。',
 
     // ---- 技術メモ（ガイド + レポート）----
     'tech.title': '技術メモ — このテストが実際に測定するもの',

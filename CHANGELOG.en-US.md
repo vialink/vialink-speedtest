@@ -195,6 +195,36 @@ Method details that keep the diagnosis honest:
   rows — now scroll **inside the table** instead of making the whole page scroll
   sideways.
 
+## Shareable test link (`/r/CODE`)
+
+- Every test gets a **short code** and a link that opens the **full report from
+  any machine**. Until now the report only existed in the browser that ran the
+  test — numbers came in the query string, and the network, quality, single
+  connection and diagnostics sections came from `localStorage`. In other words,
+  a customer could not *show* the test to anyone: they sent a screenshot.
+- The code is **random**, never derived from the `id`: a sequential one would let
+  anyone walk through other people's tests by changing a character. It is 8
+  characters from a 32-symbol alphabet (~2^40) that drops the pairs which get
+  confused when read out loud — 0/O, 1/I/L — because the link is often passed to
+  support over the phone.
+- **The report shows the link** in a row of its own (including in print and in
+  the PDF), with a copy button.
+- In link mode, **date, server and browser are the ones from the test**, not from
+  whoever is reading. Without that the support agent would see their own browser
+  in place of the relevant one — and would not notice.
+- Two writes, serving different purposes: **flat columns** (`diag_*`, `whois`)
+  to query the set — "how many customers behind CGNAT?" — and a **JSON
+  snapshot** holding the same objects the browser would keep. The snapshot is
+  what lets the report use **the very same renderers** as the live page instead
+  of a second implementation that could drift; columns alone would not do, since
+  the quality object carries median, minimum and stability per direction.
+- **An invalid link gets its own message** — telling a visitor to "run a test"
+  when they clicked a link someone sent them would answer a different question.
+- Persistence stays optional: without the columns, tests get no code and the link
+  row simply never appears.
+- ⚠️ **Anyone with the link can see the test** (IP, provider, browser). That is
+  deliberate, and it is why the code is not guessable and there is no listing.
+
 ## Who the IP is assigned to (`assets/js/whois-ip.js`)
 
 - **A third line in the IP card**, right below the ASN and right-aligned: the

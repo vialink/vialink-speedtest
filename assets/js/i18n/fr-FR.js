@@ -86,12 +86,17 @@ window.VLK_I18N.register({
     'report.docTitle': 'Rapport de Débit — {name}',
     'report.title': 'Rapport du Test de Débit et Réseau',
     'report.browser': 'Navigateur',
+    'report.link': 'Lien de ce test',
+    'report.copyLink': 'Copier le lien',
+    'report.copied': 'Lien copié',
     'report.note': 'Test réalisé dans le navigateur contre le serveur de {name}, au sein de notre réseau. Le résultat reflète la connexion entre votre appareil et {name} au moment du test — le Wi-Fi, le câblage et l’utilisation simultanée de la connexion influencent les chiffres. Consultez le <a href="/manual.html">manuel</a> pour interpréter les valeurs.',
     'report.print': 'Imprimer / enregistrer en PDF',
     'report.newTest': 'Refaire un test',
     'report.noresTitle': 'Aucun résultat reçu.',
     'report.noresBody': 'Lancez le test de débit puis cliquez sur <strong>Rapport</strong> dans le menu.',
     'report.noresLink': '→ Aller au test',
+    'report.linkInvalid': 'Lien introuvable.',
+    'report.linkInvalidBody': 'Le code de ce lien ne correspond à aucun test. Vérifiez l\'adresse ou lancez un nouveau test.',
 
     // ---- Note technique (manuel + rapport) ----
     'tech.title': 'Note technique — ce que le test mesure vraiment',

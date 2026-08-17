@@ -51,6 +51,9 @@ Node.js, sem backend obrigatório — qualquer servidor web serve.
 - **Relatório e PDF** — página de relatório imprimível (velocidade **e** rede) e
   PDF gerado no navegador (jsPDF vendorizado, sem CDN) compartilhável pelo painel
   nativo do celular.
+- **Link compartilhável** — cada teste ganha um código curto (`/r/K7M2QX9P`) que
+  abre o relatório completo de qualquer máquina: o cliente manda o teste ao
+  suporte em vez de um print. Opcional, com a persistência de resultados ligada.
 - **Card de IP/provedor** — endereço, ASN, estado e **a quem o bloco está
   designado** (registro público, via RDAP), informação em geral mais específica
   que o ASN: bloco sub-alocado aparece com o nome de quem de fato o detém.

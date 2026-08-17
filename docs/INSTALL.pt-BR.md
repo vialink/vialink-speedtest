@@ -515,10 +515,30 @@ afeta o usuário (melhor-esforço).
      ADD COLUMN single_ratio      DECIMAL(5,3)  DEFAULT NULL,
      ADD COLUMN single_grade      VARCHAR(10)   DEFAULT NULL,
      ADD COLUMN single_window_kb  INT UNSIGNED  DEFAULT NULL;
+
+   -- Link compartilhável (/r/CODIGO) + diagnóstico da conexão
+   ALTER TABLE testes
+     ADD COLUMN codigo          CHAR(8)        DEFAULT NULL,
+     ADD COLUMN whois           VARCHAR(200)   DEFAULT NULL,
+     ADD COLUMN diag_nat        VARCHAR(16)    DEFAULT NULL,
+     ADD COLUMN diag_mtu        SMALLINT UNSIGNED DEFAULT NULL,
+     ADD COLUMN diag_mtu_classe VARCHAR(12)    DEFAULT NULL,
+     ADD COLUMN diag_rtt_ms     DECIMAL(10,2)  DEFAULT NULL,
+     ADD COLUMN diag_dns_ms     DECIMAL(10,2)  DEFAULT NULL,
+     ADD COLUMN diag_dns_cls    VARCHAR(8)     DEFAULT NULL,
+     ADD COLUMN snapshot        MEDIUMTEXT     DEFAULT NULL,
+     ADD UNIQUE KEY uk_codigo (codigo);
    ```
 
    Sem esse `ALTER`, nada quebra: o endpoint responde 202 e a medição continua
-   aparecendo na tela, no relatório e no PDF.
+   aparecendo na tela, no relatório e no PDF. Sem as colunas do link, o teste
+   simplesmente não ganha código e a linha "Link deste teste" não aparece.
+
+   As duas gravações do diagnóstico têm propósitos diferentes: as **colunas
+   planas** (`diag_*`) servem para consultar o conjunto ("quantos clientes atrás
+   de CGNAT?"), e o **`snapshot`** guarda os mesmos objetos que o navegador teria
+   no `localStorage`, para o relatório aberto por link renderizar com o mesmo
+   código da tela.
 
    (As colunas `cliente`/`netbox_*` são preenchidas por um job de
    enriquecimento específico da infraestrutura Vialink —
@@ -538,8 +558,9 @@ afeta o usuário (melhor-esforço).
 
 5. **Servidor web:** descomente o bloco `location = /api/salvar-teste.php` do
    §4 (nginx) ou aplique o `FilesMatch` do §5 (Apache) e recarregue. Os outros
-   dois endpoints de gravação — `api/salvar-conectividade.php` (§10) e
-   `api/salvar-single.php` (§9.3) — pedem o mesmo tratamento.
+   endpoints de gravação — `api/salvar-conectividade.php` (§10),
+   `api/salvar-single.php` (§9.3) e `api/salvar-diagnostico.php` (§8.1) — pedem
+   o mesmo tratamento.
 6. **Valide:** rode um teste no navegador e confira a linha nova:
 
    ```bash
@@ -549,6 +570,52 @@ afeta o usuário (melhor-esforço).
 Observação: a coluna `site` classifica o hostname chamado como
 `vialink`/`maislink`/`por-ip`/`outro` (função `classificaSite` na API) —
 adapte a função aos seus domínios se quiser essa classificação.
+
+### 8.1 Link compartilhável do teste (`/r/CODIGO`)
+
+Com a persistência ligada, cada teste ganha um **código curto** e um link que
+abre o relatório completo **de qualquer máquina** — é o que permite ao cliente
+mandar o teste ao suporte em vez de um print. O relatório mostra o link numa
+linha própria, com botão de copiar.
+
+Além do `ALTER TABLE` acima, são **três** blocos no nginx:
+
+```nginx
+# Leitura de um teste pelo código (é o que o relatório consulta)
+location = /api/r.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+}
+
+# Diagnóstico + snapshot do teste (UPDATE tardio, pelo uid)
+location = /api/salvar-diagnostico.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+}
+
+# URL curta: /r/K7M2QX9P  ->  /relatorio.html?r=K7M2QX9P
+location ~ "^/r/([A-Za-z0-9]{6,12})$" {
+    return 302 /relatorio.html?r=$1;
+}
+```
+
+No Apache, o equivalente do terceiro bloco é uma regra de rewrite:
+
+```apache
+RewriteRule "^/r/([A-Za-z0-9]{6,12})$" "/relatorio.html?r=$1" [R=302,L]
+```
+
+⚠️ **Sem o `location` dos dois `.php`, o nginx serve o arquivo como texto** —
+vaza o código-fonte e o front recebe algo que não é JSON.
+
+⚠️ **Quem tem o link vê o teste**, incluindo o IP, o provedor e o navegador
+usado. É deliberado (o link nasce para ser passado ao suporte), e é por isso que
+o código é **aleatório** de 8 caracteres num alfabeto de 32 — não dá para andar
+pelos testes dos outros trocando um caractere, como aconteceria com o `id`. Não
+há listagem: só se chega a um teste sabendo o código. Se o seu caso pedir mais
+do que isso, proteja `/r/` e `/api/r.php` com autenticação no servidor web.
 
 ## 9. Ajustes do teste
 

@@ -51,6 +51,9 @@ backend — any web server will do.
 - **Report and PDF** — printable report page (speed **and** network) and a PDF
   generated in the browser (vendored jsPDF, no CDN), shareable through the
   phone's native share sheet.
+- **Shareable link** — each test gets a short code (`/r/K7M2QX9P`) that opens the
+  full report from any machine, so a customer can send the test to support
+  instead of a screenshot. Optional, with result persistence enabled.
 - **IP/provider card** — address, ASN, region and **who the block is assigned
   to** (public RDAP registry), which is often more specific than the ASN: a
   sub-allocated block shows the company that actually holds it.

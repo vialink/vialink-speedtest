@@ -89,11 +89,33 @@ $qosQuedas  = num($qos['quedas'] ?? null, 255);
 $qosNota    = in_array($qos['nota'] ?? '', ['A+', 'A', 'B', 'C', 'D', 'F'], true)
               ? $qos['nota'] : null;
 
+// A quem o bloco do IP está designado (whois/RDAP — consultado no navegador do
+// visitante, ver assets/js/whois-ip.js). Informativo, como o ASN.
+$whois = $txt($dados['whois'] ?? '', 200);
+if ($whois === '') $whois = null;
+
 $cfg = parse_ini_file('/etc/vlk-speedtest/db.ini', true);
 if (!$cfg || empty($cfg['db'])) {
     http_response_code(500);
     echo '{"erro":"config indisponivel"}';
     exit;
+}
+
+/**
+ * Código curto do teste — é o que vira o link compartilhável (/r/CODIGO).
+ *
+ * Aleatório, e não derivado do `id`: um código sequencial deixaria qualquer um
+ * andar pelos testes dos outros trocando um caractere. O alfabeto exclui os
+ * pares que se confundem ao ditar por telefone (0/O, 1/I/L) — o link nasce para
+ * ser passado ao suporte, às vezes de viva voz. 8 caracteres de um alfabeto de
+ * 32 dão 2^40 combinações, o que torna a varredura inviável.
+ */
+function geraCodigo(): string {
+    $abc = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // sem 0 O 1 I L
+    $n = strlen($abc) - 1;
+    $out = '';
+    for ($i = 0; $i < 8; $i++) $out .= $abc[random_int(0, $n)];
+    return $out;
 }
 
 try {
@@ -103,19 +125,34 @@ try {
     ]);
     $stmt = $pdo->prepare(
         'INSERT INTO testes
-           (uid, tenant, hostname, site, ip, download_mbps, upload_mbps, ping_ms, jitter_ms,
-            dl_dados_mb, ul_dados_mb, user_agent, asn, cidade,
+           (uid, codigo, tenant, hostname, site, ip, download_mbps, upload_mbps, ping_ms, jitter_ms,
+            dl_dados_mb, ul_dados_mb, user_agent, asn, cidade, whois,
             qos_idle_ms, qos_dl_ms, qos_ul_ms, qos_nota, qos_rpm,
             qos_dl_cv, qos_ul_cv, qos_dl_boost, qos_quedas)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([
-        $uid, $tenant, $hostname, $site, $ip, $download, $upload, $ping, $jitter,
-        $dlDados, $ulDados, $ua, $asn, $cidade,
-        $qosIdle, $qosDl, $qosUl, $qosNota, $qosRpm,
-        $qosDlCv, $qosUlCv, $qosBoost, $qosQuedas,
-    ]);
-    echo json_encode(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
+
+    // Colisão de código é improvável, mas a chave é única: tenta de novo em vez
+    // de perder o teste. Após as tentativas, grava sem código — o resultado vale
+    // mais que o link.
+    $codigo = null;
+    for ($tentativa = 0; $tentativa < 5; $tentativa++) {
+        $codigo = ($tentativa < 4) ? geraCodigo() : null;
+        try {
+            $stmt->execute([
+                $uid, $codigo, $tenant, $hostname, $site, $ip, $download, $upload, $ping, $jitter,
+                $dlDados, $ulDados, $ua, $asn, $cidade, $whois,
+                $qosIdle, $qosDl, $qosUl, $qosNota, $qosRpm,
+                $qosDlCv, $qosUlCv, $qosBoost, $qosQuedas,
+            ]);
+            break;
+        } catch (PDOException $e) {
+            if (($e->errorInfo[1] ?? 0) === 1062) continue;   // duplicate key
+            throw $e;
+        }
+    }
+
+    echo json_encode(['ok' => true, 'id' => (int)$pdo->lastInsertId(), 'codigo' => $codigo]);
 } catch (PDOException $e) {
     error_log('salvar-teste: ' . $e->getMessage());
     http_response_code(500);

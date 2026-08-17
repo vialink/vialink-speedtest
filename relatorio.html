@@ -184,6 +184,9 @@
     .net-tabela td.medio { color: #b8860b; font-weight: 500; }
     .net-tabela td.ruim  { color: #d3362b; font-weight: 500; }
     .rede-nota { font-size: 12px; color: #778; margin-top: 4px; }
+    /* Link compartilhável: fica também na impressão — um relatório em papel com
+       o endereço do original vale mais que um sem. */
+    .link-teste { color: var(--azul); text-decoration: none; word-break: break-all; }
   </style>
 </head>
 <body data-fundo="claro">
@@ -212,6 +215,7 @@
       <tr id="row-ipv4" style="display:none"><td data-i18n="pdf.ipv4">Endereço IPv4</td><td id="r-ipv4">—</td></tr>
       <tr><td data-i18n="pdf.provider">Provedor / localidade</td><td id="r-org">—</td></tr>
       <tr id="row-whois" style="display:none"><td data-i18n="pdf.assignedTo">Designado a</td><td id="r-whois">—</td></tr>
+      <tr id="row-link" style="display:none"><td data-i18n="report.link">Link deste teste</td><td><a id="r-link" class="link-teste" href="#">—</a></td></tr>
           <tr><td data-i18n="pdf.server">Servidor de teste</td><td id="r-servidor">—</td></tr>
           <tr><td data-i18n="report.browser">Navegador</td><td id="r-navegador">—</td></tr>
         </table>
@@ -327,6 +331,7 @@
 
         <div class="acoes">
           <button class="btn-azul" data-i18n="report.print" onclick="window.print()">Imprimir / salvar PDF</button>
+          <button id="btn-copiar" class="btn-cinza" data-i18n="report.copyLink" style="display:none">Copiar link</button>
           <a class="btn-cinza" data-i18n="report.newTest" href="/">Fazer novo teste</a>
         </div>
       </div>
@@ -353,20 +358,133 @@
         var n = parseFloat(v);
         return isFinite(n) ? n.toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—';
       };
-      var agora = new Date();
-      document.getElementById('data-hora').textContent = vlkT('common.dateAt', {
-        date: agora.toLocaleDateString(loc, { day: '2-digit', month: 'long', year: 'numeric' }),
-        time: agora.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
-      });
-      document.getElementById('r-servidor').textContent = location.hostname;
-      document.getElementById('r-dominio').textContent = location.hostname;
-      document.getElementById('r-navegador').textContent = navigator.userAgent;
 
-      if (!q.has('d')) {
+      // Este relatório tem DUAS fontes possíveis:
+      //   - a sessão que fez o teste (URL + localStorage), o caminho de sempre;
+      //   - o servidor, quando aberto por /r/CODIGO (?r=), de qualquer máquina.
+      // `remoto` guarda o segundo caso; `leEstado` é o que faz as seções
+      // seguintes não precisarem saber de qual das duas vieram.
+      var remoto = null;
+      var CHAVES = { vlkQos: 'qos', vlkSingle: 'single', vlkDiag: 'diag', vlkNetResults: 'rede' };
+      function leEstado(chave) {
+        if (remoto) return remoto[CHAVES[chave]] || null;
+        try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; }
+      }
+
+      // Cabeçalho: no modo remoto tudo é do TESTE (data, servidor, navegador de
+      // quem testou), não de quem está lendo — senão o atendente veria o próprio
+      // navegador no lugar do que interessa, e nem perceberia.
+      function pintaCabecalho(dados) {
+        var quando = dados && dados.criadoEm ? new Date(dados.criadoEm.replace(' ', 'T')) : new Date();
+        if (isNaN(quando.getTime())) quando = new Date();
+        document.getElementById('data-hora').textContent = vlkT('common.dateAt', {
+          date: quando.toLocaleDateString(loc, { day: '2-digit', month: 'long', year: 'numeric' }),
+          time: quando.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+        });
+        var host = (dados && dados.host) || location.hostname;
+        document.getElementById('r-servidor').textContent = host;
+        document.getElementById('r-dominio').textContent = host;
+        document.getElementById('r-navegador').textContent =
+          (dados && dados.userAgent) || navigator.userAgent;
+      }
+
+      // Link compartilhável: aparece quando o teste tem código — tanto para quem
+      // acabou de testar (`c=`) quanto para quem já abriu pelo link (`r=`).
+      function mostraLink(codigo) {
+        if (!codigo) return;
+        var url = location.origin + '/r/' + codigo;
+        var linha = document.getElementById('row-link');
+        var alvo = document.getElementById('r-link');
+        if (!linha || !alvo) return;
+        alvo.textContent = url;
+        alvo.setAttribute('href', url);
+        linha.style.display = 'table-row';
+        var btn = document.getElementById('btn-copiar');
+        if (btn) {
+          btn.style.display = '';
+          btn.addEventListener('click', function () {
+            var ok = function () {
+              btn.textContent = trFb('report.copied', 'Link copiado');
+              setTimeout(function () { btn.textContent = trFb('report.copyLink', 'Copiar link'); }, 2500);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url).then(ok)["catch"](function () {});
+            } else {
+              // Sem Clipboard API (http, navegador antigo): seleciona o texto
+              // para o usuário copiar à mão, em vez de não fazer nada.
+              var r = document.createRange();
+              r.selectNode(alvo);
+              window.getSelection().removeAllRanges();
+              window.getSelection().addRange(r);
+            }
+          });
+        }
+      }
+
+      function semResultado(motivo) {
         document.getElementById('conteudo').style.display = 'none';
-        document.getElementById('sem-resultado').style.display = 'block';
+        var box = document.getElementById('sem-resultado');
+        box.style.display = 'block';
+        // Link que não corresponde a teste nenhum é situação DIFERENTE de "você
+        // ainda não testou": mandar o visitante rodar um teste, quando ele
+        // clicou num link que alguém passou, seria responder outra pergunta.
+        if (motivo === 'link') {
+          var titulo = box.querySelector('[data-i18n="report.noresTitle"]');
+          var corpo = box.querySelector('[data-i18n-html="report.noresBody"]');
+          if (titulo) {
+            titulo.setAttribute('data-i18n', 'report.linkInvalid');
+            titulo.textContent = trFb('report.linkInvalid', 'Link não encontrado.');
+          }
+          if (corpo) {
+            corpo.setAttribute('data-i18n-html', 'report.linkInvalidBody');
+            corpo.innerHTML = trFb('report.linkInvalidBody',
+              'O código deste link não corresponde a nenhum teste. Confira o endereço ou faça um teste novo.');
+          }
+        }
+      }
+
+      // --- Modo link: busca o teste no servidor e devolve o controle ao mesmo
+      //     caminho de pintura, com uma query string sintética. ---
+      if (q.has('r')) {
+        pintaCabecalho(null);
+        fetch('/api/r.php?c=' + encodeURIComponent(q.get('r')))
+          .then(function (resp) { if (!resp.ok) throw new Error(resp.status); return resp.json(); })
+          .then(function (dados) {
+            var res = dados.resultado || {};
+            var p = new URLSearchParams();
+            ['d', 'u', 'p', 'j', 'dd', 'ud'].forEach(function (k) {
+              if (res[k] != null) p.set(k, res[k]);
+            });
+            if (dados.ip) p.set('ip', dados.ip);
+            if (dados.org) p.set('org', dados.org);
+            if (dados.whois) p.set('whois', dados.whois);
+            if (dados.qos) p.set('qos', '1');
+            if (dados.single) p.set('single', '1');
+            if (dados.diag) p.set('diag', '1');
+            if (dados.rede) p.set('net', '1');
+            // Perfis são derivados: se há qualidade, dá para recalculá-los aqui
+            // com o mesmo módulo da tela.
+            if (dados.qos) p.set('perfis', '1');
+            remoto = dados;
+            q = p;
+            pintaCabecalho(dados);
+            mostraLink(dados.codigo);
+            pinta();
+          })
+          ["catch"](function () { semResultado('link'); });
         return;
       }
+
+      pintaCabecalho(null);
+      mostraLink(q.get('c'));
+
+      if (!q.has('d')) {
+        semResultado();
+        return;
+      }
+      pinta();
+
+      function pinta() {
       document.getElementById('r-down').textContent = fmt1(q.get('d'));
       document.getElementById('r-up').textContent = fmt1(q.get('u'));
       document.getElementById('r-ping').textContent = fmt1(q.get('p'));
@@ -406,6 +524,7 @@
       if (q.has('single')) renderSingle();
       if (q.has('perfis')) renderPerfis();
       if (q.has('diag')) renderDiag();
+      }   // fim de pinta()
 
       function trFb(key, fb) { var s = window.vlkT ? vlkT(key) : key; return (s && s !== key) ? s : fb; }
       function ms(v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' ms'; }
@@ -422,8 +541,7 @@
       // Mesma via da rede: os números vêm do localStorage, gravados pela página
       // do teste; qos=1 na URL sinaliza que devem aparecer aqui.
       function renderQos() {
-        var d;
-        try { d = JSON.parse(localStorage.getItem('vlkQos') || 'null'); } catch (e) { d = null; }
+        var d = leEstado('vlkQos');
         if (!d || d.idle == null) return;
 
         var clsB = function (v) { return v == null ? '' : v < 30 ? 'bom' : v < 200 ? 'medio' : 'ruim'; };
@@ -474,8 +592,7 @@
       // localStorage; single=1 na URL sinaliza que ela já existia quando o
       // relatório foi aberto.
       function renderSingle() {
-        var d;
-        try { d = JSON.parse(localStorage.getItem('vlkSingle') || 'null'); } catch (e) { d = null; }
+        var d = leEstado('vlkSingle');
         if (!d || !(d.single > 0)) return;
 
         var mbps = function (v) { return (v == null || !isFinite(v)) ? '—' : fmt1(v) + ' Mbps'; };
@@ -508,7 +625,7 @@
       function renderPerfis() {
         if (!window.VLK_PERFIS) return;
         var ler = function (k) {
-          try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; }
+          return leEstado(k);
         };
         window.vlkResults = {
           d: q.get('d'), u: q.get('u'), p: q.get('p'), j: q.get('j')
@@ -537,8 +654,7 @@
       // A montagem das linhas é do próprio módulo — assim o texto do relatório
       // não pode divergir do que o usuário viu na tela.
       function renderDiag() {
-        var d;
-        try { d = JSON.parse(localStorage.getItem('vlkDiag') || 'null'); } catch (e) { d = null; }
+        var d = leEstado('vlkDiag');
         if (!d || !window.VLK_DIAG) return;
         var lbl = VLK_DIAG.label;
         var linhas = '';
@@ -566,8 +682,7 @@
       }
 
       function renderRede() {
-        var nd;
-        try { nd = JSON.parse(localStorage.getItem('vlkNetResults') || 'null'); } catch (e) { nd = null; }
+        var nd = leEstado('vlkNetResults');
         if (!nd || (!(nd.cliente || []).length && !(nd.servidor || []).length)) return;
 
         var cli = nd.cliente || [], srv = nd.servidor || [];

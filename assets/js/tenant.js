@@ -116,7 +116,7 @@ function vlkTesteUid() {
 // POST resiliente melhor-esforço: fetch → 1 retry (1,5s) → sendBeacon (sobrevive
 // a navegação/fechamento da aba). Falha nunca afeta a experiência do usuário.
 // O endpoint lê php://input, então o content-type do Blob não atrapalha.
-function vlkPostResiliente(url, corpo) {
+function vlkPostResiliente(url, corpo, onOk) {
   function enviar() {
     return fetch(url, {
       method: 'POST',
@@ -125,6 +125,9 @@ function vlkPostResiliente(url, corpo) {
       keepalive: true
     }).then(function (resp) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      // `onOk` só existe no caminho do fetch: o sendBeacon não devolve resposta.
+      // Quem depender dele (o código do link) precisa tolerar a ausência.
+      if (onOk) resp.clone().json().then(onOk)["catch"](function () {});
       return resp;
     });
   }
@@ -179,8 +182,54 @@ function vlkSalvarResultado() {
     tenant: (window._tenantConfig && window._tenantConfig.key) || '',
     // coluna `cidade` do banco passa a guardar o estado (UF/região) — o geo-IP
     // erra a cidade; o nome real do cliente vem depois do enriquecimento NetBox
-    asn: ipd.asn || '', cidade: ipd.region || ''
-  }));
+    asn: ipd.asn || '', cidade: ipd.region || '',
+    whois: ipd.whois || ''
+  }), function (resp) {
+    // Código curto do teste: é o que vira o link compartilhável. Quem não tem
+    // persistência no servidor simplesmente não recebe, e o link não aparece.
+    if (resp && resp.codigo) {
+      window.vlkCodigo = resp.codigo;
+      try { window.dispatchEvent(new CustomEvent('vlk:codigo')); } catch (e) {}
+    }
+  });
+}
+
+// Grava o estado tardio do teste: diagnóstico (NAT/MTU/DNS), whois e o SNAPSHOT
+// com qualidade, conexão única, diagnóstico e rede.
+//
+// O snapshot existe para o link compartilhável: sem ele, um relatório aberto em
+// outra máquina traria só a velocidade — tudo o mais vive no localStorage de
+// quem testou. Guardar os mesmos objetos que o navegador guardaria permite ao
+// relatório usar os MESMOS renderizadores, em vez de uma segunda implementação
+// que pode divergir da tela.
+//
+// Chamada mais de uma vez de propósito (o diagnóstico, a conexão única e a rede
+// terminam em momentos diferentes); reenvia só quando o conteúdo mudou.
+var vlkEstadoEnviado = '';
+function vlkGravarEstado() {
+  if (!window.vlkResults) return;                 // sem teste, nada a atualizar
+  var d = window.vlkDiag || null;
+  var snapshot = {};
+  if (window.vlkQos) snapshot.qos = window.vlkQos;
+  if (window.vlkSingle) snapshot.single = window.vlkSingle;
+  if (d) snapshot.diag = d;
+  if (window.vlkNetResults) snapshot.rede = window.vlkNetResults;
+  if (!d && !Object.keys(snapshot).length) return;
+
+  var corpo = JSON.stringify({
+    uid: vlkTesteUid(),
+    nat: d && d.nat ? d.nat.tipo : null,
+    mtu: d && d.mtu ? d.mtu.mtu : null,
+    mtuClasse: d && d.mtu && d.mtu.classe ? d.mtu.classe.chave : null,
+    rtt: d && d.mtu ? d.mtu.rtt : null,
+    dns: d && d.dns ? d.dns.ms : null,
+    dnsCls: d && d.dns ? d.dns.cls : null,
+    whois: (window._vlkIpData || {}).whois || '',
+    snapshot: snapshot
+  });
+  if (corpo === vlkEstadoEnviado) return;
+  vlkEstadoEnviado = corpo;
+  vlkPostResiliente('/api/salvar-diagnostico.php', corpo);
 }
 
 // Grava a análise de conectividade (teste "Complete") — uma linha por destino
@@ -432,6 +481,10 @@ function injectTenantBranding() {
     if (window.vlkDiag) q.push('diag=1');
     // Conexão única: idem — só entra se a medição já tiver terminado
     if (window.vlkSingle) q.push('single=1');
+    // Código do teste: só para o relatório PODER MOSTRAR o link compartilhável.
+    // Os dados continuam vindo daqui (URL + localStorage) — quem abre por
+    // `?r=CODIGO` é que busca tudo no servidor.
+    if (window.vlkCodigo) q.push('c=' + encodeURIComponent(window.vlkCodigo));
     if (window._tenantParam) q.push(window._tenantParam);
     var url = '/relatorio.html' + (q.length ? '?' + q.join('&') : '');
     if (a.setAttributeNS) a.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url);
@@ -553,6 +606,11 @@ function injectTenantBranding() {
     linhas.push([pT('pdf.provider'), dados && dados.org ? dados.org : '—']);
     if (dados && dados.whois) linhas.push([pT('pdf.assignedTo'), dados.whois]);
     linhas.push([pT('pdf.server'), location.hostname]);
+    // Link do teste no PDF: quem recebe o arquivo consegue abrir o relatório
+    // vivo, com as tabelas de rede que não cabem aqui.
+    if (window.vlkCodigo) {
+      linhas.push([pT('report.link'), location.origin + '/r/' + window.vlkCodigo]);
+    }
 
     // Cada linha opcional empurra o resto da página 9 mm para baixo. Antes só
     // o IPv4 era opcional e o deslocamento vinha escrito à mão em dois pontos;
@@ -1017,6 +1075,7 @@ function injectTenantBranding() {
       }));
     } catch (e) {}
     vlkSalvarConectividade(res); // grava a conectividade no banco (testes_rede)
+    vlkGravarEstado();           // e entra no snapshot do link compartilhável
   }
 
   // Conexão única: mede o que UM fluxo TCP entrega, para comparar com as 6
@@ -1170,12 +1229,16 @@ function injectTenantBranding() {
     if (sec && sec.classList.contains('aberto') && window.VLK_DIAG) {
       try { VLK_DIAG.render(); } catch (e) {}
     }
+    vlkGravarEstado();
   });
 
   // A conexão única chega depois de todo o resto e muda dois perfis (streaming
   // e home office dependem do que UM fluxo entrega). Reescrever os cards no
   // lugar não desloca nada: a quantidade e a ordem deles não mudam.
-  window.addEventListener('vlk:single', vlkRenderPerfis);
+  window.addEventListener('vlk:single', function () {
+    vlkRenderPerfis();
+    vlkGravarEstado();
+  });
 
   // Teste "Complete": ao fim da velocidade, abre a seção e mostra a análise.
   // Se o pré-aquecimento desta sessão ainda estiver válido (ex.: o usuário fez

@@ -191,6 +191,35 @@ Detalhes de método que evitam diagnóstico errado:
   tabelas de conectividade — numéricas, que só se leem comparando linhas —
   ganharam rolagem **dentro da tabela**, em vez de fazer a página rolar de lado.
 
+## Link compartilhável do teste (`/r/CODIGO`)
+
+- Cada teste ganha um **código curto** e um link que abre o **relatório completo
+  de qualquer máquina**. Até aqui o relatório só existia no navegador que fez o
+  teste — os números vinham na query string e as seções de rede, qualidade,
+  conexão única e diagnóstico saíam do `localStorage`. Ou seja, o cliente não
+  tinha como *mostrar* o teste a ninguém: mandava print.
+- O código é **aleatório**, nunca derivado do `id`: sequencial deixaria qualquer
+  um andar pelos testes dos outros trocando um caractere. São 8 caracteres de um
+  alfabeto de 32 (~2^40) que exclui os pares que se confundem ao ditar — 0/O,
+  1/I/L —, porque o link costuma ser passado ao suporte, às vezes de viva voz.
+- **O relatório mostra o link** numa linha própria (também na impressão e no
+  PDF) e traz um botão de copiar.
+- No modo link, **data, servidor e navegador são os do teste**, não os de quem
+  está lendo. Sem isso o atendente veria o próprio navegador no lugar do que
+  interessa — e não perceberia.
+- Duas gravações, com propósitos diferentes: **colunas planas** (`diag_*`,
+  `whois`) para consultar o conjunto — "quantos clientes atrás de CGNAT?" — e um
+  **snapshot JSON** com os mesmos objetos que o navegador guardaria. É o
+  snapshot que permite ao relatório usar **os mesmos renderizadores** da tela, em
+  vez de uma segunda implementação que possa divergir; as colunas não bastam,
+  porque o objeto de qualidade tem mediana, mínimo e estabilidade por sentido.
+- **Link inválido tem mensagem própria** — mandar o visitante "fazer um teste"
+  quando ele clicou num link que alguém passou seria responder outra pergunta.
+- Persistência é opcional, como sempre: sem as colunas, o teste não ganha código
+  e a linha do link simplesmente não aparece.
+- ⚠️ **Quem tem o link vê o teste** (IP, provedor, navegador). É deliberado, e é
+  a razão de o código não ser adivinhável e de não existir listagem.
+
 ## A quem o IP está designado (`assets/js/whois-ip.js`)
 
 - **Terceira linha no card de IP**, logo abaixo do ASN e alinhada à direita: o

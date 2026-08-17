@@ -93,12 +93,17 @@ window.VLK_I18N.register({
     'report.docTitle': 'Speed Report — {name}',
     'report.title': 'Speed and Network Test Report',
     'report.browser': 'Browser',
+    'report.link': 'Link to this test',
+    'report.copyLink': 'Copy link',
+    'report.copied': 'Link copied',
     'report.note': 'Test performed in the browser against the {name} server, inside our network. The result reflects the connection between your device and {name} at the time of the test — Wi-Fi, cabling and concurrent use of the connection all influence the numbers. See the <a href="/manual.html">manual</a> for help interpreting the values.',
     'report.print': 'Print / save as PDF',
     'report.newTest': 'Run a new test',
     'report.noresTitle': 'No results received.',
     'report.noresBody': 'Run the speed test and then click <strong>Report</strong> in the menu.',
     'report.noresLink': '→ Go to the test',
+    'report.linkInvalid': 'Link not found.',
+    'report.linkInvalidBody': 'This link\'s code does not match any test. Check the address or run a new test.',
 
     // ---- Technical note (manual + report pages) ----
     'tech.title': 'Technical note — what the test really measures',
